@@ -1,0 +1,203 @@
+import React from 'react';
+import {
+  AppBar,
+  Avatar,
+  Box,
+  BottomNavigation,
+  BottomNavigationAction,
+  Button,
+  Divider,
+  Drawer,
+  IconButton,
+  InputAdornment,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
+  TextField,
+  Toolbar,
+  Tooltip,
+  Typography,
+  useMediaQuery
+} from '@mui/material';
+import {
+  Assessment,
+  Campaign,
+  Dashboard,
+  History,
+  Logout,
+  Menu as MenuIcon,
+  People,
+  Search,
+  Security
+} from '@mui/icons-material';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useTheme } from '@mui/material/styles';
+import { useAuthStore } from '../context/authStore';
+
+const navItems = [
+  { label: 'Pilotage', path: '/', icon: <Dashboard /> },
+  { label: 'Pasteurs', path: '/pasteurs', icon: <People /> },
+  { label: 'Mouvements', path: '/mouvements', icon: <History /> },
+  { label: 'Communication', path: '/communication', icon: <Campaign /> },
+  { label: 'Journal', path: '/audit', icon: <Assessment />, roles: ['SUPER_ADMIN'] }
+];
+
+const drawerWidth = 276;
+
+export default function AppShell({ children, onSearch }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const { user, logout } = useAuthStore();
+  const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const [anchorEl, setAnchorEl] = React.useState(null);
+
+  const visibleItems = navItems.filter((item) => !item.roles || item.roles.includes(user?.role));
+  const activePath = visibleItems.find((item) => item.path === location.pathname)?.path || '/';
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
+
+  const drawerContent = (
+    <Box sx={{ height: '100%', bgcolor: 'background.paper' }}>
+      <Box sx={{ p: 3 }}>
+        <Typography variant="overline" color="text.secondary">
+          CBCA Interne
+        </Typography>
+        <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1.15 }}>
+          Pilotage pastoral
+        </Typography>
+      </Box>
+      <Divider />
+      <List sx={{ p: 1.5 }}>
+        {visibleItems.map((item) => (
+          <ListItemButton
+            key={item.path}
+            selected={activePath === item.path}
+            onClick={() => {
+              navigate(item.path);
+              setDrawerOpen(false);
+            }}
+            sx={{ borderRadius: 1, mb: 0.5 }}
+          >
+            <ListItemIcon sx={{ minWidth: 42 }}>{item.icon}</ListItemIcon>
+            <ListItemText primary={item.label} />
+          </ListItemButton>
+        ))}
+      </List>
+      <Box sx={{ mt: 'auto', p: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, p: 1.5, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+          <Security color="primary" />
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 700 }}>
+              Accès restreint
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {user?.role || 'Session sécurisée'}
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
+  );
+
+  return (
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+      {!isMobile && (
+        <Drawer
+          variant="permanent"
+          sx={{
+            width: drawerWidth,
+            flexShrink: 0,
+            '& .MuiDrawer-paper': { width: drawerWidth, boxSizing: 'border-box' }
+          }}
+        >
+          {drawerContent}
+        </Drawer>
+      )}
+
+      <AppBar
+        position="fixed"
+        elevation={0}
+        color="inherit"
+        sx={{
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+          width: { md: `calc(100% - ${drawerWidth}px)` },
+          ml: { md: `${drawerWidth}px` }
+        }}
+      >
+        <Toolbar sx={{ gap: 2 }}>
+          {isMobile && (
+            <Tooltip title="Menu">
+              <IconButton onClick={() => setDrawerOpen(true)} edge="start">
+                <MenuIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+          <TextField
+            size="small"
+            placeholder="Rechercher un pasteur, un poste, un matricule..."
+            onChange={(event) => onSearch?.(event.target.value)}
+            sx={{ flex: 1, maxWidth: 620 }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search fontSize="small" />
+                </InputAdornment>
+              )
+            }}
+          />
+          <Button color="inherit" onClick={(event) => setAnchorEl(event.currentTarget)} sx={{ minWidth: 0, gap: 1 }}>
+            <Avatar sx={{ width: 34, height: 34, bgcolor: 'primary.main', fontSize: 14 }}>
+              {(user?.firstName?.[0] || user?.email?.[0] || 'C').toUpperCase()}
+            </Avatar>
+            {!isMobile && (
+              <Box sx={{ textAlign: 'left' }}>
+                <Typography variant="body2" sx={{ fontWeight: 700, lineHeight: 1 }}>
+                  {user?.firstName ? `${user.firstName} ${user.lastName || ''}` : user?.email || 'Cadre CBCA'}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {user?.role || 'Utilisateur'}
+                </Typography>
+              </Box>
+            )}
+          </Button>
+          <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
+            <MenuItem onClick={handleLogout}>
+              <ListItemIcon><Logout fontSize="small" /></ListItemIcon>
+              Déconnexion
+            </MenuItem>
+          </Menu>
+        </Toolbar>
+      </AppBar>
+
+      <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} ModalProps={{ keepMounted: true }}>
+        <Box sx={{ width: drawerWidth }}>{drawerContent}</Box>
+      </Drawer>
+
+      <Box component="main" sx={{ ml: { md: `${drawerWidth}px` }, pt: 9, pb: { xs: 9, md: 4 }, px: { xs: 2, sm: 3, lg: 4 } }}>
+        {children}
+      </Box>
+
+      {isMobile && (
+        <BottomNavigation
+          showLabels
+          value={activePath}
+          onChange={(_, value) => navigate(value)}
+          sx={{ position: 'fixed', left: 0, right: 0, bottom: 0, borderTop: '1px solid', borderColor: 'divider', zIndex: 1200 }}
+        >
+          {visibleItems.slice(0, 4).map((item) => (
+            <BottomNavigationAction key={item.path} label={item.label} value={item.path} icon={item.icon} />
+          ))}
+        </BottomNavigation>
+      )}
+    </Box>
+  );
+}

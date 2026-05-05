@@ -1,0 +1,21 @@
+{
+  "expo": {
+    "name": "CBCA Pilotage",
+    "slug": "cbca-pilotage",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0B5CAB"
+      }
+    },
+    "extra": {
+      "apiUrl": "http://localhost:5000/api/v1"
+    }
+  }
+}
