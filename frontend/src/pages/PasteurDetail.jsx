@@ -62,6 +62,7 @@ export default function PasteurDetail() {
                   <Typography color="text.secondary">{pasteur.fonction}</Typography>
                   <Stack direction="row" spacing={1} justifyContent={{ xs: 'flex-start', md: 'center' }} flexWrap="wrap" sx={{ mt: 1 }}>
                     <Chip label={pasteur.grade} color="primary" />
+                    <Chip label={pasteur.responsabilite || 'Pasteur de Paroisse'} color="secondary" variant="outlined" />
                     <Chip label={pasteur.statut} />
                   </Stack>
                 </Box>
@@ -78,6 +79,7 @@ export default function PasteurDetail() {
               <Grid container spacing={2} sx={{ mt: 0.5 }}>
                 <Grid item xs={6} md={4}><Info label="Matricule" value={pasteur.matricule} /></Grid>
                 <Grid item xs={6} md={4}><Info label="Identifiant CBCA" value={pasteur.numeroIdentifiant} /></Grid>
+                <Grid item xs={6} md={4}><Info label="Responsabilité" value={pasteur.responsabilite} /></Grid>
                 <Grid item xs={6} md={4}><Info label="Date d'ordination" value={pasteur.dateOrdination ? new Date(pasteur.dateOrdination).toLocaleDateString('fr-FR') : '-'} /></Grid>
                 <Grid item xs={6} md={4}><Info label="Poste" value={pasteur.Poste?.nom} /></Grid>
                 <Grid item xs={6} md={4}><Info label="Section" value={pasteur.Section?.nom} /></Grid>

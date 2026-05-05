@@ -6,24 +6,21 @@ const rateLimit = require('express-rate-limit');
 const config = require('./config');
 
 const authMiddleware = require('./middleware/auth');
-const rbacMiddleware = require('./middleware/rbac');
 const errorHandler = require('./middleware/errorHandler');
 
-// Routes
 const authRoutes = require('./routes/auth');
 const pasteurRoutes = require('./routes/pasteurs');
 const geographieRoutes = require('./routes/geographie');
 const mouvementRoutes = require('./routes/mouvements');
 const dashboardRoutes = require('./routes/dashboard');
 const auditRoutes = require('./routes/audit');
+const messageRoutes = require('./routes/messages');
 
 const app = express();
 
-// Security Middleware
 app.use(helmet());
 app.use(cors(config.cors));
 
-// Rate Limiting
 const limiter = rateLimit({
   windowMs: config.rateLimit.windowMs,
   max: config.rateLimit.maxRequests,
@@ -31,19 +28,14 @@ const limiter = rateLimit({
 });
 app.use('/api/v1/auth', limiter);
 
-// Logging
 app.use(morgan('combined'));
-
-// Body Parser
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Health Check
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date() });
 });
 
-// Welcome Route
 app.get('/', (req, res) => {
   res.json({
     message: 'CBCA Pastor Management API',
@@ -52,17 +44,14 @@ app.get('/', (req, res) => {
   });
 });
 
-// Routes (public)
 app.use(`${config.app.apiPrefix}/auth`, authRoutes);
-
-// Routes (protégées)
 app.use(`${config.app.apiPrefix}/pasteurs`, authMiddleware, pasteurRoutes);
 app.use(`${config.app.apiPrefix}/geographie`, authMiddleware, geographieRoutes);
 app.use(`${config.app.apiPrefix}/mouvements`, authMiddleware, mouvementRoutes);
 app.use(`${config.app.apiPrefix}/dashboard`, authMiddleware, dashboardRoutes);
 app.use(`${config.app.apiPrefix}/audit`, authMiddleware, auditRoutes);
+app.use(`${config.app.apiPrefix}/messages`, authMiddleware, messageRoutes);
 
-// 404 Handler
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -73,7 +62,6 @@ app.use((req, res) => {
   });
 });
 
-// Error Handler
 app.use(errorHandler);
 
 module.exports = app;

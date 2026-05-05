@@ -37,6 +37,10 @@ const Pasteur = sequelize.define('Pasteur', {
     type: DataTypes.ENUM('Révérend Pasteur', 'Pasteur', 'Pasteur Stagiaire', 'Proposant'),
     allowNull: false
   },
+  responsabilite: {
+    type: DataTypes.ENUM('Pasteur de Poste', 'Pasteur Sectionnaire', 'Pasteur de Paroisse', 'Assistant Pastoral', 'Administration'),
+    defaultValue: 'Pasteur de Paroisse'
+  },
   fonction: DataTypes.STRING,
   formation: {
     type: DataTypes.JSON,

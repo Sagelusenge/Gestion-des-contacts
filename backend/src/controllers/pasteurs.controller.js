@@ -6,7 +6,7 @@ const pasteurSchema = Joi.object({
   nom: Joi.string().required(),
   prenom: Joi.string().required(),
   dateNaissance: Joi.date(),
-  lieuNaissance: Joi.string(),
+  lieuNaissance: Joi.string().allow('', null),
   photo: Joi.string().allow('', null),
   email: Joi.string().email().allow('', null),
   telephone: Joi.string().allow('', null),
@@ -14,6 +14,7 @@ const pasteurSchema = Joi.object({
   numeroIdentifiant: Joi.string().allow('', null),
   dateOrdination: Joi.date().required(),
   grade: Joi.string().valid('Révérend Pasteur', 'Pasteur', 'Pasteur Stagiaire', 'Proposant').required(),
+  responsabilite: Joi.string().valid('Pasteur de Poste', 'Pasteur Sectionnaire', 'Pasteur de Paroisse', 'Assistant Pastoral', 'Administration'),
   fonction: Joi.string().allow('', null),
   formation: Joi.array().items(Joi.object()).default([]),
   etatCivil: Joi.string().valid('Célibataire', 'Marié', 'Divorcé', 'Veuf').allow(null),
@@ -50,13 +51,14 @@ const writeAudit = async (req, action, pasteur, anciennes = null) => {
 
 exports.listPasteurs = async (req, res, next) => {
   try {
-    const { page = 1, limit = 20, poste, statut, grade, search } = req.query;
+    const { page = 1, limit = 20, poste, statut, grade, responsabilite, search } = req.query;
     const offset = (page - 1) * limit;
 
     let where = getPasteurScope(req);
     if (poste) where.posteId = poste;
     if (statut) where.statut = statut;
     if (grade) where.grade = grade;
+    if (responsabilite) where.responsabilite = responsabilite;
     if (search) {
       where = {
         ...where,
@@ -64,7 +66,8 @@ exports.listPasteurs = async (req, res, next) => {
           { nom: { [Op.like]: `%${search}%` } },
           { prenom: { [Op.like]: `%${search}%` } },
           { matricule: { [Op.like]: `%${search}%` } },
-          { fonction: { [Op.like]: `%${search}%` } }
+          { fonction: { [Op.like]: `%${search}%` } },
+          { responsabilite: { [Op.like]: `%${search}%` } }
         ]
       };
     }
@@ -150,10 +153,7 @@ exports.createPasteur = async (req, res, next) => {
     const pasteur = await Pasteur.create(value);
     await writeAudit(req, 'CREATE', pasteur);
 
-    res.status(201).json({
-      success: true,
-      data: pasteur
-    });
+    res.status(201).json({ success: true, data: pasteur });
   } catch (error) {
     next(error);
   }
@@ -178,10 +178,7 @@ exports.updatePasteur = async (req, res, next) => {
     await pasteur.update(req.body);
     await writeAudit(req, 'UPDATE', pasteur, anciennes);
 
-    res.json({
-      success: true,
-      data: pasteur
-    });
+    res.json({ success: true, data: pasteur });
   } catch (error) {
     next(error);
   }
@@ -200,10 +197,7 @@ exports.deletePasteur = async (req, res, next) => {
     await writeAudit(req, 'DELETE', pasteur, pasteur.toJSON());
     await pasteur.destroy();
 
-    res.json({
-      success: true,
-      message: 'Pasteur supprimé avec succès'
-    });
+    res.json({ success: true, message: 'Pasteur supprimé avec succès' });
   } catch (error) {
     next(error);
   }

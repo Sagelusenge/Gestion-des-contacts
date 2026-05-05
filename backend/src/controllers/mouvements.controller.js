@@ -38,10 +38,7 @@ exports.listMouvements = async (req, res, next) => {
       order: [['dateDebut', 'DESC']]
     });
 
-    res.json({
-      success: true,
-      data: { mouvements }
-    });
+    res.json({ success: true, data: { mouvements } });
   } catch (error) {
     next(error);
   }
@@ -60,10 +57,7 @@ exports.createMouvement = async (req, res, next) => {
     value.createdById = req.user.id;
     const mouvement = await Mouvement.create(value);
 
-    res.status(201).json({
-      success: true,
-      data: mouvement
-    });
+    res.status(201).json({ success: true, data: mouvement });
   } catch (error) {
     next(error);
   }

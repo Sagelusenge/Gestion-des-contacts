@@ -3,6 +3,7 @@ const { Op } = require('sequelize');
 
 const grades = ['Révérend Pasteur', 'Pasteur', 'Pasteur Stagiaire', 'Proposant'];
 const statuts = ['Actif', 'En Congé', 'Retraité', 'Suspendu'];
+const responsabilites = ['Pasteur de Poste', 'Pasteur Sectionnaire', 'Pasteur de Paroisse', 'Assistant Pastoral', 'Administration'];
 
 const getScopeWhere = (req) => {
   if (req.user?.role === 'ADMIN_POSTE' && req.user?.posteAssigneId) {
@@ -30,6 +31,11 @@ exports.getStatistiques = async (req, res, next) => {
       pasteurParStatut[statut] = await Pasteur.count({ where: { ...pasteurScope, statut } });
     }
 
+    const pasteurParResponsabilite = {};
+    for (const responsabilite of responsabilites) {
+      pasteurParResponsabilite[responsabilite] = await Pasteur.count({ where: { ...pasteurScope, responsabilite } });
+    }
+
     const dateLimit = new Date();
     dateLimit.setMonth(dateLimit.getMonth() + 6);
     const alertesMandats = await Mouvement.count({
@@ -46,6 +52,7 @@ exports.getStatistiques = async (req, res, next) => {
         totalPasteurs,
         pasteurParGrade,
         pasteurParStatut,
+        pasteurParResponsabilite,
         totalPostes,
         totalSections,
         totalParoisses,
@@ -82,10 +89,7 @@ exports.getGeographie = async (req, res, next) => {
       }))
     );
 
-    res.json({
-      success: true,
-      data: { parPosition }
-    });
+    res.json({ success: true, data: { parPosition } });
   } catch (error) {
     next(error);
   }

@@ -11,7 +11,9 @@ const {
   Paroisse,
   Pasteur,
   Mouvement,
-  AuditLog
+  AuditLog,
+  Message,
+  MessageRecipient
 } = require('../src/models');
 
 const db = {
@@ -23,22 +25,8 @@ const db = {
 };
 
 const users = [
-  {
-    email: 'representant.legal@cbca.cd',
-    password: 'Cbca@2026!',
-    firstName: 'Représentant',
-    lastName: 'Légal',
-    phone: '+243 970 000 001',
-    role: 'SUPER_ADMIN'
-  },
-  {
-    email: 'secretaire.communautaire@cbca.cd',
-    password: 'Cbca@2026!',
-    firstName: 'Secrétaire',
-    lastName: 'Communautaire',
-    phone: '+243 970 000 002',
-    role: 'SUPER_ADMIN'
-  }
+  { email: 'representant.legal@cbca.cd', password: 'Cbca@2026!', firstName: 'Représentant', lastName: 'Légal', phone: '+243 970 000 001', role: 'SUPER_ADMIN' },
+  { email: 'secretaire.communautaire@cbca.cd', password: 'Cbca@2026!', firstName: 'Secrétaire', lastName: 'Communautaire', phone: '+243 970 000 002', role: 'SUPER_ADMIN' }
 ];
 
 const postes = [
@@ -75,6 +63,7 @@ const pasteurs = [
     matricule: 'CBCA-RL-0019',
     numeroIdentifiant: 'CBCA-NK-24-0019',
     grade: 'Révérend Pasteur',
+    responsabilite: 'Pasteur de Poste',
     fonction: 'Responsable de Poste',
     telephone: '+243 970 000 101',
     email: 'emmanuel.kambale@cbca.cd',
@@ -84,10 +73,7 @@ const pasteurs = [
     etatCivil: 'Marié',
     conjoint: { nom: 'Maman Grâce Kambale', telephone: '+243 970 000 102', implication: 'Animatrice' },
     enfants: [{ nom: 'Deborah' }, { nom: 'Samuel' }],
-    formation: [
-      { diplome: 'Licence en Théologie', institution: 'ULPGL', annee: 2005 },
-      { diplome: 'Leadership pastoral', institution: 'CBCA', annee: 2018 }
-    ],
+    formation: [{ diplome: 'Licence en Théologie', institution: 'ULPGL', annee: 2005 }],
     statut: 'Actif',
     adresseActuelle: 'Poste CBCA Goma',
     poste: 'GOM',
@@ -101,7 +87,8 @@ const pasteurs = [
     matricule: 'CBCA-PA-0034',
     numeroIdentifiant: 'CBCA-BN-24-0034',
     grade: 'Pasteur',
-    fonction: 'Pasteur titulaire',
+    responsabilite: 'Pasteur Sectionnaire',
+    fonction: 'Pasteur sectionnaire',
     telephone: '+243 970 000 220',
     email: 'jeanpaul.mumbere@cbca.cd',
     dateOrdination: '2015-06-21',
@@ -123,6 +110,7 @@ const pasteurs = [
     matricule: 'CBCA-ST-0088',
     numeroIdentifiant: 'CBCA-BU-24-0088',
     grade: 'Pasteur Stagiaire',
+    responsabilite: 'Assistant Pastoral',
     fonction: 'Assistant paroissial',
     telephone: '+243 970 000 303',
     email: 'daniel.safari@cbca.cd',
@@ -140,6 +128,7 @@ const pasteurs = [
     matricule: 'CBCA-PR-0112',
     numeroIdentifiant: 'CBCA-RU-24-0112',
     grade: 'Proposant',
+    responsabilite: 'Pasteur de Paroisse',
     fonction: 'Responsable jeunesse',
     telephone: '+243 970 000 404',
     email: 'moise.bisimwa@cbca.cd',
@@ -163,9 +152,7 @@ const mouvements = [
 
 const upsertBy = async (model, where, values) => {
   const [row, created] = await model.findOrCreate({ where, defaults: values });
-  if (!created) {
-    await row.update(values);
-  }
+  if (!created) await row.update(values);
   return row;
 };
 
@@ -178,62 +165,40 @@ const executeOptional = async (sql, label) => {
 };
 
 const installDatabaseObjects = async () => {
-  const q = (name) => `\`${name}\``;
-
   const indexes = [
     ['idx_users_role', 'Users', 'role'],
     ['idx_users_poste_assigne', 'Users', 'posteAssigneId'],
     ['idx_pasteurs_poste', 'Pasteurs', 'posteId'],
-    ['idx_pasteurs_section', 'Pasteurs', 'sectionId'],
-    ['idx_pasteurs_paroisse', 'Pasteurs', 'paroisseId'],
+    ['idx_pasteurs_responsabilite', 'Pasteurs', 'responsabilite'],
     ['idx_pasteurs_grade', 'Pasteurs', 'grade'],
-    ['idx_pasteurs_statut', 'Pasteurs', 'statut'],
-    ['idx_mouvements_pasteur', 'Mouvements', 'pasteurId'],
     ['idx_mouvements_date_fin', 'Mouvements', 'dateFin'],
-    ['idx_audit_entite', 'AuditLogs', 'entite'],
-    ['idx_audit_utilisateur', 'AuditLogs', 'utilisateurId']
+    ['idx_messages_audience', 'Messages', 'audienceType'],
+    ['idx_message_recipients_pasteur', 'MessageRecipients', 'pasteurId']
   ];
 
-  for (const [indexName, table, column] of indexes) {
-    await executeOptional(
-      `CREATE INDEX ${q(indexName)} ON ${q(table)} (${q(column)})`,
-      `Index ${indexName}`
-    );
+  for (const [name, table, column] of indexes) {
+    await executeOptional(`CREATE INDEX \`${name}\` ON \`${table}\` (\`${column}\`)`, `Index ${name}`);
   }
 
   const constraints = [
     ['chk_pasteurs_dates', 'Pasteurs', '`dateNaissance` IS NULL OR `dateOrdination` >= `dateNaissance`'],
     ['chk_mouvements_dates', 'Mouvements', '`dateFin` IS NULL OR `dateFin` >= `dateDebut`'],
     ['chk_paroisses_members_positive', 'Paroisses', '`nombreMembers` >= 0'],
-    ['chk_postes_counts_positive', 'Postes', '`nombrePasteurs` >= 0 AND `nombreSections` >= 0 AND `nombreParoisses` >= 0']
+    ['chk_postes_counts_positive', 'Postes', '`nombrePasteurs` >= 0 AND `nombreSections` >= 0 AND `nombreParoisses` >= 0'],
+    ['chk_messages_contenu', 'Messages', 'CHAR_LENGTH(`contenu`) >= 3']
   ];
 
-  for (const [constraintName, table, expression] of constraints) {
-    await executeOptional(
-      `ALTER TABLE ${q(table)} ADD CONSTRAINT ${q(constraintName)} CHECK (${expression})`,
-      `Contrainte ${constraintName}`
-    );
+  for (const [name, table, expression] of constraints) {
+    await executeOptional(`ALTER TABLE \`${table}\` ADD CONSTRAINT \`${name}\` CHECK (${expression})`, `Contrainte ${name}`);
   }
 
   await sequelize.query('DROP VIEW IF EXISTS v_pasteurs_carte');
   await sequelize.query(`
     CREATE VIEW v_pasteurs_carte AS
-    SELECT
-      p.id,
-      p.matricule,
-      p.numeroIdentifiant,
-      CONCAT(p.prenom, ' ', p.nom) AS nomComplet,
-      p.grade,
-      p.fonction,
-      p.telephone,
-      p.email,
-      p.dateOrdination,
-      p.statut,
-      po.nom AS poste,
-      s.nom AS section,
-      pa.nom AS paroisse,
-      p.etatCivil,
-      JSON_UNQUOTE(JSON_EXTRACT(p.conjoint, '$.nom')) AS conjointNom
+    SELECT p.id, p.matricule, p.numeroIdentifiant, CONCAT(p.prenom, ' ', p.nom) AS nomComplet,
+           p.grade, p.responsabilite, p.fonction, p.telephone, p.email, p.dateOrdination, p.statut,
+           po.nom AS poste, s.nom AS section, pa.nom AS paroisse, p.etatCivil,
+           JSON_UNQUOTE(JSON_EXTRACT(p.conjoint, '$.nom')) AS conjointNom
     FROM Pasteurs p
     LEFT JOIN Postes po ON po.id = p.posteId
     LEFT JOIN Sections s ON s.id = p.sectionId
@@ -243,21 +208,18 @@ const installDatabaseObjects = async () => {
   await sequelize.query('DROP VIEW IF EXISTS v_dashboard_grades');
   await sequelize.query(`
     CREATE VIEW v_dashboard_grades AS
-    SELECT grade, statut, COUNT(*) AS total
+    SELECT grade, responsabilite, statut, COUNT(*) AS total
     FROM Pasteurs
-    GROUP BY grade, statut
+    GROUP BY grade, responsabilite, statut
   `);
 
   await sequelize.query('DROP VIEW IF EXISTS v_couverture_postes');
   await sequelize.query(`
     CREATE VIEW v_couverture_postes AS
-    SELECT
-      po.id,
-      po.code,
-      po.nom AS poste,
-      COUNT(DISTINCT p.id) AS pasteurs,
-      COUNT(DISTINCT s.id) AS sections,
-      COUNT(DISTINCT pa.id) AS paroisses
+    SELECT po.id, po.code, po.nom AS poste,
+           COUNT(DISTINCT p.id) AS pasteurs,
+           COUNT(DISTINCT s.id) AS sections,
+           COUNT(DISTINCT pa.id) AS paroisses
     FROM Postes po
     LEFT JOIN Pasteurs p ON p.posteId = po.id
     LEFT JOIN Sections s ON s.posteId = po.id
@@ -268,13 +230,9 @@ const installDatabaseObjects = async () => {
   await sequelize.query('DROP VIEW IF EXISTS v_alertes_mandat');
   await sequelize.query(`
     CREATE VIEW v_alertes_mandat AS
-    SELECT
-      m.id,
-      p.id AS pasteurId,
-      CONCAT(p.prenom, ' ', p.nom) AS pasteur,
-      po.nom AS posteCourant,
-      m.dateFin AS dateFinMandat,
-      DATEDIFF(m.dateFin, CURDATE()) AS joursRestants
+    SELECT m.id, p.id AS pasteurId, CONCAT(p.prenom, ' ', p.nom) AS pasteur,
+           po.nom AS posteCourant, m.dateFin AS dateFinMandat,
+           DATEDIFF(m.dateFin, CURDATE()) AS joursRestants
     FROM Mouvements m
     INNER JOIN Pasteurs p ON p.id = m.pasteurId
     INNER JOIN Postes po ON po.id = m.posteCibleId
@@ -283,16 +241,26 @@ const installDatabaseObjects = async () => {
       AND m.dateFin BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 6 MONTH)
   `);
 
+  await sequelize.query('DROP VIEW IF EXISTS v_boites_messages');
+  await sequelize.query(`
+    CREATE VIEW v_boites_messages AS
+    SELECT mr.id, mr.messageId, mr.pasteurId, CONCAT(p.prenom, ' ', p.nom) AS pasteur,
+           p.grade, p.responsabilite, m.objet, m.contenu, m.priorite, m.sentAt, mr.statutLecture
+    FROM MessageRecipients mr
+    INNER JOIN Messages m ON m.id = mr.messageId
+    INNER JOIN Pasteurs p ON p.id = mr.pasteurId
+  `);
+
   await sequelize.query('DROP PROCEDURE IF EXISTS sp_dashboard_resume');
   await sequelize.query(`
     CREATE PROCEDURE sp_dashboard_resume()
     BEGIN
-      SELECT
-        (SELECT COUNT(*) FROM Pasteurs) AS totalPasteurs,
-        (SELECT COUNT(*) FROM Postes) AS totalPostes,
-        (SELECT COUNT(*) FROM Sections) AS totalSections,
-        (SELECT COUNT(*) FROM Paroisses) AS totalParoisses,
-        (SELECT COUNT(*) FROM v_alertes_mandat) AS alertesMandats;
+      SELECT (SELECT COUNT(*) FROM Pasteurs) AS totalPasteurs,
+             (SELECT COUNT(*) FROM Postes) AS totalPostes,
+             (SELECT COUNT(*) FROM Sections) AS totalSections,
+             (SELECT COUNT(*) FROM Paroisses) AS totalParoisses,
+             (SELECT COUNT(*) FROM v_alertes_mandat) AS alertesMandats,
+             (SELECT COUNT(*) FROM MessageRecipients WHERE statutLecture = 'Non lu') AS messagesNonLus;
     END
   `);
 
@@ -302,54 +270,43 @@ const installDatabaseObjects = async () => {
     BEGIN
       SELECT *
       FROM v_pasteurs_carte
-      WHERE searchTerm IS NULL
-         OR searchTerm = ''
+      WHERE searchTerm IS NULL OR searchTerm = ''
          OR nomComplet LIKE CONCAT('%', searchTerm, '%')
          OR matricule LIKE CONCAT('%', searchTerm, '%')
          OR poste LIKE CONCAT('%', searchTerm, '%')
-         OR paroisse LIKE CONCAT('%', searchTerm, '%')
+         OR responsabilite LIKE CONCAT('%', searchTerm, '%')
       ORDER BY nomComplet ASC;
+    END
+  `);
+
+  await sequelize.query('DROP PROCEDURE IF EXISTS sp_envoyer_message_grade');
+  await sequelize.query(`
+    CREATE PROCEDURE sp_envoyer_message_grade(
+      IN inObjet VARCHAR(255),
+      IN inContenu TEXT,
+      IN inGrade VARCHAR(80),
+      IN inUserId INT
+    )
+    BEGIN
+      INSERT INTO Messages (objet, contenu, audienceType, audienceValeur, canal, priorite, statut, sentById, sentAt, createdAt, updatedAt)
+      VALUES (inObjet, inContenu, 'GRADE', inGrade, 'BOITE_INTERNE', 'Normale', 'Envoyé', inUserId, NOW(), NOW(), NOW());
+
+      INSERT INTO MessageRecipients (messageId, pasteurId, statutLecture, canalLivraison, createdAt, updatedAt)
+      SELECT LAST_INSERT_ID(), id, 'Non lu', 'BOITE_INTERNE', NOW(), NOW()
+      FROM Pasteurs
+      WHERE grade = inGrade AND statut = 'Actif';
     END
   `);
 
   await sequelize.query('DROP PROCEDURE IF EXISTS sp_affecter_pasteur');
   await sequelize.query(`
-    CREATE PROCEDURE sp_affecter_pasteur(
-      IN inPasteurId INT,
-      IN inPosteCibleId INT,
-      IN inDateDebut DATE,
-      IN inDateFin DATE,
-      IN inCreatedById INT
-    )
+    CREATE PROCEDURE sp_affecter_pasteur(IN inPasteurId INT, IN inPosteCibleId INT, IN inDateDebut DATE, IN inDateFin DATE, IN inCreatedById INT)
     BEGIN
-      INSERT INTO Mouvements (
-        pasteurId,
-        posteSourceId,
-        posteCibleId,
-        typeMovement,
-        dateDebut,
-        dateFin,
-        statut,
-        createdById,
-        createdAt,
-        updatedAt
-      )
-      SELECT
-        p.id,
-        p.posteId,
-        inPosteCibleId,
-        'Transfert',
-        inDateDebut,
-        inDateFin,
-        'Effectué',
-        inCreatedById,
-        NOW(),
-        NOW()
-      FROM Pasteurs p
-      WHERE p.id = inPasteurId;
+      INSERT INTO Mouvements (pasteurId, posteSourceId, posteCibleId, typeMovement, dateDebut, dateFin, statut, createdById, createdAt, updatedAt)
+      SELECT p.id, p.posteId, inPosteCibleId, 'Transfert', inDateDebut, inDateFin, 'Effectué', inCreatedById, NOW(), NOW()
+      FROM Pasteurs p WHERE p.id = inPasteurId;
 
-      UPDATE Pasteurs
-      SET posteId = inPosteCibleId, updatedById = inCreatedById, updatedAt = NOW()
+      UPDATE Pasteurs SET posteId = inPosteCibleId, updatedById = inCreatedById, updatedAt = NOW()
       WHERE id = inPasteurId;
     END
   `);
@@ -360,57 +317,11 @@ const installDatabaseObjects = async () => {
     AFTER UPDATE ON Pasteurs
     FOR EACH ROW
     BEGIN
-      INSERT INTO AuditLogs (
-        action,
-        entite,
-        entiteId,
-        utilisateurId,
-        utilisateurNom,
-        anciennes,
-        nouvelles,
-        createdAt,
-        updatedAt
-      )
-      VALUES (
-        'UPDATE',
-        'Pasteur',
-        NEW.id,
-        NEW.updatedById,
-        'TRIGGER_MYSQL',
-        JSON_OBJECT('nom', OLD.nom, 'prenom', OLD.prenom, 'telephone', OLD.telephone, 'posteId', OLD.posteId, 'statut', OLD.statut),
-        JSON_OBJECT('nom', NEW.nom, 'prenom', NEW.prenom, 'telephone', NEW.telephone, 'posteId', NEW.posteId, 'statut', NEW.statut),
-        NOW(),
-        NOW()
-      );
-    END
-  `);
-
-  await sequelize.query('DROP TRIGGER IF EXISTS trg_pasteurs_after_delete_audit');
-  await sequelize.query(`
-    CREATE TRIGGER trg_pasteurs_after_delete_audit
-    AFTER DELETE ON Pasteurs
-    FOR EACH ROW
-    BEGIN
-      INSERT INTO AuditLogs (
-        action,
-        entite,
-        entiteId,
-        utilisateurId,
-        utilisateurNom,
-        anciennes,
-        createdAt,
-        updatedAt
-      )
-      VALUES (
-        'DELETE',
-        'Pasteur',
-        OLD.id,
-        OLD.updatedById,
-        'TRIGGER_MYSQL',
-        JSON_OBJECT('nom', OLD.nom, 'prenom', OLD.prenom, 'matricule', OLD.matricule, 'posteId', OLD.posteId),
-        NOW(),
-        NOW()
-      );
+      INSERT INTO AuditLogs (action, entite, entiteId, utilisateurId, utilisateurNom, anciennes, nouvelles, createdAt, updatedAt)
+      VALUES ('UPDATE', 'Pasteur', NEW.id, NEW.updatedById, 'TRIGGER_MYSQL',
+        JSON_OBJECT('telephone', OLD.telephone, 'posteId', OLD.posteId, 'responsabilite', OLD.responsabilite, 'statut', OLD.statut),
+        JSON_OBJECT('telephone', NEW.telephone, 'posteId', NEW.posteId, 'responsabilite', NEW.responsabilite, 'statut', NEW.statut),
+        NOW(), NOW());
     END
   `);
 
@@ -421,10 +332,18 @@ const installDatabaseObjects = async () => {
     FOR EACH ROW
     BEGIN
       IF NEW.dateFin IS NOT NULL AND NEW.dateFin <= DATE_ADD(CURDATE(), INTERVAL 6 MONTH) THEN
-        UPDATE Pasteurs
-        SET alerteFin = TRUE, updatedAt = NOW()
-        WHERE id = NEW.pasteurId;
+        UPDATE Pasteurs SET alerteFin = TRUE, updatedAt = NOW() WHERE id = NEW.pasteurId;
       END IF;
+    END
+  `);
+
+  await sequelize.query('DROP TRIGGER IF EXISTS trg_message_recipients_after_insert_audit');
+  await sequelize.query(`
+    CREATE TRIGGER trg_message_recipients_after_insert_audit
+    AFTER INSERT ON MessageRecipients
+    FOR EACH ROW
+    BEGIN
+      UPDATE Messages SET updatedAt = NOW() WHERE id = NEW.messageId;
     END
   `);
 };
@@ -438,12 +357,8 @@ const main = async () => {
     multipleStatements: true
   });
 
-  await serverConnection.query(
-    `DROP DATABASE IF EXISTS \`${db.name}\``
-  );
-  await serverConnection.query(
-    `CREATE DATABASE IF NOT EXISTS \`${db.name}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`
-  );
+  await serverConnection.query(`DROP DATABASE IF EXISTS \`${db.name}\``);
+  await serverConnection.query(`CREATE DATABASE \`${db.name}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
   await serverConnection.end();
 
   setupModels(sequelize);
@@ -470,11 +385,7 @@ const main = async () => {
 
   const posteRows = {};
   for (const poste of postes) {
-    posteRows[poste.code] = await upsertBy(Poste, { code: poste.code }, {
-      ...poste,
-      communauteId: communaute.id,
-      createdById: superAdmin.id
-    });
+    posteRows[poste.code] = await upsertBy(Poste, { code: poste.code }, { ...poste, communauteId: communaute.id, createdById: superAdmin.id });
   }
 
   const adminPostes = [
@@ -533,10 +444,7 @@ const main = async () => {
   }
 
   for (const mouvement of mouvements) {
-    await upsertBy(Mouvement, {
-      pasteurId: pasteurRows[mouvement.pasteur].id,
-      dateDebut: mouvement.dateDebut
-    }, {
+    await upsertBy(Mouvement, { pasteurId: pasteurRows[mouvement.pasteur].id, dateDebut: mouvement.dateDebut }, {
       pasteurId: pasteurRows[mouvement.pasteur].id,
       posteCibleId: posteRows[mouvement.posteCible].id,
       typeMovement: mouvement.typeMovement,
@@ -548,15 +456,30 @@ const main = async () => {
     });
   }
 
-  await AuditLog.findOrCreate({
-    where: { entite: 'System', action: 'CREATE', utilisateurId: superAdmin.id },
-    defaults: {
-      entite: 'System',
-      action: 'CREATE',
-      utilisateurId: superAdmin.id,
-      utilisateurNom: 'Initialisation CBCA',
-      nouvelles: { database: db.name, seed: 'initial' }
-    }
+  const seedMessage = await Message.create({
+    objet: 'Bienvenue dans la boîte interne CBCA',
+    contenu: 'Cette boîte recevra les communications ciblées de la haute hiérarchie.',
+    audienceType: 'TOUS',
+    audienceValeur: '',
+    canal: 'BOITE_INTERNE',
+    priorite: 'Normale',
+    sentById: superAdmin.id
+  });
+
+  await MessageRecipient.bulkCreate(
+    Object.values(pasteurRows).map((pasteur) => ({
+      messageId: seedMessage.id,
+      pasteurId: pasteur.id,
+      canalLivraison: 'BOITE_INTERNE'
+    }))
+  );
+
+  await AuditLog.create({
+    entite: 'System',
+    action: 'CREATE',
+    utilisateurId: superAdmin.id,
+    utilisateurNom: 'Initialisation CBCA',
+    nouvelles: { database: db.name, seed: 'initial' }
   });
 
   await sequelize.close();

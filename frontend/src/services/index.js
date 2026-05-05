@@ -35,3 +35,10 @@ export const dashboardService = {
 export const auditService = {
   list: (params) => apiClient.get('/audit', { params })
 };
+
+export const messageService = {
+  getAudiences: () => apiClient.get('/messages/audiences'),
+  list: () => apiClient.get('/messages'),
+  inbox: (params) => apiClient.get('/messages/inbox', { params }),
+  send: (data) => apiClient.post('/messages', data)
+};

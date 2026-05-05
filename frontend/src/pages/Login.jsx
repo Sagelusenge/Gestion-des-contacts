@@ -5,13 +5,13 @@ import {
   Box,
   Button,
   CircularProgress,
-  Grid,
+  Divider,
   Paper,
   Stack,
   TextField,
   Typography
 } from '@mui/material';
-import { Lock, Security } from '@mui/icons-material';
+import { AdminPanelSettings, Lock, Shield, VerifiedUser } from '@mui/icons-material';
 import { useAuthStore } from '../context/authStore';
 
 export default function Login() {
@@ -31,40 +31,79 @@ export default function Login() {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', display: 'grid', placeItems: 'center', px: 2 }}>
-      <Grid container sx={{ maxWidth: 1080, minHeight: { md: 620 }, boxShadow: 2, borderRadius: 1, overflow: 'hidden', bgcolor: 'background.paper' }}>
-        <Grid item xs={12} md={6} sx={{ p: { xs: 3, md: 5 }, bgcolor: 'primary.main', color: 'primary.contrastText', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'grid',
+        placeItems: 'center',
+        px: 2,
+        py: 4,
+        bgcolor: 'primary.dark',
+        backgroundImage: 'linear-gradient(135deg, #073D73 0%, #0B5CAB 52%, #F5F7FA 52%, #F5F7FA 100%)'
+      }}
+    >
+      <Paper
+        elevation={8}
+        sx={{
+          width: '100%',
+          maxWidth: 1120,
+          minHeight: { md: 650 },
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: '1.05fr 0.95fr' },
+          overflow: 'hidden',
+          borderRadius: 1
+        }}
+      >
+        <Box sx={{ p: { xs: 3, md: 5 }, color: 'primary.contrastText', bgcolor: 'primary.main', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           <Box>
-            <Typography variant="overline">CBCA - Accès interne</Typography>
-            <Typography variant="h3" sx={{ fontWeight: 900, mt: 1, lineHeight: 1.05 }}>
-              Pilotage pastoral stratégique
+            <Stack direction="row" spacing={1.5} alignItems="center">
+              <Box sx={{ width: 48, height: 48, border: '1px solid rgba(255,255,255,.35)', borderRadius: 1, display: 'grid', placeItems: 'center' }}>
+                <Shield />
+              </Box>
+              <Box>
+                <Typography variant="overline" sx={{ opacity: 0.85 }}>Accès restreint</Typography>
+                <Typography variant="h6" sx={{ fontWeight: 900, lineHeight: 1 }}>CBCA Pilotage</Typography>
+              </Box>
+            </Stack>
+
+            <Typography variant="h3" sx={{ mt: 7, fontWeight: 900, lineHeight: 1.05, maxWidth: 520 }}>
+              Direction pastorale, données fiables, communication maîtrisée.
             </Typography>
-            <Typography sx={{ mt: 2, maxWidth: 440, opacity: 0.9 }}>
-              Plateforme réservée au Représentant Légal, aux Secrétaires Communautaires et aux administrateurs autorisés.
+            <Typography sx={{ mt: 2.5, maxWidth: 520, opacity: 0.9, fontSize: 17 }}>
+              Outil interne pour le Représentant Légal, les Secrétaires Communautaires et les responsables autorisés.
             </Typography>
           </Box>
-          <Stack spacing={1.5} sx={{ mt: 5 }}>
-            {['Authentification administrateur', 'Accès par rôle et poste', 'Journalisation des modifications'].map((item) => (
-              <Box key={item} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Security fontSize="small" />
-                <Typography>{item}</Typography>
+
+          <Stack spacing={1.25} sx={{ mt: 6 }}>
+            {[
+              ['RBAC', 'Super-Admin, Admin de Poste et lecture contrôlée'],
+              ['Traçabilité', 'Journal des modifications sensibles'],
+              ['Communication', 'Diffusion ciblée vers les boîtes internes']
+            ].map(([title, text]) => (
+              <Box key={title} sx={{ display: 'grid', gridTemplateColumns: '34px 1fr', gap: 1.5, alignItems: 'center' }}>
+                <VerifiedUser fontSize="small" />
+                <Box>
+                  <Typography sx={{ fontWeight: 800 }}>{title}</Typography>
+                  <Typography variant="body2" sx={{ opacity: 0.82 }}>{text}</Typography>
+                </Box>
               </Box>
             ))}
           </Stack>
-        </Grid>
+        </Box>
 
-        <Grid item xs={12} md={6} sx={{ p: { xs: 3, md: 5 }, display: 'flex', alignItems: 'center' }}>
-          <Paper elevation={0} sx={{ width: '100%' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
-              <Box sx={{ display: 'grid', placeItems: 'center', width: 48, height: 48, bgcolor: 'primary.main', color: 'primary.contrastText', borderRadius: 1 }}>
-                <Lock />
+        <Box sx={{ p: { xs: 3, md: 5 }, display: 'flex', alignItems: 'center' }}>
+          <Box sx={{ width: '100%' }}>
+            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 3 }}>
+              <Box sx={{ width: 48, height: 48, display: 'grid', placeItems: 'center', bgcolor: 'primary.light', color: 'primary.dark', borderRadius: 1 }}>
+                <AdminPanelSettings />
               </Box>
               <Box>
-                <Typography variant="h5" sx={{ fontWeight: 800 }}>Connexion sécurisée</Typography>
-                <Typography color="text.secondary">Compte administrateur requis</Typography>
+                <Typography variant="h4" sx={{ fontWeight: 900 }}>Connexion</Typography>
+                <Typography color="text.secondary">Session administrative sécurisée</Typography>
               </Box>
-            </Box>
+            </Stack>
 
+            <Divider sx={{ mb: 2.5 }} />
             {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
             <Box component="form" onSubmit={handleSubmit}>
@@ -90,13 +129,13 @@ export default function Login() {
                 disabled={loading}
                 required
               />
-              <Button fullWidth variant="contained" type="submit" sx={{ mt: 3, py: 1.25 }} disabled={loading}>
-                {loading ? <CircularProgress size={24} color="inherit" /> : 'Entrer dans le cockpit'}
+              <Button fullWidth variant="contained" type="submit" startIcon={!loading && <Lock />} sx={{ mt: 3, py: 1.35 }} disabled={loading}>
+                {loading ? <CircularProgress size={24} color="inherit" /> : 'Ouvrir le tableau de bord'}
               </Button>
             </Box>
-          </Paper>
-        </Grid>
-      </Grid>
+          </Box>
+        </Box>
+      </Paper>
     </Box>
   );
 }
