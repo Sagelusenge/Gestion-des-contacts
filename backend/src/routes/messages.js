@@ -7,6 +7,6 @@ const router = express.Router();
 router.get('/audiences', messagesController.getAudiences);
 router.get('/', messagesController.listMessages);
 router.get('/inbox', messagesController.getInbox);
-router.post('/', rbacMiddleware(['SUPER_ADMIN', 'ADMIN_POSTE']), messagesController.sendMessage);
+router.post('/', rbacMiddleware(['SUPER_ADMIN', 'PASTEUR_POSTE', 'PASTEUR_SECTIONNAIRE']), messagesController.sendMessage);
 
 module.exports = router;

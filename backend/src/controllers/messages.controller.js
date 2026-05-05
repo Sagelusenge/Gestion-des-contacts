@@ -16,20 +16,22 @@ const sendSchema = Joi.object({
   contenu: Joi.string().min(3).required(),
   audienceType: Joi.string().valid('TOUS', 'GRADE', 'RESPONSABILITE', 'POSTE', 'SECTION', 'PAROISSE', 'PASTEURS_SELECTIONNES').required(),
   audienceValeur: Joi.alternatives().try(Joi.string(), Joi.number(), Joi.array().items(Joi.number())).allow('', null),
-  canal: Joi.string().valid('BOITE_INTERNE', 'SMS', 'WHATSAPP', 'MIXTE').default('BOITE_INTERNE'),
+  canal: Joi.string().valid('WHATSAPP', 'BOITE_INTERNE', 'SMS', 'MIXTE').default('WHATSAPP'),
   priorite: Joi.string().valid('Normale', 'Haute', 'Urgente').default('Normale')
 });
 
-const buildAudienceWhere = (audienceType, audienceValeur, req) => {
-  const where = { statut: 'Actif' };
+const scopeWhere = (req) => (
+  (req.user?.role === 'PASTEUR_POSTE' || req.user?.role === 'PASTEUR_SECTIONNAIRE') && req.user?.posteAssigneId
+    ? { posteId: req.user.posteAssigneId }
+    : {}
+);
 
-  if (req.user?.role === 'ADMIN_POSTE' && req.user?.posteAssigneId) {
-    where.posteId = req.user.posteAssigneId;
-  }
+const buildAudienceWhere = (audienceType, audienceValeur, req) => {
+  const where = { statut: 'Actif', ...scopeWhere(req) };
 
   if (audienceType === 'GRADE') where.grade = audienceValeur;
   if (audienceType === 'RESPONSABILITE') where.responsabilite = audienceValeur;
-  if (audienceType === 'POSTE') where.posteId = Number(audienceValeur);
+  if (audienceType === 'POSTE' && req.user.role === 'SUPER_ADMIN') where.posteId = Number(audienceValeur);
   if (audienceType === 'SECTION') where.sectionId = Number(audienceValeur);
   if (audienceType === 'PAROISSE') where.paroisseId = Number(audienceValeur);
   if (audienceType === 'PASTEURS_SELECTIONNES') where.id = { [Op.in]: audienceValeur.map(Number) };
@@ -37,11 +39,20 @@ const buildAudienceWhere = (audienceType, audienceValeur, req) => {
   return where;
 };
 
+const buildWhatsAppText = (value) => {
+  const priority = value.priorite === 'Urgente' ? '[URGENT] ' : value.priorite === 'Haute' ? '[IMPORTANT] ' : '';
+  return `${priority}${value.objet}\n\n${value.contenu}\n\nCBCA`;
+};
+
+const buildWhatsAppLink = (telephone, text) => {
+  const digits = String(telephone || '').replace(/\D/g, '');
+  if (!digits) return null;
+  return `https://wa.me/${digits}?text=${encodeURIComponent(text)}`;
+};
+
 exports.getAudiences = async (req, res, next) => {
   try {
-    const scope = req.user?.role === 'ADMIN_POSTE' && req.user?.posteAssigneId
-      ? { posteId: req.user.posteAssigneId }
-      : {};
+    const scope = scopeWhere(req);
 
     const [postes, sections, paroisses] = await Promise.all([
       Poste.findAll({ where: scope.posteId ? { id: scope.posteId } : {}, attributes: ['id', 'nom', 'code'], order: [['nom', 'ASC']] }),
@@ -88,7 +99,7 @@ exports.sendMessage = async (req, res, next) => {
 
     const recipients = await Pasteur.findAll({
       where: buildAudienceWhere(value.audienceType, value.audienceValeur, req),
-      attributes: ['id', 'nom', 'prenom', 'telephone', 'email']
+      attributes: ['id', 'nom', 'prenom', 'telephone', 'email', 'grade', 'responsabilite']
     });
 
     if (!recipients.length) {
@@ -112,9 +123,20 @@ exports.sendMessage = async (req, res, next) => {
       recipients.map((pasteur) => ({
         messageId: message.id,
         pasteurId: pasteur.id,
-        canalLivraison: value.canal
+        canalLivraison: value.canal,
+        statutLecture: value.canal === 'WHATSAPP' ? 'Archivé' : 'Non lu'
       }))
     );
+
+    const whatsappText = buildWhatsAppText(value);
+    const whatsappLinks = recipients
+      .map((pasteur) => ({
+        pasteurId: pasteur.id,
+        nom: `${pasteur.prenom} ${pasteur.nom}`,
+        telephone: pasteur.telephone,
+        url: buildWhatsAppLink(pasteur.telephone, whatsappText)
+      }))
+      .filter((item) => item.url);
 
     await AuditLog.create({
       action: 'CREATE',
@@ -126,7 +148,9 @@ exports.sendMessage = async (req, res, next) => {
         objet: message.objet,
         audienceType: message.audienceType,
         audienceValeur: message.audienceValeur,
-        destinataires: recipients.length
+        canal: message.canal,
+        destinataires: recipients.length,
+        liensWhatsApp: whatsappLinks.length
       },
       ip: req.ip,
       userAgent: req.get('user-agent')
@@ -134,7 +158,13 @@ exports.sendMessage = async (req, res, next) => {
 
     res.status(201).json({
       success: true,
-      data: { message, destinataires: recipients.length, recipients }
+      data: {
+        message,
+        destinataires: recipients.length,
+        liensWhatsApp: whatsappLinks.length,
+        whatsappLinks,
+        recipients
+      }
     });
   } catch (error) {
     next(error);
@@ -146,7 +176,7 @@ exports.listMessages = async (req, res, next) => {
     const messages = await Message.findAll({
       include: [
         { model: User, as: 'sender', attributes: ['id', 'firstName', 'lastName', 'email'] },
-        { model: MessageRecipient, attributes: ['id', 'pasteurId', 'statutLecture'] }
+        { model: MessageRecipient, attributes: ['id', 'pasteurId', 'statutLecture', 'canalLivraison'] }
       ],
       order: [['sentAt', 'DESC']],
       limit: 80

@@ -7,6 +7,7 @@ import Pasteurs from './pages/Pasteurs';
 import PasteurDetail from './pages/PasteurDetail';
 import Mouvements from './pages/Mouvements';
 import Communication from './pages/Communication';
+import Paroisses from './pages/Paroisses';
 import Audit from './pages/Audit';
 import Unauthorized from './pages/Unauthorized';
 
@@ -42,6 +43,15 @@ function App() {
           element={
             <ProtectedRoute>
               <PasteurDetail />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/paroisses"
+          element={
+            <ProtectedRoute>
+              <Paroisses />
             </ProtectedRoute>
           }
         />

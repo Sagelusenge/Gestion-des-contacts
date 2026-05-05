@@ -15,7 +15,7 @@ const mouvementSchema = Joi.object({
 });
 
 const pasteurScope = (req) => (
-  req.user?.role === 'ADMIN_POSTE' && req.user?.posteAssigneId
+  (req.user?.role === 'PASTEUR_POSTE' || req.user?.role === 'PASTEUR_SECTIONNAIRE') && req.user?.posteAssigneId
     ? { posteId: req.user.posteAssigneId }
     : {}
 );

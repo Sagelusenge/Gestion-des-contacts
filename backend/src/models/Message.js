@@ -22,7 +22,7 @@ const Message = sequelize.define('Message', {
   audienceValeur: DataTypes.STRING,
   canal: {
     type: DataTypes.ENUM('BOITE_INTERNE', 'SMS', 'WHATSAPP', 'MIXTE'),
-    defaultValue: 'BOITE_INTERNE'
+    defaultValue: 'WHATSAPP'
   },
   priorite: {
     type: DataTypes.ENUM('Normale', 'Haute', 'Urgente'),

@@ -30,12 +30,14 @@ const User = sequelize.define('User', {
   },
   phone: DataTypes.STRING,
   role: {
-    type: DataTypes.ENUM('SUPER_ADMIN', 'ADMIN_POSTE', 'VIEWER'),
+    type: DataTypes.ENUM('SUPER_ADMIN', 'PASTEUR_POSTE', 'PASTEUR_SECTIONNAIRE', 'VIEWER'),
     defaultValue: 'VIEWER'
   },
   posteAssigneId: {
-    type: DataTypes.INTEGER,
-    references: { model: 'Postes', key: 'id' }
+    type: DataTypes.INTEGER
+  },
+  pasteurId: {
+    type: DataTypes.INTEGER
   },
   isActive: {
     type: DataTypes.BOOLEAN,

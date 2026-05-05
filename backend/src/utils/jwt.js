@@ -9,7 +9,8 @@ const generateToken = (user) => {
       role: user.role,
       firstName: user.firstName,
       lastName: user.lastName,
-      posteAssigneId: user.posteAssigneId
+      posteAssigneId: user.posteAssigneId,
+      pasteurId: user.pasteurId
     },
     config.jwt.secret,
     { expiresIn: config.jwt.expire }

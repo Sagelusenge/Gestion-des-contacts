@@ -29,6 +29,7 @@ const setupModels = () => {
 
   User.hasMany(Pasteur, { foreignKey: 'createdById' });
   Pasteur.belongsTo(User, { foreignKey: 'createdById', as: 'createdBy' });
+  User.belongsTo(Pasteur, { foreignKey: 'pasteurId', as: 'pasteur', constraints: false });
 
   Pasteur.belongsTo(Poste, { foreignKey: 'posteId' });
   Poste.hasMany(Pasteur, { foreignKey: 'posteId' });

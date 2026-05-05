@@ -10,6 +10,7 @@ export const authService = {
 export const pasteurService = {
   list: (params) => apiClient.get('/pasteurs', { params }),
   getById: (id) => apiClient.get(`/pasteurs/${id}`),
+  nextMatricule: (params) => apiClient.get('/pasteurs/matricule/next', { params }),
   create: (data) => apiClient.post('/pasteurs', data),
   update: (id, data) => apiClient.put(`/pasteurs/${id}`, data),
   delete: (id) => apiClient.delete(`/pasteurs/${id}`)
@@ -18,7 +19,8 @@ export const pasteurService = {
 export const geographieService = {
   getPostes: (params) => apiClient.get('/geographie/postes', { params }),
   getSections: (params) => apiClient.get('/geographie/sections', { params }),
-  getParoisses: (params) => apiClient.get('/geographie/paroisses', { params })
+  getParoisses: (params) => apiClient.get('/geographie/paroisses', { params }),
+  createParoisse: (data) => apiClient.post('/geographie/paroisses', data)
 };
 
 export const mouvementService = {

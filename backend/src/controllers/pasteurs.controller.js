@@ -2,6 +2,9 @@ const { Pasteur, Poste, Section, Paroisse, User, Mouvement, AuditLog } = require
 const Joi = require('joi');
 const { Op } = require('sequelize');
 
+const grades = ['Révérend Pasteur', 'Pasteur', 'Pasteur Stagiaire', 'Proposant'];
+const responsabilites = ['Pasteur de Poste', 'Pasteur Sectionnaire', 'Pasteur de Paroisse', 'Assistant Pastoral', 'Administration'];
+
 const pasteurSchema = Joi.object({
   nom: Joi.string().required(),
   prenom: Joi.string().required(),
@@ -10,11 +13,11 @@ const pasteurSchema = Joi.object({
   photo: Joi.string().allow('', null),
   email: Joi.string().email().allow('', null),
   telephone: Joi.string().allow('', null),
-  matricule: Joi.string().required(),
+  matricule: Joi.string().allow('', null),
   numeroIdentifiant: Joi.string().allow('', null),
   dateOrdination: Joi.date().required(),
-  grade: Joi.string().valid('Révérend Pasteur', 'Pasteur', 'Pasteur Stagiaire', 'Proposant').required(),
-  responsabilite: Joi.string().valid('Pasteur de Poste', 'Pasteur Sectionnaire', 'Pasteur de Paroisse', 'Assistant Pastoral', 'Administration'),
+  grade: Joi.string().valid(...grades).required(),
+  responsabilite: Joi.string().valid(...responsabilites),
   fonction: Joi.string().allow('', null),
   formation: Joi.array().items(Joi.object()).default([]),
   etatCivil: Joi.string().valid('Célibataire', 'Marié', 'Divorcé', 'Veuf').allow(null),
@@ -24,16 +27,65 @@ const pasteurSchema = Joi.object({
   sectionId: Joi.number().allow(null),
   paroisseId: Joi.number().allow(null),
   adresseActuelle: Joi.string().allow('', null),
-  statut: Joi.string().valid('Actif', 'En Congé', 'Retraité', 'Suspendu'),
+  statut: Joi.string().valid('Actif', 'En Congé', 'Retraité', 'Suspendu').default('Actif'),
   notes: Joi.string().allow('', null),
   alerteFin: Joi.boolean()
 });
 
 const getPasteurScope = (req) => (
-  req.user?.role === 'ADMIN_POSTE' && req.user?.posteAssigneId
+  (req.user?.role === 'PASTEUR_POSTE' || req.user?.role === 'PASTEUR_SECTIONNAIRE') && req.user?.posteAssigneId
     ? { posteId: req.user.posteAssigneId }
     : {}
 );
+
+const getMatriculePrefix = (value) => {
+  if (value.responsabilite === 'Pasteur de Poste') return 'CBCA-PP';
+  if (value.responsabilite === 'Pasteur Sectionnaire') return 'CBCA-PS';
+  if (value.grade === 'Révérend Pasteur') return 'CBCA-RP';
+  if (value.grade === 'Pasteur Stagiaire') return 'CBCA-ST';
+  if (value.grade === 'Proposant') return 'CBCA-PR';
+  return 'CBCA-PA';
+};
+
+const generateMatricule = async (value) => {
+  const prefix = getMatriculePrefix(value);
+  const year = new Date().getFullYear();
+  const total = await Pasteur.count({
+    where: {
+      matricule: {
+        [Op.like]: `${prefix}-${year}-%`
+      }
+    }
+  });
+
+  return `${prefix}-${year}-${String(total + 1).padStart(4, '0')}`;
+};
+
+const canCreatePasteur = (user, value) => {
+  if (user.role === 'SUPER_ADMIN') {
+    return value.responsabilite === 'Pasteur de Poste';
+  }
+
+  if (user.role === 'PASTEUR_POSTE') {
+    return value.responsabilite === 'Pasteur Sectionnaire';
+  }
+
+  if (user.role === 'PASTEUR_SECTIONNAIRE') {
+    return !['Pasteur de Poste', 'Pasteur Sectionnaire'].includes(value.responsabilite);
+  }
+
+  return false;
+};
+
+const lockScopeForUser = (user, value) => {
+  if (user.role === 'PASTEUR_POSTE' || user.role === 'PASTEUR_SECTIONNAIRE') {
+    if (!user.posteAssigneId) {
+      return false;
+    }
+    value.posteId = user.posteAssigneId;
+  }
+  return true;
+};
 
 const writeAudit = async (req, action, pasteur, anciennes = null) => {
   await AuditLog.create({
@@ -55,7 +107,7 @@ exports.listPasteurs = async (req, res, next) => {
     const offset = (page - 1) * limit;
 
     let where = getPasteurScope(req);
-    if (poste) where.posteId = poste;
+    if (poste && req.user.role === 'SUPER_ADMIN') where.posteId = poste;
     if (statut) where.statut = statut;
     if (grade) where.grade = grade;
     if (responsabilite) where.responsabilite = responsabilite;
@@ -137,8 +189,24 @@ exports.createPasteur = async (req, res, next) => {
       });
     }
 
-    if (req.user.role === 'ADMIN_POSTE') {
-      value.posteId = req.user.posteAssigneId;
+    value.responsabilite = value.responsabilite || 'Pasteur de Paroisse';
+
+    if (!canCreatePasteur(req.user, value)) {
+      return res.status(403).json({
+        success: false,
+        error: { code: 'AUTH_FORBIDDEN', message: 'Votre niveau hiérarchique ne permet pas de créer ce type de pasteur' }
+      });
+    }
+
+    if (!lockScopeForUser(req.user, value)) {
+      return res.status(403).json({
+        success: false,
+        error: { code: 'AUTH_FORBIDDEN', message: 'Aucun poste n’est attaché à ce compte' }
+      });
+    }
+
+    if (!value.matricule) {
+      value.matricule = await generateMatricule(value);
     }
 
     const exists = await Pasteur.findOne({ where: { matricule: value.matricule } });
@@ -171,14 +239,31 @@ exports.updatePasteur = async (req, res, next) => {
 
     const anciennes = pasteur.toJSON();
     req.body.updatedById = req.user.id;
-    if (req.user.role === 'ADMIN_POSTE') {
+    if (req.user.role === 'PASTEUR_POSTE' || req.user.role === 'PASTEUR_SECTIONNAIRE') {
       delete req.body.posteId;
+      delete req.body.matricule;
     }
 
     await pasteur.update(req.body);
     await writeAudit(req, 'UPDATE', pasteur, anciennes);
 
     res.json({ success: true, data: pasteur });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.getNextMatricule = async (req, res, next) => {
+  try {
+    const value = {
+      grade: req.query.grade || 'Pasteur',
+      responsabilite: req.query.responsabilite || 'Pasteur de Paroisse'
+    };
+
+    res.json({
+      success: true,
+      data: { matricule: await generateMatricule(value) }
+    });
   } catch (error) {
     next(error);
   }

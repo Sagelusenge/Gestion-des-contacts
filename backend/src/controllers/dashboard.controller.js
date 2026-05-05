@@ -6,7 +6,7 @@ const statuts = ['Actif', 'En Congé', 'Retraité', 'Suspendu'];
 const responsabilites = ['Pasteur de Poste', 'Pasteur Sectionnaire', 'Pasteur de Paroisse', 'Assistant Pastoral', 'Administration'];
 
 const getScopeWhere = (req) => {
-  if (req.user?.role === 'ADMIN_POSTE' && req.user?.posteAssigneId) {
+  if ((req.user?.role === 'PASTEUR_POSTE' || req.user?.role === 'PASTEUR_SECTIONNAIRE') && req.user?.posteAssigneId) {
     return { posteId: req.user.posteAssigneId };
   }
 
@@ -16,10 +16,12 @@ const getScopeWhere = (req) => {
 exports.getStatistiques = async (req, res, next) => {
   try {
     const pasteurScope = getScopeWhere(req);
+    const geoScope = pasteurScope.posteId ? { posteId: pasteurScope.posteId } : {};
+
     const totalPasteurs = await Pasteur.count({ where: pasteurScope });
-    const totalPostes = req.user?.role === 'ADMIN_POSTE' ? 1 : await Poste.count();
-    const totalSections = await Section.count({ where: pasteurScope.posteId ? { posteId: pasteurScope.posteId } : {} });
-    const totalParoisses = await Paroisse.count({ where: pasteurScope.posteId ? { posteId: pasteurScope.posteId } : {} });
+    const totalPostes = pasteurScope.posteId ? 1 : await Poste.count();
+    const totalSections = await Section.count({ where: geoScope });
+    const totalParoisses = await Paroisse.count({ where: geoScope });
 
     const pasteurParGrade = {};
     for (const grade of grades) {
@@ -66,9 +68,7 @@ exports.getStatistiques = async (req, res, next) => {
 
 exports.getGeographie = async (req, res, next) => {
   try {
-    const posteWhere = req.user?.role === 'ADMIN_POSTE' && req.user?.posteAssigneId
-      ? { id: req.user.posteAssigneId }
-      : {};
+    const posteWhere = req.user?.posteAssigneId ? { id: req.user.posteAssigneId } : {};
 
     const postes = await Poste.findAll({
       where: posteWhere,

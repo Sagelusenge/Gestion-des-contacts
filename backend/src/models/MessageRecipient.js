@@ -24,7 +24,7 @@ const MessageRecipient = sequelize.define('MessageRecipient', {
   luAt: DataTypes.DATE,
   canalLivraison: {
     type: DataTypes.ENUM('BOITE_INTERNE', 'SMS', 'WHATSAPP', 'MIXTE'),
-    defaultValue: 'BOITE_INTERNE'
+    defaultValue: 'WHATSAPP'
   }
 });
 

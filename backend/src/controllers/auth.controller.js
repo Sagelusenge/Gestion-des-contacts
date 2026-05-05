@@ -2,53 +2,19 @@ const { User } = require('../models');
 const { generateToken, generateRefreshToken } = require('../utils/jwt');
 const Joi = require('joi');
 
-const registerSchema = Joi.object({
-  email: Joi.string().email().required(),
-  password: Joi.string().min(8).required(),
-  firstName: Joi.string().required(),
-  lastName: Joi.string().required(),
-  phone: Joi.string()
-});
-
 const loginSchema = Joi.object({
   email: Joi.string().email().required(),
   password: Joi.string().required()
 });
 
-exports.register = async (req, res, next) => {
-  try {
-    const { error, value } = registerSchema.validate(req.body);
-    if (error) {
-      return res.status(400).json({
-        success: false,
-        error: { code: 'VALIDATION_ERROR', message: error.details[0].message }
-      });
+exports.register = async (req, res) => {
+  res.status(403).json({
+    success: false,
+    error: {
+      code: 'REGISTER_DISABLED',
+      message: 'La création des comptes se fait uniquement par la hiérarchie autorisée.'
     }
-
-    const userExists = await User.findOne({ where: { email: value.email } });
-    if (userExists) {
-      return res.status(409).json({
-        success: false,
-        error: { code: 'DUPLICATE_ENTRY', message: 'Email déjà utilisé' }
-      });
-    }
-
-    const user = await User.create(value);
-    const token = generateToken(user);
-    const refreshToken = generateRefreshToken(user);
-
-    res.status(201).json({
-      success: true,
-      data: {
-        token,
-        refreshToken,
-        user: user.toJSON(),
-        expiresIn: 86400
-      }
-    });
-  } catch (error) {
-    next(error);
-  }
+  });
 };
 
 exports.login = async (req, res, next) => {
@@ -61,7 +27,7 @@ exports.login = async (req, res, next) => {
       });
     }
 
-    const user = await User.findOne({ where: { email: value.email } });
+    const user = await User.findOne({ where: { email: value.email, isActive: true } });
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -116,7 +82,7 @@ exports.refresh = async (req, res, next) => {
     try {
       const { id } = require('jsonwebtoken').verify(refreshToken, process.env.JWT_REFRESH_SECRET);
       const user = await User.findByPk(id);
-      if (!user) {
+      if (!user || !user.isActive) {
         throw new Error('User not found');
       }
 

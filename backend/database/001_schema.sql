@@ -8,14 +8,16 @@ CREATE TABLE IF NOT EXISTS Users (
   firstName VARCHAR(255) NOT NULL,
   lastName VARCHAR(255) NOT NULL,
   phone VARCHAR(255),
-  role ENUM('SUPER_ADMIN', 'ADMIN_POSTE', 'VIEWER') DEFAULT 'VIEWER',
+  role ENUM('SUPER_ADMIN', 'PASTEUR_POSTE', 'PASTEUR_SECTIONNAIRE', 'VIEWER') DEFAULT 'VIEWER',
   posteAssigneId INT,
+  pasteurId INT,
   isActive BOOLEAN DEFAULT TRUE,
   lastLogin DATETIME,
   createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_users_role (role),
-  INDEX idx_users_poste_assigne (posteAssigneId)
+  INDEX idx_users_poste_assigne (posteAssigneId),
+  INDEX idx_users_pasteur (pasteurId)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS Communautes (
@@ -134,6 +136,7 @@ CREATE TABLE IF NOT EXISTS Pasteurs (
   INDEX idx_pasteurs_poste (posteId)
 ) ENGINE=InnoDB;
 
+ALTER TABLE Users ADD CONSTRAINT fk_users_pasteur FOREIGN KEY (pasteurId) REFERENCES Pasteurs(id);
 ALTER TABLE Sections ADD CONSTRAINT fk_sections_responsable FOREIGN KEY (responsableId) REFERENCES Pasteurs(id);
 ALTER TABLE Paroisses ADD CONSTRAINT fk_paroisses_pasteur FOREIGN KEY (pasteurId) REFERENCES Pasteurs(id);
 
@@ -167,7 +170,7 @@ CREATE TABLE IF NOT EXISTS Messages (
   contenu TEXT NOT NULL,
   audienceType ENUM('TOUS', 'GRADE', 'RESPONSABILITE', 'POSTE', 'SECTION', 'PAROISSE', 'PASTEURS_SELECTIONNES') NOT NULL,
   audienceValeur VARCHAR(255),
-  canal ENUM('BOITE_INTERNE', 'SMS', 'WHATSAPP', 'MIXTE') DEFAULT 'BOITE_INTERNE',
+  canal ENUM('BOITE_INTERNE', 'SMS', 'WHATSAPP', 'MIXTE') DEFAULT 'WHATSAPP',
   priorite ENUM('Normale', 'Haute', 'Urgente') DEFAULT 'Normale',
   statut ENUM('Brouillon', 'Envoyé', 'Annulé') DEFAULT 'Envoyé',
   sentById INT,
@@ -184,7 +187,7 @@ CREATE TABLE IF NOT EXISTS MessageRecipients (
   pasteurId INT NOT NULL,
   statutLecture ENUM('Non lu', 'Lu', 'Archivé') DEFAULT 'Non lu',
   luAt DATETIME,
-  canalLivraison ENUM('BOITE_INTERNE', 'SMS', 'WHATSAPP', 'MIXTE') DEFAULT 'BOITE_INTERNE',
+  canalLivraison ENUM('BOITE_INTERNE', 'SMS', 'WHATSAPP', 'MIXTE') DEFAULT 'WHATSAPP',
   createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT fk_message_recipients_message FOREIGN KEY (messageId) REFERENCES Messages(id),

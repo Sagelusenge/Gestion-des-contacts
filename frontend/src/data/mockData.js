@@ -7,18 +7,18 @@ export const mockPasteurs = [
     id: 1,
     nom: 'Kambale',
     prenom: 'Emmanuel',
-    matricule: 'CBCA-RL-0019',
+    matricule: 'CBCA-PP-2026-0001',
     numeroIdentifiant: 'CBCA-NK-24-0019',
     grade: 'Révérend Pasteur',
     responsabilite: 'Pasteur de Poste',
     fonction: 'Responsable de Poste',
-    telephone: '+243 970 000 101',
+    telephone: '+243970000101',
     email: 'emmanuel.kambale@cbca.cd',
     dateOrdination: '2008-08-17',
     dateNaissance: '1976-04-12',
     lieuNaissance: 'Butembo',
     etatCivil: 'Marié',
-    conjoint: { nom: 'Maman Grâce Kambale', telephone: '+243 970 000 102' },
+    conjoint: { nom: 'Maman Grâce Kambale', telephone: '+243970000102' },
     enfants: [{ nom: 'Deborah' }, { nom: 'Samuel' }],
     formation: [
       { diplome: 'Licence en Théologie', institution: 'ULPGL', annee: 2005 },
@@ -39,18 +39,18 @@ export const mockPasteurs = [
     id: 2,
     nom: 'Mumbere',
     prenom: 'Jean-Paul',
-    matricule: 'CBCA-PA-0034',
+    matricule: 'CBCA-PS-2026-0001',
     numeroIdentifiant: 'CBCA-BN-24-0034',
     grade: 'Pasteur',
     responsabilite: 'Pasteur Sectionnaire',
     fonction: 'Pasteur sectionnaire',
-    telephone: '+243 970 000 220',
+    telephone: '+243970000220',
     email: 'jeanpaul.mumbere@cbca.cd',
     dateOrdination: '2015-06-21',
     dateNaissance: '1983-11-02',
     lieuNaissance: 'Beni',
     etatCivil: 'Marié',
-    conjoint: { nom: 'Maman Esther Mumbere', telephone: '+243 970 000 221' },
+    conjoint: { nom: 'Maman Esther Mumbere', telephone: '+243970000221' },
     formation: [{ diplome: 'Bachelor en Théologie', institution: 'ISTEBU', annee: 2012 }],
     statut: 'Actif',
     adresseActuelle: 'Paroisse CBCA Cité Belge',
@@ -66,12 +66,12 @@ export const mockPasteurs = [
     id: 3,
     nom: 'Safari',
     prenom: 'Daniel',
-    matricule: 'CBCA-ST-0088',
+    matricule: 'CBCA-ST-2026-0001',
     numeroIdentifiant: 'CBCA-BU-24-0088',
     grade: 'Pasteur Stagiaire',
     responsabilite: 'Assistant Pastoral',
     fonction: 'Assistant paroissial',
-    telephone: '+243 970 000 303',
+    telephone: '+243970000303',
     email: 'daniel.safari@cbca.cd',
     dateOrdination: '2023-09-10',
     statut: 'Actif',
@@ -88,12 +88,12 @@ export const mockPasteurs = [
     id: 4,
     nom: 'Bisimwa',
     prenom: 'Moïse',
-    matricule: 'CBCA-PR-0112',
+    matricule: 'CBCA-PR-2026-0001',
     numeroIdentifiant: 'CBCA-RU-24-0112',
     grade: 'Proposant',
     responsabilite: 'Pasteur de Paroisse',
     fonction: 'Responsable jeunesse',
-    telephone: '+243 970 000 404',
+    telephone: '+243970000404',
     email: 'moise.bisimwa@cbca.cd',
     dateOrdination: '2024-02-18',
     statut: 'Actif',
@@ -110,10 +110,10 @@ export const mockPasteurs = [
 ];
 
 export const mockGeographie = [
-  { id: 1, poste: 'Poste de Goma', code: 'GOM', pasteurs: 42, sections: 8, paroisses: 31, telephone: '+243 970 000 100' },
-  { id: 2, poste: 'Poste de Beni', code: 'BEN', pasteurs: 36, sections: 6, paroisses: 28, telephone: '+243 970 000 200' },
-  { id: 3, poste: 'Poste de Butembo', code: 'BUT', pasteurs: 39, sections: 7, paroisses: 30, telephone: '+243 970 000 300' },
-  { id: 4, poste: 'Poste de Rutshuru', code: 'RUT', pasteurs: 24, sections: 5, paroisses: 18, telephone: '+243 970 000 400' }
+  { id: 1, poste: 'Poste de Goma', code: 'GOM', pasteurs: 42, sections: 8, paroisses: 31, telephone: '+243970000100' },
+  { id: 2, poste: 'Poste de Beni', code: 'BEN', pasteurs: 36, sections: 6, paroisses: 28, telephone: '+243970000200' },
+  { id: 3, poste: 'Poste de Butembo', code: 'BUT', pasteurs: 39, sections: 7, paroisses: 30, telephone: '+243970000300' },
+  { id: 4, poste: 'Poste de Rutshuru', code: 'RUT', pasteurs: 24, sections: 5, paroisses: 18, telephone: '+243970000400' }
 ];
 
 export const mockAlertes = [
@@ -122,9 +122,9 @@ export const mockAlertes = [
 ];
 
 export const mockAuditLogs = [
-  { id: 1, action: 'UPDATE', entite: 'Pasteur', utilisateurNom: 'Secrétaire Communautaire', createdAt: '2026-05-04T14:12:00Z', nouvelles: { matricule: 'CBCA-PA-0034' } },
+  { id: 1, action: 'UPDATE', entite: 'Pasteur', utilisateurNom: 'Pasteur de Poste', createdAt: '2026-05-04T14:12:00Z', nouvelles: { matricule: 'CBCA-PS-2026-0001' } },
   { id: 2, action: 'CREATE', entite: 'Mouvement', utilisateurNom: 'Représentant Légal', createdAt: '2026-05-03T09:30:00Z', nouvelles: { typeMovement: 'Affectation' } },
-  { id: 3, action: 'UPDATE', entite: 'Pasteur', utilisateurNom: 'Admin de Poste', createdAt: '2026-05-02T16:45:00Z', nouvelles: { telephone: '+243 970 000 303' } }
+  { id: 3, action: 'CREATE', entite: 'Paroisse', utilisateurNom: 'Pasteur Sectionnaire', createdAt: '2026-05-02T16:45:00Z', nouvelles: { code: 'BAR' } }
 ];
 
 export const dashboardFallback = {

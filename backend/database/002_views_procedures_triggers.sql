@@ -11,25 +11,20 @@ LEFT JOIN Postes po ON po.id = p.posteId
 LEFT JOIN Sections s ON s.id = p.sectionId
 LEFT JOIN Paroisses pa ON pa.id = p.paroisseId;
 
-DROP VIEW IF EXISTS v_boites_messages;
-CREATE VIEW v_boites_messages AS
+DROP VIEW IF EXISTS v_whatsapp_messages;
+CREATE VIEW v_whatsapp_messages AS
 SELECT mr.id, mr.messageId, mr.pasteurId, CONCAT(p.prenom, ' ', p.nom) AS pasteur,
-       p.grade, p.responsabilite, m.objet, m.contenu, m.priorite, m.sentAt, mr.statutLecture
+       p.telephone, p.grade, p.responsabilite, m.objet, m.contenu, m.priorite, m.canal, m.sentAt
 FROM MessageRecipients mr
 INNER JOIN Messages m ON m.id = mr.messageId
-INNER JOIN Pasteurs p ON p.id = mr.pasteurId;
+INNER JOIN Pasteurs p ON p.id = mr.pasteurId
+WHERE m.canal IN ('WHATSAPP', 'MIXTE');
 
-DROP VIEW IF EXISTS v_alertes_mandat;
-CREATE VIEW v_alertes_mandat AS
-SELECT m.id, p.id AS pasteurId, CONCAT(p.prenom, ' ', p.nom) AS pasteur,
-       po.nom AS posteCourant, m.dateFin AS dateFinMandat,
-       DATEDIFF(m.dateFin, CURDATE()) AS joursRestants
-FROM Mouvements m
-INNER JOIN Pasteurs p ON p.id = m.pasteurId
-INNER JOIN Postes po ON po.id = m.posteCibleId
-WHERE m.statut = 'Effectué'
-  AND m.dateFin IS NOT NULL
-  AND m.dateFin BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 6 MONTH);
+DROP VIEW IF EXISTS v_dashboard_grades;
+CREATE VIEW v_dashboard_grades AS
+SELECT grade, responsabilite, statut, COUNT(*) AS total
+FROM Pasteurs
+GROUP BY grade, responsabilite, statut;
 
 DROP VIEW IF EXISTS v_couverture_postes;
 CREATE VIEW v_couverture_postes AS
@@ -43,8 +38,21 @@ LEFT JOIN Sections s ON s.posteId = po.id
 LEFT JOIN Paroisses pa ON pa.posteId = po.id
 GROUP BY po.id, po.code, po.nom;
 
-DROP PROCEDURE IF EXISTS sp_dashboard_resume;
+DROP VIEW IF EXISTS v_alertes_mandat;
+CREATE VIEW v_alertes_mandat AS
+SELECT m.id, p.id AS pasteurId, CONCAT(p.prenom, ' ', p.nom) AS pasteur,
+       po.nom AS posteCourant, m.dateFin AS dateFinMandat,
+       DATEDIFF(m.dateFin, CURDATE()) AS joursRestants
+FROM Mouvements m
+INNER JOIN Pasteurs p ON p.id = m.pasteurId
+INNER JOIN Postes po ON po.id = m.posteCibleId
+WHERE m.statut = 'Effectué'
+  AND m.dateFin IS NOT NULL
+  AND m.dateFin BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 6 MONTH);
+
 DELIMITER //
+
+DROP PROCEDURE IF EXISTS sp_dashboard_resume//
 CREATE PROCEDURE sp_dashboard_resume()
 BEGIN
   SELECT (SELECT COUNT(*) FROM Pasteurs) AS totalPasteurs,
@@ -52,24 +60,31 @@ BEGIN
          (SELECT COUNT(*) FROM Sections) AS totalSections,
          (SELECT COUNT(*) FROM Paroisses) AS totalParoisses,
          (SELECT COUNT(*) FROM v_alertes_mandat) AS alertesMandats,
-         (SELECT COUNT(*) FROM MessageRecipients WHERE statutLecture = 'Non lu') AS messagesNonLus;
+         (SELECT COUNT(*) FROM MessageRecipients WHERE canalLivraison = 'WHATSAPP') AS messagesWhatsApp;
 END//
 
-DROP PROCEDURE IF EXISTS sp_envoyer_message_grade//
-CREATE PROCEDURE sp_envoyer_message_grade(
-  IN inObjet VARCHAR(255),
-  IN inContenu TEXT,
-  IN inGrade VARCHAR(80),
-  IN inUserId INT
-)
+DROP PROCEDURE IF EXISTS sp_search_pasteurs//
+CREATE PROCEDURE sp_search_pasteurs(IN searchTerm VARCHAR(120))
 BEGIN
-  INSERT INTO Messages (objet, contenu, audienceType, audienceValeur, canal, priorite, statut, sentById, sentAt, createdAt, updatedAt)
-  VALUES (inObjet, inContenu, 'GRADE', inGrade, 'BOITE_INTERNE', 'Normale', 'Envoyé', inUserId, NOW(), NOW(), NOW());
+  SELECT *
+  FROM v_pasteurs_carte
+  WHERE searchTerm IS NULL OR searchTerm = ''
+     OR nomComplet LIKE CONCAT('%', searchTerm, '%')
+     OR matricule LIKE CONCAT('%', searchTerm, '%')
+     OR poste LIKE CONCAT('%', searchTerm, '%')
+     OR responsabilite LIKE CONCAT('%', searchTerm, '%')
+  ORDER BY nomComplet ASC;
+END//
 
-  INSERT INTO MessageRecipients (messageId, pasteurId, statutLecture, canalLivraison, createdAt, updatedAt)
-  SELECT LAST_INSERT_ID(), id, 'Non lu', 'BOITE_INTERNE', NOW(), NOW()
-  FROM Pasteurs
-  WHERE grade = inGrade AND statut = 'Actif';
+DROP PROCEDURE IF EXISTS sp_affecter_pasteur//
+CREATE PROCEDURE sp_affecter_pasteur(IN inPasteurId INT, IN inPosteCibleId INT, IN inDateDebut DATE, IN inDateFin DATE, IN inCreatedById INT)
+BEGIN
+  INSERT INTO Mouvements (pasteurId, posteSourceId, posteCibleId, typeMovement, dateDebut, dateFin, statut, createdById, createdAt, updatedAt)
+  SELECT p.id, p.posteId, inPosteCibleId, 'Transfert', inDateDebut, inDateFin, 'Effectué', inCreatedById, NOW(), NOW()
+  FROM Pasteurs p WHERE p.id = inPasteurId;
+
+  UPDATE Pasteurs SET posteId = inPosteCibleId, updatedById = inCreatedById, updatedAt = NOW()
+  WHERE id = inPasteurId;
 END//
 
 DROP TRIGGER IF EXISTS trg_pasteurs_after_update_audit//
@@ -101,4 +116,5 @@ FOR EACH ROW
 BEGIN
   UPDATE Messages SET updatedAt = NOW() WHERE id = NEW.messageId;
 END//
+
 DELIMITER ;

@@ -19,20 +19,27 @@ import {
   TextField,
   Typography
 } from '@mui/material';
-import { Add, Call, FilterAlt, Visibility, WhatsApp } from '@mui/icons-material';
+import { Add, Badge, Call, FilterAlt, Visibility, WhatsApp } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import AppShell from '../components/AppShell';
 import { geographieService, pasteurService } from '../services';
 import { grades, mockPasteurs, statuts } from '../data/mockData';
+import { useAuthStore } from '../context/authStore';
 
-const responsabilites = ['Pasteur de Poste', 'Pasteur Sectionnaire', 'Pasteur de Paroisse', 'Assistant Pastoral', 'Administration'];
+const allResponsabilites = ['Pasteur de Poste', 'Pasteur Sectionnaire', 'Pasteur de Paroisse', 'Assistant Pastoral', 'Administration'];
 
-const emptyForm = {
+const getAllowedResponsibilities = (role) => {
+  if (role === 'SUPER_ADMIN') return ['Pasteur de Poste'];
+  if (role === 'PASTEUR_POSTE') return ['Pasteur Sectionnaire'];
+  if (role === 'PASTEUR_SECTIONNAIRE') return ['Pasteur de Paroisse', 'Assistant Pastoral', 'Administration'];
+  return [];
+};
+
+const buildEmptyForm = (role) => ({
   nom: '',
   prenom: '',
-  matricule: '',
-  grade: 'Pasteur',
-  responsabilite: 'Pasteur de Paroisse',
+  grade: role === 'SUPER_ADMIN' ? 'Révérend Pasteur' : 'Pasteur',
+  responsabilite: getAllowedResponsibilities(role)[0] || 'Pasteur de Paroisse',
   fonction: '',
   telephone: '',
   email: '',
@@ -41,10 +48,11 @@ const emptyForm = {
   sectionId: '',
   paroisseId: '',
   statut: 'Actif'
-};
+});
 
 export default function Pasteurs() {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
   const [pasteurs, setPasteurs] = useState(mockPasteurs);
   const [postes, setPostes] = useState([]);
   const [sections, setSections] = useState([]);
@@ -54,8 +62,12 @@ export default function Pasteurs() {
   const [statut, setStatut] = useState('');
   const [responsabilite, setResponsabilite] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [form, setForm] = useState(emptyForm);
+  const [form, setForm] = useState(() => buildEmptyForm(user?.role));
+  const [nextMatricule, setNextMatricule] = useState('');
   const [notice, setNotice] = useState(null);
+
+  const allowedResponsibilities = useMemo(() => getAllowedResponsibilities(user?.role), [user?.role]);
+  const canAdd = allowedResponsibilities.length > 0;
 
   const loadPasteurs = async () => {
     try {
@@ -75,9 +87,13 @@ export default function Pasteurs() {
           geographieService.getSections(),
           geographieService.getParoisses()
         ]);
-        setPostes(postesResponse.data.data.postes);
-        setSections(sectionsResponse.data.data.sections);
-        setParoisses(paroissesResponse.data.data.paroisses);
+        const loadedPostes = postesResponse.data.data.postes || [];
+        setPostes(loadedPostes);
+        setSections(sectionsResponse.data.data.sections || []);
+        setParoisses(paroissesResponse.data.data.paroisses || []);
+        if ((user?.role === 'PASTEUR_POSTE' || user?.role === 'PASTEUR_SECTIONNAIRE') && loadedPostes[0]) {
+          setForm((prev) => ({ ...prev, posteId: loadedPostes[0].id }));
+        }
       } catch {
         setPostes([]);
         setSections([]);
@@ -86,7 +102,14 @@ export default function Pasteurs() {
     };
 
     load();
-  }, []);
+  }, [user?.role]);
+
+  useEffect(() => {
+    if (!dialogOpen) return;
+    pasteurService.nextMatricule({ grade: form.grade, responsabilite: form.responsabilite })
+      .then((response) => setNextMatricule(response.data.data.matricule))
+      .catch(() => setNextMatricule('Génération indisponible'));
+  }, [dialogOpen, form.grade, form.responsabilite]);
 
   const filteredPasteurs = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -109,8 +132,41 @@ export default function Pasteurs() {
     });
   }, [grade, pasteurs, responsabilite, search, statut]);
 
+  const availableSections = useMemo(
+    () => sections.filter((section) => !form.posteId || Number(section.posteId) === Number(form.posteId)),
+    [form.posteId, sections]
+  );
+
+  const availableParoisses = useMemo(
+    () => paroisses.filter((paroisse) => {
+      if (form.sectionId) return Number(paroisse.sectionId) === Number(form.sectionId);
+      if (form.posteId) return Number(paroisse.posteId) === Number(form.posteId);
+      return true;
+    }),
+    [form.posteId, form.sectionId, paroisses]
+  );
+
+  const openCreateDialog = () => {
+    const next = buildEmptyForm(user?.role);
+    if ((user?.role === 'PASTEUR_POSTE' || user?.role === 'PASTEUR_SECTIONNAIRE') && postes[0]) {
+      next.posteId = postes[0].id;
+    }
+    setForm(next);
+    setDialogOpen(true);
+  };
+
   const handleForm = (name, value) => {
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setForm((prev) => {
+      const next = { ...prev, [name]: value };
+      if (name === 'posteId') {
+        next.sectionId = '';
+        next.paroisseId = '';
+      }
+      if (name === 'sectionId') {
+        next.paroisseId = '';
+      }
+      return next;
+    });
   };
 
   const handleCreate = async () => {
@@ -123,7 +179,7 @@ export default function Pasteurs() {
         paroisseId: form.paroisseId ? Number(form.paroisseId) : null
       });
       setDialogOpen(false);
-      setForm(emptyForm);
+      setForm(buildEmptyForm(user?.role));
       setNotice({ severity: 'success', text: 'Pasteur ajouté avec succès.' });
       await loadPasteurs();
     } catch (error) {
@@ -136,15 +192,17 @@ export default function Pasteurs() {
       <Stack spacing={3}>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: 2 }}>
           <Box>
-            <Typography variant="overline" color="primary">Registre interne</Typography>
-            <Typography variant="h4" sx={{ fontWeight: 800 }}>Pasteurs et responsables</Typography>
+            <Typography variant="overline" color="primary" sx={{ fontWeight: 800 }}>Registre interne</Typography>
+            <Typography variant="h4" sx={{ fontWeight: 900 }}>Pasteurs et responsables</Typography>
             <Typography color="text.secondary">
               Recherche par matricule, poste, paroisse, grade, responsabilité ou fonction pastorale.
             </Typography>
           </Box>
-          <Button variant="contained" startIcon={<Add />} onClick={() => setDialogOpen(true)}>
-            Ajouter
-          </Button>
+          {canAdd && (
+            <Button variant="contained" startIcon={<Add />} onClick={openCreateDialog}>
+              Ajouter
+            </Button>
+          )}
         </Box>
 
         {notice && <Alert severity={notice.severity}>{notice.text}</Alert>}
@@ -168,7 +226,7 @@ export default function Pasteurs() {
                 <InputLabel>Responsabilité</InputLabel>
                 <Select label="Responsabilité" value={responsabilite} onChange={(event) => setResponsabilite(event.target.value)}>
                   <MenuItem value="">Toutes</MenuItem>
-                  {responsabilites.map((item) => <MenuItem key={item} value={item}>{item}</MenuItem>)}
+                  {allResponsabilites.map((item) => <MenuItem key={item} value={item}>{item}</MenuItem>)}
                 </Select>
               </FormControl>
             </Grid>
@@ -186,7 +244,7 @@ export default function Pasteurs() {
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <FilterAlt color="primary" />
-          <Typography sx={{ fontWeight: 700 }}>{filteredPasteurs.length} fiche(s) visibles</Typography>
+          <Typography sx={{ fontWeight: 800 }}>{filteredPasteurs.length} fiche(s) visibles</Typography>
         </Box>
 
         <Grid container spacing={2}>
@@ -199,7 +257,7 @@ export default function Pasteurs() {
                   </Avatar>
                   <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Stack direction="row" spacing={1} flexWrap="wrap" alignItems="center">
-                      <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                      <Typography variant="h6" sx={{ fontWeight: 900 }}>
                         {pasteur.prenom} {pasteur.nom}
                       </Typography>
                       <Chip label={pasteur.grade} size="small" color="primary" variant="outlined" />
@@ -213,11 +271,11 @@ export default function Pasteurs() {
                     <Grid container spacing={1.5} sx={{ mt: 1 }}>
                       <Grid item xs={6}>
                         <Typography variant="caption" color="text.secondary">Matricule</Typography>
-                        <Typography variant="body2" sx={{ fontWeight: 700 }}>{pasteur.matricule}</Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 800 }}>{pasteur.matricule}</Typography>
                       </Grid>
                       <Grid item xs={6}>
                         <Typography variant="caption" color="text.secondary">Ordination</Typography>
-                        <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 800 }}>
                           {pasteur.dateOrdination ? new Date(pasteur.dateOrdination).toLocaleDateString('fr-FR') : '-'}
                         </Typography>
                       </Grid>
@@ -246,9 +304,19 @@ export default function Pasteurs() {
         <DialogTitle>Ajouter un pasteur</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ pt: 1 }}>
+            <Grid item xs={12}>
+              <Paper sx={{ p: 2, bgcolor: '#F7FAFE', borderRadius: 1 }}>
+                <Stack direction="row" spacing={1.5} alignItems="center">
+                  <Badge color="primary" />
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Matricule généré automatiquement</Typography>
+                    <Typography sx={{ fontWeight: 900 }}>{nextMatricule || 'Calcul en cours...'}</Typography>
+                  </Box>
+                </Stack>
+              </Paper>
+            </Grid>
             <Grid item xs={12} sm={6}><TextField fullWidth label="Nom" value={form.nom} onChange={(e) => handleForm('nom', e.target.value)} /></Grid>
             <Grid item xs={12} sm={6}><TextField fullWidth label="Prénom" value={form.prenom} onChange={(e) => handleForm('prenom', e.target.value)} /></Grid>
-            <Grid item xs={12} sm={6}><TextField fullWidth label="Matricule" value={form.matricule} onChange={(e) => handleForm('matricule', e.target.value)} /></Grid>
             <Grid item xs={12} sm={6}><TextField fullWidth type="date" label="Date d'ordination" InputLabelProps={{ shrink: true }} value={form.dateOrdination} onChange={(e) => handleForm('dateOrdination', e.target.value)} /></Grid>
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
@@ -262,17 +330,17 @@ export default function Pasteurs() {
               <FormControl fullWidth>
                 <InputLabel>Responsabilité</InputLabel>
                 <Select label="Responsabilité" value={form.responsabilite} onChange={(e) => handleForm('responsabilite', e.target.value)}>
-                  {responsabilites.map((item) => <MenuItem key={item} value={item}>{item}</MenuItem>)}
+                  {allowedResponsibilities.map((item) => <MenuItem key={item} value={item}>{item}</MenuItem>)}
                 </Select>
               </FormControl>
             </Grid>
             <Grid item xs={12} sm={6}><TextField fullWidth label="Fonction" value={form.fonction} onChange={(e) => handleForm('fonction', e.target.value)} /></Grid>
-            <Grid item xs={12} sm={6}><TextField fullWidth label="Téléphone" value={form.telephone} onChange={(e) => handleForm('telephone', e.target.value)} /></Grid>
+            <Grid item xs={12} sm={6}><TextField fullWidth label="Téléphone WhatsApp" value={form.telephone} onChange={(e) => handleForm('telephone', e.target.value)} /></Grid>
             <Grid item xs={12} sm={6}><TextField fullWidth label="Email" value={form.email} onChange={(e) => handleForm('email', e.target.value)} /></Grid>
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
                 <InputLabel>Poste</InputLabel>
-                <Select label="Poste" value={form.posteId} onChange={(e) => handleForm('posteId', e.target.value)}>
+                <Select label="Poste" value={form.posteId} onChange={(e) => handleForm('posteId', e.target.value)} disabled={user?.role !== 'SUPER_ADMIN'}>
                   {postes.map((item) => <MenuItem key={item.id} value={item.id}>{item.nom}</MenuItem>)}
                 </Select>
               </FormControl>
@@ -282,7 +350,7 @@ export default function Pasteurs() {
                 <InputLabel>Section</InputLabel>
                 <Select label="Section" value={form.sectionId} onChange={(e) => handleForm('sectionId', e.target.value)}>
                   <MenuItem value="">Aucune</MenuItem>
-                  {sections.map((item) => <MenuItem key={item.id} value={item.id}>{item.nom}</MenuItem>)}
+                  {availableSections.map((item) => <MenuItem key={item.id} value={item.id}>{item.nom}</MenuItem>)}
                 </Select>
               </FormControl>
             </Grid>
@@ -291,7 +359,7 @@ export default function Pasteurs() {
                 <InputLabel>Paroisse</InputLabel>
                 <Select label="Paroisse" value={form.paroisseId} onChange={(e) => handleForm('paroisseId', e.target.value)}>
                   <MenuItem value="">Aucune</MenuItem>
-                  {paroisses.map((item) => <MenuItem key={item.id} value={item.id}>{item.nom}</MenuItem>)}
+                  {availableParoisses.map((item) => <MenuItem key={item.id} value={item.id}>{item.nom}</MenuItem>)}
                 </Select>
               </FormControl>
             </Grid>
@@ -299,7 +367,7 @@ export default function Pasteurs() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDialogOpen(false)}>Annuler</Button>
-          <Button variant="contained" onClick={handleCreate} disabled={!form.nom || !form.prenom || !form.matricule || !form.dateOrdination || !form.posteId}>
+          <Button variant="contained" onClick={handleCreate} disabled={!form.nom || !form.prenom || !form.dateOrdination || !form.posteId}>
             Enregistrer
           </Button>
         </DialogActions>

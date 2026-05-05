@@ -15,7 +15,7 @@ import {
   TextField,
   Typography
 } from '@mui/material';
-import { AllInbox, Campaign, CheckCircle, Send } from '@mui/icons-material';
+import { Campaign, CheckCircle, OpenInNew, Send, WhatsApp } from '@mui/icons-material';
 import AppShell from '../components/AppShell';
 import { messageService } from '../services';
 
@@ -29,27 +29,25 @@ const fallbackAudiences = [
 export default function Communication() {
   const [audiences, setAudiences] = useState(fallbackAudiences);
   const [messages, setMessages] = useState([]);
-  const [inbox, setInbox] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [form, setForm] = useState({
     objet: '',
     contenu: '',
-    canal: 'BOITE_INTERNE',
+    canal: 'WHATSAPP',
     priorite: 'Normale'
   });
+  const [whatsappLinks, setWhatsappLinks] = useState([]);
   const [notice, setNotice] = useState(null);
   const selectedAudience = useMemo(() => audiences[selectedIndex] || audiences[0], [audiences, selectedIndex]);
 
   const loadData = async () => {
     try {
-      const [audienceResponse, messagesResponse, inboxResponse] = await Promise.all([
+      const [audienceResponse, messagesResponse] = await Promise.all([
         messageService.getAudiences(),
-        messageService.list(),
-        messageService.inbox()
+        messageService.list()
       ]);
       setAudiences(audienceResponse.data.data.audiences);
       setMessages(messagesResponse.data.data.messages || []);
-      setInbox(inboxResponse.data.data.inbox || []);
     } catch {
       setAudiences(fallbackAudiences);
     }
@@ -61,19 +59,28 @@ export default function Communication() {
 
   const handleSend = async () => {
     setNotice(null);
+    setWhatsappLinks([]);
     try {
       const response = await messageService.send({
         ...form,
+        canal: 'WHATSAPP',
         audienceType: selectedAudience.type,
         audienceValeur: selectedAudience.value
       });
-      setNotice({ severity: 'success', text: `Message envoyé à ${response.data.data.destinataires} destinataire(s).` });
-      setForm({ objet: '', contenu: '', canal: 'BOITE_INTERNE', priorite: 'Normale' });
+
+      const links = response.data.data.whatsappLinks || [];
+      setWhatsappLinks(links);
+      setNotice({ severity: 'success', text: `${links.length} lien(s) WhatsApp préparé(s) pour ${response.data.data.destinataires} destinataire(s).` });
+      setForm({ objet: '', contenu: '', canal: 'WHATSAPP', priorite: 'Normale' });
       await loadData();
+
+      if (links.length === 1) {
+        window.open(links[0].url, '_blank', 'noopener,noreferrer');
+      }
     } catch (error) {
       setNotice({
         severity: 'error',
-        text: error.response?.data?.error?.message || 'Envoi impossible pour le moment.'
+        text: error.response?.data?.error?.message || 'Préparation WhatsApp impossible pour le moment.'
       });
     }
   };
@@ -82,10 +89,10 @@ export default function Communication() {
     <AppShell>
       <Stack spacing={3}>
         <Box>
-          <Typography variant="overline" color="primary">Communication stratégique</Typography>
-          <Typography variant="h4" sx={{ fontWeight: 800 }}>Diffusion ciblée et boîtes internes</Typography>
+          <Typography variant="overline" color="primary" sx={{ fontWeight: 800 }}>Communication stratégique</Typography>
+          <Typography variant="h4" sx={{ fontWeight: 900 }}>Diffusion WhatsApp ciblée</Typography>
           <Typography color="text.secondary">
-            Rédigez un texte, choisissez une cible, et le message arrive dans la boîte des pasteurs concernés.
+            Rédigez un texte, choisissez une cible, puis ouvrez les conversations WhatsApp des destinataires concernés.
           </Typography>
         </Box>
 
@@ -94,7 +101,7 @@ export default function Communication() {
         <Grid container spacing={2.5}>
           <Grid item xs={12} lg={4}>
             <Paper sx={{ p: 2.5, borderRadius: 1 }}>
-              <Typography variant="h6" sx={{ fontWeight: 800, mb: 2 }}>Cibles rapides</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 900, mb: 2 }}>Cibles rapides</Typography>
               <Stack spacing={1.25}>
                 {audiences.map((audience, index) => (
                   <Button
@@ -116,7 +123,7 @@ export default function Communication() {
             <Paper sx={{ p: 2.5, borderRadius: 1 }}>
               <Stack spacing={2}>
                 <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 800 }}>{selectedAudience.label}</Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 900 }}>{selectedAudience.label}</Typography>
                   <Typography variant="body2" color="text.secondary">
                     {selectedAudience.count} destinataire(s) dans cette cible
                   </Typography>
@@ -134,11 +141,8 @@ export default function Communication() {
                   <Grid item xs={12} sm={6}>
                     <FormControl fullWidth>
                       <InputLabel>Canal</InputLabel>
-                      <Select label="Canal" value={form.canal} onChange={(event) => setForm((prev) => ({ ...prev, canal: event.target.value }))}>
-                        <MenuItem value="BOITE_INTERNE">Boîte interne</MenuItem>
-                        <MenuItem value="SMS">SMS</MenuItem>
+                      <Select label="Canal" value="WHATSAPP" disabled>
                         <MenuItem value="WHATSAPP">WhatsApp</MenuItem>
-                        <MenuItem value="MIXTE">Mixte</MenuItem>
                       </Select>
                     </FormControl>
                   </Grid>
@@ -153,54 +157,45 @@ export default function Communication() {
                     </FormControl>
                   </Grid>
                 </Grid>
-                <Button variant="contained" startIcon={<Send />} onClick={handleSend} disabled={!form.objet.trim() || !form.contenu.trim()}>
-                  Envoyer dans les boîtes
+                <Button variant="contained" color="success" startIcon={<WhatsApp />} onClick={handleSend} disabled={!form.objet.trim() || !form.contenu.trim()}>
+                  Préparer sur WhatsApp
                 </Button>
               </Stack>
             </Paper>
           </Grid>
         </Grid>
 
-        <Grid container spacing={2.5}>
-          <Grid item xs={12} lg={6}>
-            <Paper sx={{ p: 2.5, borderRadius: 1 }}>
-              <Typography variant="h6" sx={{ fontWeight: 800 }}>Derniers messages envoyés</Typography>
-              <Divider sx={{ my: 2 }} />
-              <Stack spacing={1.5}>
-                {messages.slice(0, 5).map((message) => (
-                  <Box key={message.id} sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
-                    <Box>
-                      <Typography sx={{ fontWeight: 800 }}>{message.objet}</Typography>
-                      <Typography variant="body2" color="text.secondary">{message.audienceType} {message.audienceValeur}</Typography>
-                    </Box>
-                    <Chip label={`${message.MessageRecipients?.length || 0} reçus`} size="small" icon={<CheckCircle />} />
-                  </Box>
-                ))}
-                {!messages.length && <Typography color="text.secondary">Aucun message envoyé pour le moment.</Typography>}
-              </Stack>
-            </Paper>
-          </Grid>
+        {whatsappLinks.length > 0 && (
+          <Paper sx={{ p: 2.5, borderRadius: 1 }}>
+            <Typography variant="h6" sx={{ fontWeight: 900, mb: 2 }}>Conversations WhatsApp préparées</Typography>
+            <Grid container spacing={1.5}>
+              {whatsappLinks.map((item) => (
+                <Grid item xs={12} sm={6} lg={4} key={item.pasteurId}>
+                  <Button fullWidth variant="outlined" color="success" startIcon={<OpenInNew />} href={item.url} target="_blank" rel="noreferrer" sx={{ justifyContent: 'flex-start' }}>
+                    {item.nom}
+                  </Button>
+                </Grid>
+              ))}
+            </Grid>
+          </Paper>
+        )}
 
-          <Grid item xs={12} lg={6}>
-            <Paper sx={{ p: 2.5, borderRadius: 1 }}>
-              <Typography variant="h6" sx={{ fontWeight: 800 }}>Aperçu des boîtes internes</Typography>
-              <Divider sx={{ my: 2 }} />
-              <Stack spacing={1.5}>
-                {inbox.slice(0, 6).map((item) => (
-                  <Box key={item.id} sx={{ display: 'grid', gridTemplateColumns: '36px 1fr auto', gap: 1.5, alignItems: 'center' }}>
-                    <AllInbox color="primary" />
-                    <Box>
-                      <Typography sx={{ fontWeight: 800 }}>{item.Pasteur?.prenom} {item.Pasteur?.nom}</Typography>
-                      <Typography variant="body2" color="text.secondary">{item.Message?.objet}</Typography>
-                    </Box>
-                    <Chip label={item.statutLecture} size="small" />
-                  </Box>
-                ))}
-                {!inbox.length && <Typography color="text.secondary">Les boîtes sont vides.</Typography>}
-              </Stack>
-            </Paper>
-          </Grid>
-        </Grid>
+        <Paper sx={{ p: 2.5, borderRadius: 1 }}>
+          <Typography variant="h6" sx={{ fontWeight: 900 }}>Journal des préparations WhatsApp</Typography>
+          <Divider sx={{ my: 2 }} />
+          <Stack spacing={1.5}>
+            {messages.slice(0, 6).map((message) => (
+              <Box key={message.id} sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
+                <Box>
+                  <Typography sx={{ fontWeight: 900 }}>{message.objet}</Typography>
+                  <Typography variant="body2" color="text.secondary">{message.audienceType} {message.audienceValeur}</Typography>
+                </Box>
+                <Chip label={`${message.MessageRecipients?.length || 0} contacts`} size="small" icon={<CheckCircle />} />
+              </Box>
+            ))}
+            {!messages.length && <Typography color="text.secondary">Aucune préparation enregistrée pour le moment.</Typography>}
+          </Stack>
+        </Paper>
       </Stack>
     </AppShell>
   );

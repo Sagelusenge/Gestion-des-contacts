@@ -31,7 +31,7 @@ const theme = createTheme({
     }
   },
   shape: {
-    borderRadius: 8
+    borderRadius: 6
   },
   typography: {
     fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
@@ -45,7 +45,8 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           textTransform: 'none',
-          fontWeight: 700
+          fontWeight: 800,
+          borderRadius: 6
         }
       }
     },
@@ -53,6 +54,13 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           border: '1px solid rgba(23, 32, 51, 0.08)'
+        }
+      }
+    },
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
+          borderRadius: 6
         }
       }
     }

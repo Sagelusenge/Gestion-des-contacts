@@ -24,10 +24,7 @@ const db = {
   name: process.env.DB_NAME || 'cbca_pastors'
 };
 
-const users = [
-  { email: 'representant.legal@cbca.cd', password: 'Cbca@2026!', firstName: 'Représentant', lastName: 'Légal', phone: '+243 970 000 001', role: 'SUPER_ADMIN' },
-  { email: 'secretaire.communautaire@cbca.cd', password: 'Cbca@2026!', firstName: 'Secrétaire', lastName: 'Communautaire', phone: '+243 970 000 002', role: 'SUPER_ADMIN' }
-];
+const password = 'Cbca@2026!';
 
 const postes = [
   { nom: 'Poste de Goma', code: 'GOM', telephone: '+243 970 000 100', email: 'poste.goma@cbca.cd', adresse: 'Goma, Nord-Kivu' },
@@ -60,18 +57,18 @@ const pasteurs = [
   {
     nom: 'Kambale',
     prenom: 'Emmanuel',
-    matricule: 'CBCA-RL-0019',
+    matricule: 'CBCA-PP-2026-0001',
     numeroIdentifiant: 'CBCA-NK-24-0019',
     grade: 'Révérend Pasteur',
     responsabilite: 'Pasteur de Poste',
     fonction: 'Responsable de Poste',
-    telephone: '+243 970 000 101',
+    telephone: '+243970000101',
     email: 'emmanuel.kambale@cbca.cd',
     dateOrdination: '2008-08-17',
     dateNaissance: '1976-04-12',
     lieuNaissance: 'Butembo',
     etatCivil: 'Marié',
-    conjoint: { nom: 'Maman Grâce Kambale', telephone: '+243 970 000 102', implication: 'Animatrice' },
+    conjoint: { nom: 'Maman Grâce Kambale', telephone: '+243970000102', implication: 'Animatrice' },
     enfants: [{ nom: 'Deborah' }, { nom: 'Samuel' }],
     formation: [{ diplome: 'Licence en Théologie', institution: 'ULPGL', annee: 2005 }],
     statut: 'Actif',
@@ -84,18 +81,18 @@ const pasteurs = [
   {
     nom: 'Mumbere',
     prenom: 'Jean-Paul',
-    matricule: 'CBCA-PA-0034',
+    matricule: 'CBCA-PS-2026-0001',
     numeroIdentifiant: 'CBCA-BN-24-0034',
     grade: 'Pasteur',
     responsabilite: 'Pasteur Sectionnaire',
     fonction: 'Pasteur sectionnaire',
-    telephone: '+243 970 000 220',
+    telephone: '+243970000220',
     email: 'jeanpaul.mumbere@cbca.cd',
     dateOrdination: '2015-06-21',
     dateNaissance: '1983-11-02',
     lieuNaissance: 'Beni',
     etatCivil: 'Marié',
-    conjoint: { nom: 'Maman Esther Mumbere', telephone: '+243 970 000 221', implication: 'Responsable mamans' },
+    conjoint: { nom: 'Maman Esther Mumbere', telephone: '+243970000221', implication: 'Responsable mamans' },
     formation: [{ diplome: 'Bachelor en Théologie', institution: 'ISTEBU', annee: 2012 }],
     statut: 'Actif',
     adresseActuelle: 'Paroisse CBCA Cité Belge',
@@ -107,12 +104,12 @@ const pasteurs = [
   {
     nom: 'Safari',
     prenom: 'Daniel',
-    matricule: 'CBCA-ST-0088',
+    matricule: 'CBCA-ST-2026-0001',
     numeroIdentifiant: 'CBCA-BU-24-0088',
     grade: 'Pasteur Stagiaire',
     responsabilite: 'Assistant Pastoral',
     fonction: 'Assistant paroissial',
-    telephone: '+243 970 000 303',
+    telephone: '+243970000303',
     email: 'daniel.safari@cbca.cd',
     dateOrdination: '2023-09-10',
     etatCivil: 'Célibataire',
@@ -125,12 +122,12 @@ const pasteurs = [
   {
     nom: 'Bisimwa',
     prenom: 'Moïse',
-    matricule: 'CBCA-PR-0112',
+    matricule: 'CBCA-PR-2026-0001',
     numeroIdentifiant: 'CBCA-RU-24-0112',
     grade: 'Proposant',
     responsabilite: 'Pasteur de Paroisse',
     fonction: 'Responsable jeunesse',
-    telephone: '+243 970 000 404',
+    telephone: '+243970000404',
     email: 'moise.bisimwa@cbca.cd',
     dateOrdination: '2024-02-18',
     etatCivil: 'Marié',
@@ -144,10 +141,10 @@ const pasteurs = [
 ];
 
 const mouvements = [
-  { pasteur: 'CBCA-RL-0019', posteCible: 'GOM', typeMovement: 'Affectation', dateDebut: '2019-01-15', dateFin: '2027-01-15', statut: 'Effectué', dureeMandat: 8 },
-  { pasteur: 'CBCA-PA-0034', posteCible: 'BEN', typeMovement: 'Affectation', dateDebut: '2021-03-01', dateFin: '2026-09-01', statut: 'Effectué', dureeMandat: 5 },
-  { pasteur: 'CBCA-ST-0088', posteCible: 'BUT', typeMovement: 'Affectation', dateDebut: '2023-10-01', dateFin: '2026-10-01', statut: 'Effectué', dureeMandat: 3 },
-  { pasteur: 'CBCA-PR-0112', posteCible: 'RUT', typeMovement: 'Affectation', dateDebut: '2024-03-01', dateFin: '2027-03-01', statut: 'Effectué', dureeMandat: 3 }
+  { pasteur: 'CBCA-PP-2026-0001', posteCible: 'GOM', typeMovement: 'Affectation', dateDebut: '2019-01-15', dateFin: '2027-01-15', statut: 'Effectué', dureeMandat: 8 },
+  { pasteur: 'CBCA-PS-2026-0001', posteCible: 'BEN', typeMovement: 'Affectation', dateDebut: '2021-03-01', dateFin: '2026-09-01', statut: 'Effectué', dureeMandat: 5 },
+  { pasteur: 'CBCA-ST-2026-0001', posteCible: 'BUT', typeMovement: 'Affectation', dateDebut: '2023-10-01', dateFin: '2026-10-01', statut: 'Effectué', dureeMandat: 3 },
+  { pasteur: 'CBCA-PR-2026-0001', posteCible: 'RUT', typeMovement: 'Affectation', dateDebut: '2024-03-01', dateFin: '2027-03-01', statut: 'Effectué', dureeMandat: 3 }
 ];
 
 const upsertBy = async (model, where, values) => {
@@ -168,6 +165,7 @@ const installDatabaseObjects = async () => {
   const indexes = [
     ['idx_users_role', 'Users', 'role'],
     ['idx_users_poste_assigne', 'Users', 'posteAssigneId'],
+    ['idx_users_pasteur', 'Users', 'pasteurId'],
     ['idx_pasteurs_poste', 'Pasteurs', 'posteId'],
     ['idx_pasteurs_responsabilite', 'Pasteurs', 'responsabilite'],
     ['idx_pasteurs_grade', 'Pasteurs', 'grade'],
@@ -181,6 +179,8 @@ const installDatabaseObjects = async () => {
   }
 
   const constraints = [
+    ['fk_users_poste_assigne', 'Users', 'FOREIGN KEY (`posteAssigneId`) REFERENCES `Postes`(`id`)'],
+    ['fk_users_pasteur', 'Users', 'FOREIGN KEY (`pasteurId`) REFERENCES `Pasteurs`(`id`)'],
     ['chk_pasteurs_dates', 'Pasteurs', '`dateNaissance` IS NULL OR `dateOrdination` >= `dateNaissance`'],
     ['chk_mouvements_dates', 'Mouvements', '`dateFin` IS NULL OR `dateFin` >= `dateDebut`'],
     ['chk_paroisses_members_positive', 'Paroisses', '`nombreMembers` >= 0'],
@@ -189,7 +189,8 @@ const installDatabaseObjects = async () => {
   ];
 
   for (const [name, table, expression] of constraints) {
-    await executeOptional(`ALTER TABLE \`${table}\` ADD CONSTRAINT \`${name}\` CHECK (${expression})`, `Contrainte ${name}`);
+    const clause = expression.startsWith('FOREIGN KEY') ? expression : `CHECK (${expression})`;
+    await executeOptional(`ALTER TABLE \`${table}\` ADD CONSTRAINT \`${name}\` ${clause}`, `Contrainte ${name}`);
   }
 
   await sequelize.query('DROP VIEW IF EXISTS v_pasteurs_carte');
@@ -241,14 +242,15 @@ const installDatabaseObjects = async () => {
       AND m.dateFin BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 6 MONTH)
   `);
 
-  await sequelize.query('DROP VIEW IF EXISTS v_boites_messages');
+  await sequelize.query('DROP VIEW IF EXISTS v_whatsapp_messages');
   await sequelize.query(`
-    CREATE VIEW v_boites_messages AS
+    CREATE VIEW v_whatsapp_messages AS
     SELECT mr.id, mr.messageId, mr.pasteurId, CONCAT(p.prenom, ' ', p.nom) AS pasteur,
-           p.grade, p.responsabilite, m.objet, m.contenu, m.priorite, m.sentAt, mr.statutLecture
+           p.telephone, p.grade, p.responsabilite, m.objet, m.contenu, m.priorite, m.canal, m.sentAt
     FROM MessageRecipients mr
     INNER JOIN Messages m ON m.id = mr.messageId
     INNER JOIN Pasteurs p ON p.id = mr.pasteurId
+    WHERE m.canal IN ('WHATSAPP', 'MIXTE')
   `);
 
   await sequelize.query('DROP PROCEDURE IF EXISTS sp_dashboard_resume');
@@ -260,7 +262,7 @@ const installDatabaseObjects = async () => {
              (SELECT COUNT(*) FROM Sections) AS totalSections,
              (SELECT COUNT(*) FROM Paroisses) AS totalParoisses,
              (SELECT COUNT(*) FROM v_alertes_mandat) AS alertesMandats,
-             (SELECT COUNT(*) FROM MessageRecipients WHERE statutLecture = 'Non lu') AS messagesNonLus;
+             (SELECT COUNT(*) FROM MessageRecipients WHERE canalLivraison = 'WHATSAPP') AS messagesWhatsApp;
     END
   `);
 
@@ -276,25 +278,6 @@ const installDatabaseObjects = async () => {
          OR poste LIKE CONCAT('%', searchTerm, '%')
          OR responsabilite LIKE CONCAT('%', searchTerm, '%')
       ORDER BY nomComplet ASC;
-    END
-  `);
-
-  await sequelize.query('DROP PROCEDURE IF EXISTS sp_envoyer_message_grade');
-  await sequelize.query(`
-    CREATE PROCEDURE sp_envoyer_message_grade(
-      IN inObjet VARCHAR(255),
-      IN inContenu TEXT,
-      IN inGrade VARCHAR(80),
-      IN inUserId INT
-    )
-    BEGIN
-      INSERT INTO Messages (objet, contenu, audienceType, audienceValeur, canal, priorite, statut, sentById, sentAt, createdAt, updatedAt)
-      VALUES (inObjet, inContenu, 'GRADE', inGrade, 'BOITE_INTERNE', 'Normale', 'Envoyé', inUserId, NOW(), NOW(), NOW());
-
-      INSERT INTO MessageRecipients (messageId, pasteurId, statutLecture, canalLivraison, createdAt, updatedAt)
-      SELECT LAST_INSERT_ID(), id, 'Non lu', 'BOITE_INTERNE', NOW(), NOW()
-      FROM Pasteurs
-      WHERE grade = inGrade AND statut = 'Actif';
     END
   `);
 
@@ -361,10 +344,19 @@ const main = async () => {
   await serverConnection.query(`CREATE DATABASE \`${db.name}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
   await serverConnection.end();
 
-  setupModels(sequelize);
+  setupModels();
   await sequelize.authenticate();
   await sequelize.sync({ force: true });
   await installDatabaseObjects();
+
+  const representant = await upsertBy(User, { email: 'representant.legal@cbca.cd' }, {
+    email: 'representant.legal@cbca.cd',
+    password,
+    firstName: 'Représentant',
+    lastName: 'Légal',
+    phone: '+243970000001',
+    role: 'SUPER_ADMIN'
+  });
 
   const communaute = await upsertBy(Communaute, { code: 'CBCA-NK' }, {
     nom: 'Communauté Baptiste au Centre de l’Afrique - Nord-Kivu',
@@ -372,38 +364,18 @@ const main = async () => {
     description: 'Base de pilotage pastoral et administratif',
     pays: 'République Démocratique du Congo',
     region: 'Nord-Kivu',
-    telephone: '+243 970 000 000',
+    telephone: '+243970000000',
     email: 'secretariat@cbca.cd',
-    siteWeb: 'https://cbca.cd',
+    siteWeb: 'https://cbca-kanisa.org',
     nombrePostes: postes.length,
+    logo: '/cbca-logo.jpg',
     couleur1: '#0B5CAB',
     couleur2: '#B68A2C'
   });
 
-  const superAdmin = await upsertBy(User, { email: users[0].email }, users[0]);
-  await upsertBy(User, { email: users[1].email }, users[1]);
-
   const posteRows = {};
   for (const poste of postes) {
-    posteRows[poste.code] = await upsertBy(Poste, { code: poste.code }, { ...poste, communauteId: communaute.id, createdById: superAdmin.id });
-  }
-
-  const adminPostes = [
-    { email: 'admin.goma@cbca.cd', firstName: 'Admin', lastName: 'Goma', phone: '+243 970 000 110', role: 'ADMIN_POSTE', poste: 'GOM' },
-    { email: 'admin.beni@cbca.cd', firstName: 'Admin', lastName: 'Beni', phone: '+243 970 000 210', role: 'ADMIN_POSTE', poste: 'BEN' }
-  ];
-
-  for (const admin of adminPostes) {
-    const user = await upsertBy(User, { email: admin.email }, {
-      email: admin.email,
-      password: 'Cbca@2026!',
-      firstName: admin.firstName,
-      lastName: admin.lastName,
-      phone: admin.phone,
-      role: admin.role,
-      posteAssigneId: posteRows[admin.poste].id
-    });
-    await posteRows[admin.poste].update({ responsableId: user.id });
+    posteRows[poste.code] = await upsertBy(Poste, { code: poste.code }, { ...poste, communauteId: communaute.id, createdById: representant.id });
   }
 
   const sectionRows = {};
@@ -435,13 +407,38 @@ const main = async () => {
       posteId: posteRows[poste].id,
       sectionId: sectionRows[section].id,
       paroisseId: paroisseRows[paroisse].id,
-      createdById: superAdmin.id
+      createdById: representant.id
     });
   }
 
-  for (const pasteur of pasteurs) {
-    await paroisseRows[pasteur.paroisse].update({ pasteurId: pasteurRows[pasteur.matricule].id });
-  }
+  await paroisseRows.BAR.update({ pasteurId: pasteurRows['CBCA-PP-2026-0001'].id });
+  await paroisseRows.CBG.update({ pasteurId: pasteurRows['CBCA-PS-2026-0001'].id });
+  await sectionRows['BEN-M'].update({ responsableId: pasteurRows['CBCA-PS-2026-0001'].id });
+
+  const pasteurPosteUser = await upsertBy(User, { email: 'pasteur.poste.goma@cbca.cd' }, {
+    email: 'pasteur.poste.goma@cbca.cd',
+    password,
+    firstName: 'Emmanuel',
+    lastName: 'Kambale',
+    phone: '+243970000101',
+    role: 'PASTEUR_POSTE',
+    posteAssigneId: posteRows.GOM.id,
+    pasteurId: pasteurRows['CBCA-PP-2026-0001'].id
+  });
+
+  const sectionnaireUser = await upsertBy(User, { email: 'sectionnaire.beni@cbca.cd' }, {
+    email: 'sectionnaire.beni@cbca.cd',
+    password,
+    firstName: 'Jean-Paul',
+    lastName: 'Mumbere',
+    phone: '+243970000220',
+    role: 'PASTEUR_SECTIONNAIRE',
+    posteAssigneId: posteRows.BEN.id,
+    pasteurId: pasteurRows['CBCA-PS-2026-0001'].id
+  });
+
+  await posteRows.GOM.update({ responsableId: pasteurPosteUser.id });
+  await posteRows.BEN.update({ responsableId: sectionnaireUser.id });
 
   for (const mouvement of mouvements) {
     await upsertBy(Mouvement, { pasteurId: pasteurRows[mouvement.pasteur].id, dateDebut: mouvement.dateDebut }, {
@@ -452,32 +449,33 @@ const main = async () => {
       dateFin: mouvement.dateFin,
       statut: mouvement.statut,
       dureeMandat: mouvement.dureeMandat,
-      createdById: superAdmin.id
+      createdById: representant.id
     });
   }
 
   const seedMessage = await Message.create({
-    objet: 'Bienvenue dans la boîte interne CBCA',
-    contenu: 'Cette boîte recevra les communications ciblées de la haute hiérarchie.',
+    objet: 'Bienvenue dans le canal WhatsApp CBCA',
+    contenu: 'Les communications ciblées sont préparées pour WhatsApp et conservées dans le journal de l’application.',
     audienceType: 'TOUS',
     audienceValeur: '',
-    canal: 'BOITE_INTERNE',
+    canal: 'WHATSAPP',
     priorite: 'Normale',
-    sentById: superAdmin.id
+    sentById: representant.id
   });
 
   await MessageRecipient.bulkCreate(
     Object.values(pasteurRows).map((pasteur) => ({
       messageId: seedMessage.id,
       pasteurId: pasteur.id,
-      canalLivraison: 'BOITE_INTERNE'
+      canalLivraison: 'WHATSAPP',
+      statutLecture: 'Archivé'
     }))
   );
 
   await AuditLog.create({
     entite: 'System',
     action: 'CREATE',
-    utilisateurId: superAdmin.id,
+    utilisateurId: representant.id,
     utilisateurNom: 'Initialisation CBCA',
     nouvelles: { database: db.name, seed: 'initial' }
   });
@@ -486,8 +484,9 @@ const main = async () => {
 
   console.log('Base de données CBCA initialisée.');
   console.log(`Database: ${db.name}`);
-  console.log('Compte Super-Admin: representant.legal@cbca.cd / Cbca@2026!');
-  console.log('Compte Admin Poste: admin.goma@cbca.cd / Cbca@2026!');
+  console.log(`Compte Représentant: representant.legal@cbca.cd / ${password}`);
+  console.log(`Compte Pasteur Poste: pasteur.poste.goma@cbca.cd / ${password}`);
+  console.log(`Compte Pasteur Sectionnaire: sectionnaire.beni@cbca.cd / ${password}`);
 };
 
 main().catch(async (error) => {
