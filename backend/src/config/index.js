@@ -1,5 +1,12 @@
 require('dotenv').config();
 
+const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3000,http://127.0.0.1:5173,http://localhost:5173,http://127.0.0.1:5174,http://localhost:5174')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const isLocalDevOrigin = (origin) => /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
+
 const config = {
   app: {
     name: 'CBCA Pastor Management API',
@@ -25,9 +32,13 @@ const config = {
   },
   
   cors: {
-    origin: (process.env.CORS_ORIGIN || 'http://localhost:3000,http://127.0.0.1:5173,http://localhost:5173')
-      .split(',')
-      .map((origin) => origin.trim()),
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin) || isLocalDevOrigin(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error(`Origin non autorisée par CORS: ${origin}`));
+    },
     credentials: true
   },
   
