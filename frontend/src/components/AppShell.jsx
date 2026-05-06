@@ -46,17 +46,17 @@ import { useAuthStore } from '../context/authStore';
 import { useThemeMode } from '../context/themeMode';
 
 const navItems = [
-  { label: 'Home', path: '/', icon: <Dashboard /> },
+  { label: 'Dashboard', path: '/', icon: <Dashboard /> },
   { label: 'Pasteurs', path: '/pasteurs', icon: <People /> },
   { label: 'Organisation', path: '/organisation', icon: <MapsHomeWork /> },
-  { label: 'États', path: '/etats', icon: <Description /> },
+  { label: 'Etats', path: '/etats', icon: <Description /> },
   { label: 'WhatsApp', path: '/communication', icon: <Campaign /> }
 ];
 
 const drawerWidth = 292;
 
 const roleLabels = {
-  SUPER_ADMIN: 'Représentant légal',
+  SUPER_ADMIN: 'Representant legal',
   PASTEUR_POSTE: 'Pasteur de poste',
   PASTEUR_SECTIONNAIRE: 'Pasteur sectionnaire',
   VIEWER: 'Lecture'
@@ -82,16 +82,36 @@ export default function AppShell({ children, onSearch }) {
   };
 
   const drawerContent = (
-    <Box sx={{ minHeight: '100%', bgcolor: '#171820', color: 'white', display: 'flex', flexDirection: 'column' }}>
-      <Box sx={{ p: 3.5 }}>
+    <Box
+      sx={{
+        minHeight: '100%',
+        bgcolor: '#171821',
+        color: 'white',
+        display: 'flex',
+        flexDirection: 'column'
+      }}
+    >
+      <Box sx={{ p: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <Box component="img" src="/cbca-logo.jpg" alt="Logo CBCA" sx={{ width: 52, height: 52, objectFit: 'contain', bgcolor: 'white', borderRadius: 1.5, p: 0.5 }} />
+          <Box
+            component="img"
+            src="/cbca-logo.jpg"
+            alt="Logo CBCA"
+            sx={{
+              width: 54,
+              height: 54,
+              objectFit: 'contain',
+              bgcolor: 'white',
+              borderRadius: '8px',
+              p: 0.5
+            }}
+          />
           <Box>
             <Typography variant="h5" sx={{ fontWeight: 950, lineHeight: 1, color: 'white' }}>
               CBCA
             </Typography>
-            <Typography variant="body2" sx={{ fontWeight: 800, color: '#48B8FF' }}>
-              Direction
+            <Typography variant="body2" sx={{ fontWeight: 800, color: '#4CB6FF' }}>
+              Direction pastorale
             </Typography>
           </Box>
         </Box>
@@ -109,26 +129,28 @@ export default function AppShell({ children, onSearch }) {
                 setDrawerOpen(false);
               }}
               sx={{
-                borderRadius: 2,
-                mb: 1.2,
-                minHeight: 58,
+                borderRadius: '8px',
+                mb: 1,
+                minHeight: 56,
                 color: selected ? 'white' : 'rgba(255,255,255,0.74)',
                 bgcolor: selected ? 'transparent' : 'rgba(255,255,255,0.035)',
-                backgroundImage: selected ? 'linear-gradient(135deg, #7438F4 0%, #3BB5F6 100%)' : 'none',
+                backgroundImage: selected ? 'linear-gradient(135deg, #6D3DF5 0%, #39A9F2 100%)' : 'none',
                 border: '1px solid rgba(255,255,255,0.08)',
-                boxShadow: selected ? '0 18px 34px rgba(82,92,229,0.28)' : 'none',
+                boxShadow: selected ? '0 16px 32px rgba(67,105,230,0.28)' : 'none',
                 '&:hover': {
                   bgcolor: selected ? 'transparent' : 'rgba(255,255,255,0.07)'
                 },
                 '&.Mui-selected': {
                   bgcolor: 'transparent',
-                  backgroundImage: 'linear-gradient(135deg, #7438F4 0%, #3BB5F6 100%)',
+                  backgroundImage: 'linear-gradient(135deg, #6D3DF5 0%, #39A9F2 100%)',
                   color: 'white',
                   '& .MuiListItemIcon-root': { color: 'white' }
                 }
               }}
             >
-              <ListItemIcon sx={{ minWidth: 42, color: selected ? 'white' : 'rgba(255,255,255,0.74)' }}>{item.icon}</ListItemIcon>
+              <ListItemIcon sx={{ minWidth: 42, color: selected ? 'white' : 'rgba(255,255,255,0.74)' }}>
+                {item.icon}
+              </ListItemIcon>
               <ListItemText primary={item.label} primaryTypographyProps={{ fontWeight: 850 }} />
             </ListItemButton>
           );
@@ -136,7 +158,15 @@ export default function AppShell({ children, onSearch }) {
       </List>
 
       <Box sx={{ mt: 'auto', p: 2 }}>
-        <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: '#23242D', color: 'white', border: '1px solid rgba(255,255,255,0.08)' }}>
+        <Box
+          sx={{
+            p: 1.5,
+            borderRadius: '8px',
+            bgcolor: '#242530',
+            color: 'white',
+            border: '1px solid rgba(255,255,255,0.08)'
+          }}
+        >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
             <Avatar sx={{ width: 40, height: 40, bgcolor: 'primary.main', fontWeight: 900 }}>
               {(user?.firstName?.[0] || user?.email?.[0] || 'C').toUpperCase()}
@@ -149,7 +179,7 @@ export default function AppShell({ children, onSearch }) {
                 {user?.email || 'session CBCA'}
               </Typography>
             </Box>
-            <Tooltip title="Déconnexion">
+            <Tooltip title="Deconnexion">
               <IconButton size="small" onClick={() => setConfirmLogout(true)} sx={{ color: 'rgba(255,255,255,0.75)' }}>
                 <Logout fontSize="small" />
               </IconButton>
@@ -204,7 +234,7 @@ export default function AppShell({ children, onSearch }) {
               flex: 1,
               maxWidth: 680,
               '& .MuiOutlinedInput-root': {
-                borderRadius: 999,
+                borderRadius: '999px',
                 bgcolor: mode === 'dark' ? 'rgba(255,255,255,0.04)' : '#F3F4FF'
               }
             }}
@@ -239,12 +269,12 @@ export default function AppShell({ children, onSearch }) {
           <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
             <MenuItem disabled>
               <ListItemIcon><Security fontSize="small" /></ListItemIcon>
-              {roleLabels[user?.role] || 'Session sécurisée'}
+              {roleLabels[user?.role] || 'Session securisee'}
             </MenuItem>
             <Divider />
             <MenuItem onClick={() => setConfirmLogout(true)}>
               <ListItemIcon><Logout fontSize="small" /></ListItemIcon>
-              Déconnexion
+              Deconnexion
             </MenuItem>
           </Menu>
         </Toolbar>
@@ -272,13 +302,13 @@ export default function AppShell({ children, onSearch }) {
       )}
 
       <Dialog open={confirmLogout} onClose={() => setConfirmLogout(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>Confirmer la déconnexion</DialogTitle>
+        <DialogTitle>Confirmer la deconnexion</DialogTitle>
         <DialogContent>
           <Typography color="text.secondary">Voulez-vous vraiment fermer cette session CBCA ?</Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirmLogout(false)}>Annuler</Button>
-          <Button variant="contained" color="error" onClick={handleLogout}>Se déconnecter</Button>
+          <Button variant="contained" color="error" onClick={handleLogout}>Se deconnecter</Button>
         </DialogActions>
       </Dialog>
     </Box>
