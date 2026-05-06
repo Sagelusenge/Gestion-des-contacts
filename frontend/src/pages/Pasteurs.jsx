@@ -11,21 +11,25 @@ import {
   DialogTitle,
   FormControl,
   Grid,
+  IconButton,
   InputLabel,
   MenuItem,
   Paper,
   Select,
   Stack,
   TextField,
+  Tooltip,
   Typography
 } from '@mui/material';
-import { Add, Badge, Call, FilterAlt, Visibility, WhatsApp } from '@mui/icons-material';
+import { Add, Call, Delete, Edit, Print, Visibility, WhatsApp } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import AppShell from '../components/AppShell';
 import { geographieService, pasteurService } from '../services';
-import { grades, mockPasteurs, statuts } from '../data/mockData';
+import { mockPasteurs } from '../data/mockData';
 import { useAuthStore } from '../context/authStore';
 
+const grades = ['Révérend Pasteur', 'Pasteur', 'Pasteur Stagiaire', 'Proposant'];
+const statuts = ['Actif', 'En Congé', 'Retraité', 'Suspendu'];
 const allResponsabilites = ['Pasteur de Poste', 'Pasteur Sectionnaire', 'Pasteur de Paroisse', 'Assistant Pastoral', 'Administration'];
 
 const getAllowedResponsibilities = (role) => {
@@ -50,6 +54,9 @@ const buildEmptyForm = (role) => ({
   statut: 'Actif'
 });
 
+const toDateInput = (value) => value ? new Date(value).toISOString().slice(0, 10) : '';
+const digits = (value) => String(value || '').replace(/\D/g, '');
+
 export default function Pasteurs() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
@@ -62,6 +69,8 @@ export default function Pasteurs() {
   const [statut, setStatut] = useState('');
   const [responsabilite, setResponsabilite] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [form, setForm] = useState(() => buildEmptyForm(user?.role));
   const [nextMatricule, setNextMatricule] = useState('');
   const [notice, setNotice] = useState(null);
@@ -70,50 +79,38 @@ export default function Pasteurs() {
   const canAdd = allowedResponsibilities.length > 0;
 
   const loadPasteurs = async () => {
-    try {
-      const response = await pasteurService.list({ limit: 100 });
-      setPasteurs(response.data.data.pasteurs);
-    } catch {
-      setPasteurs(mockPasteurs);
+    const response = await pasteurService.list({ limit: 300 });
+    setPasteurs(response.data.data.pasteurs);
+  };
+
+  const loadGeo = async () => {
+    const [postesResponse, sectionsResponse, paroissesResponse] = await Promise.all([
+      geographieService.getPostes({ limit: 100 }),
+      geographieService.getSections(),
+      geographieService.getParoisses()
+    ]);
+    const loadedPostes = postesResponse.data.data.postes || [];
+    setPostes(loadedPostes);
+    setSections(sectionsResponse.data.data.sections || []);
+    setParoisses(paroissesResponse.data.data.paroisses || []);
+    if ((user?.role === 'PASTEUR_POSTE' || user?.role === 'PASTEUR_SECTIONNAIRE') && loadedPostes[0]) {
+      setForm((prev) => ({ ...prev, posteId: loadedPostes[0].id }));
     }
   };
 
   useEffect(() => {
-    const load = async () => {
-      await loadPasteurs();
-      try {
-        const [postesResponse, sectionsResponse, paroissesResponse] = await Promise.all([
-          geographieService.getPostes({ limit: 100 }),
-          geographieService.getSections(),
-          geographieService.getParoisses()
-        ]);
-        const loadedPostes = postesResponse.data.data.postes || [];
-        setPostes(loadedPostes);
-        setSections(sectionsResponse.data.data.sections || []);
-        setParoisses(paroissesResponse.data.data.paroisses || []);
-        if ((user?.role === 'PASTEUR_POSTE' || user?.role === 'PASTEUR_SECTIONNAIRE') && loadedPostes[0]) {
-          setForm((prev) => ({ ...prev, posteId: loadedPostes[0].id }));
-        }
-      } catch {
-        setPostes([]);
-        setSections([]);
-        setParoisses([]);
-      }
-    };
-
-    load();
+    Promise.all([loadPasteurs(), loadGeo()]).catch(() => setPasteurs(mockPasteurs));
   }, [user?.role]);
 
   useEffect(() => {
-    if (!dialogOpen) return;
+    if (!dialogOpen || editing) return;
     pasteurService.nextMatricule({ grade: form.grade, responsabilite: form.responsabilite })
       .then((response) => setNextMatricule(response.data.data.matricule))
       .catch(() => setNextMatricule('Génération indisponible'));
-  }, [dialogOpen, form.grade, form.responsabilite]);
+  }, [dialogOpen, editing, form.grade, form.responsabilite]);
 
   const filteredPasteurs = useMemo(() => {
     const term = search.trim().toLowerCase();
-
     return pasteurs.filter((pasteur) => {
       const matchesSearch = !term || [
         pasteur.nom,
@@ -122,9 +119,10 @@ export default function Pasteurs() {
         pasteur.fonction,
         pasteur.responsabilite,
         pasteur.Poste?.nom,
-        pasteur.Paroisse?.nom
+        pasteur.Section?.nom,
+        pasteur.Paroisse?.nom,
+        pasteur.telephone
       ].some((value) => value?.toLowerCase().includes(term));
-
       return matchesSearch
         && (!grade || pasteur.grade === grade)
         && (!statut || pasteur.statut === statut)
@@ -148,10 +146,28 @@ export default function Pasteurs() {
 
   const openCreateDialog = () => {
     const next = buildEmptyForm(user?.role);
-    if ((user?.role === 'PASTEUR_POSTE' || user?.role === 'PASTEUR_SECTIONNAIRE') && postes[0]) {
-      next.posteId = postes[0].id;
-    }
+    if ((user?.role === 'PASTEUR_POSTE' || user?.role === 'PASTEUR_SECTIONNAIRE') && postes[0]) next.posteId = postes[0].id;
+    setEditing(null);
     setForm(next);
+    setDialogOpen(true);
+  };
+
+  const openEditDialog = (pasteur) => {
+    setEditing(pasteur);
+    setForm({
+      nom: pasteur.nom || '',
+      prenom: pasteur.prenom || '',
+      grade: pasteur.grade || 'Pasteur',
+      responsabilite: pasteur.responsabilite || 'Pasteur de Paroisse',
+      fonction: pasteur.fonction || '',
+      telephone: pasteur.telephone || '',
+      email: pasteur.email || '',
+      dateOrdination: toDateInput(pasteur.dateOrdination),
+      posteId: pasteur.posteId || pasteur.Poste?.id || '',
+      sectionId: pasteur.sectionId || pasteur.Section?.id || '',
+      paroisseId: pasteur.paroisseId || pasteur.Paroisse?.id || '',
+      statut: pasteur.statut || 'Actif'
+    });
     setDialogOpen(true);
   };
 
@@ -162,28 +178,43 @@ export default function Pasteurs() {
         next.sectionId = '';
         next.paroisseId = '';
       }
-      if (name === 'sectionId') {
-        next.paroisseId = '';
-      }
+      if (name === 'sectionId') next.paroisseId = '';
       return next;
     });
   };
 
-  const handleCreate = async () => {
+  const savePasteur = async () => {
     setNotice(null);
+    const payload = {
+      ...form,
+      posteId: Number(form.posteId),
+      sectionId: form.sectionId ? Number(form.sectionId) : null,
+      paroisseId: form.paroisseId ? Number(form.paroisseId) : null
+    };
     try {
-      await pasteurService.create({
-        ...form,
-        posteId: Number(form.posteId),
-        sectionId: form.sectionId ? Number(form.sectionId) : null,
-        paroisseId: form.paroisseId ? Number(form.paroisseId) : null
-      });
+      if (editing) {
+        await pasteurService.update(editing.id, payload);
+      } else {
+        await pasteurService.create(payload);
+      }
       setDialogOpen(false);
-      setForm(buildEmptyForm(user?.role));
-      setNotice({ severity: 'success', text: 'Pasteur ajouté avec succès.' });
+      setNotice({ severity: 'success', text: editing ? 'Fiche mise à jour.' : 'Pasteur ajouté avec succès.' });
       await loadPasteurs();
     } catch (error) {
-      setNotice({ severity: 'error', text: error.response?.data?.error?.message || 'Création impossible.' });
+      setNotice({ severity: 'error', text: error.response?.data?.error?.message || 'Action impossible.' });
+    }
+  };
+
+  const deletePasteur = async () => {
+    if (!deleteTarget) return;
+    setNotice(null);
+    try {
+      await pasteurService.delete(deleteTarget.id);
+      setDeleteTarget(null);
+      setNotice({ severity: 'success', text: 'Fiche supprimée.' });
+      await loadPasteurs();
+    } catch (error) {
+      setNotice({ severity: 'error', text: error.response?.data?.error?.message || 'Suppression impossible.' });
     }
   };
 
@@ -192,107 +223,59 @@ export default function Pasteurs() {
       <Stack spacing={3}>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: 2 }}>
           <Box>
-            <Typography variant="overline" color="primary" sx={{ fontWeight: 800 }}>Registre interne</Typography>
-            <Typography variant="h4" sx={{ fontWeight: 900 }}>Pasteurs et responsables</Typography>
-            <Typography color="text.secondary">
-              Recherche par matricule, poste, paroisse, grade, responsabilité ou fonction pastorale.
-            </Typography>
+            <Typography variant="overline" color="primary" sx={{ fontWeight: 900 }}>Registre interne</Typography>
+            <Typography variant="h4" sx={{ fontWeight: 950 }}>Annuaire pastoral</Typography>
+            <Typography color="text.secondary">Fiches, appels, WhatsApp, impression et mises à jour.</Typography>
           </Box>
-          {canAdd && (
-            <Button variant="contained" startIcon={<Add />} onClick={openCreateDialog}>
-              Ajouter
-            </Button>
-          )}
+          <Stack direction="row" spacing={1} flexWrap="wrap">
+            <Button variant="outlined" startIcon={<Print />} onClick={() => window.print()}>Print</Button>
+            {canAdd && <Button variant="contained" startIcon={<Add />} onClick={openCreateDialog}>Ajouter</Button>}
+          </Stack>
         </Box>
 
         {notice && <Alert severity={notice.severity}>{notice.text}</Alert>}
 
         <Paper sx={{ p: 2, borderRadius: 1 }}>
           <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} md={4}>
-              <TextField fullWidth label="Recherche" value={search} onChange={(event) => setSearch(event.target.value)} />
-            </Grid>
+            <Grid item xs={12} md={4}><TextField fullWidth label="Recherche" value={search} onChange={(event) => setSearch(event.target.value)} /></Grid>
             <Grid item xs={6} md={2.5}>
-              <FormControl fullWidth>
-                <InputLabel>Grade</InputLabel>
-                <Select label="Grade" value={grade} onChange={(event) => setGrade(event.target.value)}>
-                  <MenuItem value="">Tous</MenuItem>
-                  {grades.map((item) => <MenuItem key={item} value={item}>{item}</MenuItem>)}
-                </Select>
-              </FormControl>
+              <FormControl fullWidth><InputLabel>Grade</InputLabel><Select label="Grade" value={grade} onChange={(e) => setGrade(e.target.value)}><MenuItem value="">Tous</MenuItem>{grades.map((item) => <MenuItem key={item} value={item}>{item}</MenuItem>)}</Select></FormControl>
             </Grid>
             <Grid item xs={6} md={3}>
-              <FormControl fullWidth>
-                <InputLabel>Responsabilité</InputLabel>
-                <Select label="Responsabilité" value={responsabilite} onChange={(event) => setResponsabilite(event.target.value)}>
-                  <MenuItem value="">Toutes</MenuItem>
-                  {allResponsabilites.map((item) => <MenuItem key={item} value={item}>{item}</MenuItem>)}
-                </Select>
-              </FormControl>
+              <FormControl fullWidth><InputLabel>Responsabilité</InputLabel><Select label="Responsabilité" value={responsabilite} onChange={(e) => setResponsabilite(e.target.value)}><MenuItem value="">Toutes</MenuItem>{allResponsabilites.map((item) => <MenuItem key={item} value={item}>{item}</MenuItem>)}</Select></FormControl>
             </Grid>
             <Grid item xs={6} md={2.5}>
-              <FormControl fullWidth>
-                <InputLabel>Statut</InputLabel>
-                <Select label="Statut" value={statut} onChange={(event) => setStatut(event.target.value)}>
-                  <MenuItem value="">Tous</MenuItem>
-                  {statuts.map((item) => <MenuItem key={item} value={item}>{item}</MenuItem>)}
-                </Select>
-              </FormControl>
+              <FormControl fullWidth><InputLabel>Statut</InputLabel><Select label="Statut" value={statut} onChange={(e) => setStatut(e.target.value)}><MenuItem value="">Tous</MenuItem>{statuts.map((item) => <MenuItem key={item} value={item}>{item}</MenuItem>)}</Select></FormControl>
             </Grid>
           </Grid>
         </Paper>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <FilterAlt color="primary" />
-          <Typography sx={{ fontWeight: 800 }}>{filteredPasteurs.length} fiche(s) visibles</Typography>
-        </Box>
-
         <Grid container spacing={2}>
           {filteredPasteurs.map((pasteur) => (
             <Grid item xs={12} lg={6} key={pasteur.id}>
-              <Paper sx={{ p: 2.5, borderRadius: 1, height: '100%' }}>
+              <Paper sx={{ p: 2.5, borderRadius: 1, height: '100%', position: 'relative', overflow: 'hidden' }}>
+                <Box sx={{ position: 'absolute', top: 0, right: 0, width: 5, height: '100%', bgcolor: pasteur.statut === 'Actif' ? 'success.main' : 'warning.main' }} />
                 <Stack direction="row" spacing={2} alignItems="flex-start">
-                  <Avatar src={pasteur.photo} sx={{ width: 58, height: 58, bgcolor: 'primary.main', fontWeight: 800 }}>
-                    {pasteur.prenom?.[0]}{pasteur.nom?.[0]}
-                  </Avatar>
+                  <Avatar src={pasteur.photo} sx={{ width: 64, height: 64, bgcolor: 'primary.main', fontWeight: 900 }}>{pasteur.prenom?.[0]}{pasteur.nom?.[0]}</Avatar>
                   <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Stack direction="row" spacing={1} flexWrap="wrap" alignItems="center">
-                      <Typography variant="h6" sx={{ fontWeight: 900 }}>
-                        {pasteur.prenom} {pasteur.nom}
-                      </Typography>
+                      <Typography variant="h6" sx={{ fontWeight: 950 }}>{pasteur.prenom} {pasteur.nom}</Typography>
                       <Chip label={pasteur.grade} size="small" color="primary" variant="outlined" />
-                      <Chip label={pasteur.responsabilite || 'Pasteur de Paroisse'} size="small" color="secondary" variant="outlined" />
                       <Chip label={pasteur.statut} size="small" />
                     </Stack>
                     <Typography color="text.secondary">{pasteur.fonction}</Typography>
-                    <Typography variant="body2" sx={{ mt: 1 }}>
-                      {pasteur.Poste?.nom} / {pasteur.Section?.nom} / {pasteur.Paroisse?.nom}
-                    </Typography>
-                    <Grid container spacing={1.5} sx={{ mt: 1 }}>
-                      <Grid item xs={6}>
-                        <Typography variant="caption" color="text.secondary">Matricule</Typography>
-                        <Typography variant="body2" sx={{ fontWeight: 800 }}>{pasteur.matricule}</Typography>
-                      </Grid>
-                      <Grid item xs={6}>
-                        <Typography variant="caption" color="text.secondary">Ordination</Typography>
-                        <Typography variant="body2" sx={{ fontWeight: 800 }}>
-                          {pasteur.dateOrdination ? new Date(pasteur.dateOrdination).toLocaleDateString('fr-FR') : '-'}
-                        </Typography>
-                      </Grid>
-                    </Grid>
+                    <Typography variant="body2" sx={{ mt: 1 }}>{pasteur.Poste?.nom} / {pasteur.Section?.nom} / {pasteur.Paroisse?.nom}</Typography>
+                    <Typography variant="body2" sx={{ mt: 1, fontWeight: 850 }}>{pasteur.matricule}</Typography>
                   </Box>
+                  <Stack direction="row" spacing={0.5}>
+                    <Tooltip title="Modifier"><IconButton onClick={() => openEditDialog(pasteur)}><Edit /></IconButton></Tooltip>
+                    <Tooltip title="Supprimer"><IconButton color="error" onClick={() => setDeleteTarget(pasteur)}><Delete /></IconButton></Tooltip>
+                  </Stack>
                 </Stack>
-
                 <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mt: 2 }}>
-                  <Button size="small" variant="contained" startIcon={<Visibility />} onClick={() => navigate(`/pasteurs/${pasteur.id}`)}>
-                    Fiche
-                  </Button>
-                  <Button size="small" variant="outlined" startIcon={<Call />} href={pasteur.telephone ? `tel:${pasteur.telephone.replaceAll(' ', '')}` : undefined}>
-                    Appeler
-                  </Button>
-                  <Button size="small" variant="outlined" color="success" startIcon={<WhatsApp />} href={pasteur.telephone ? `https://wa.me/${pasteur.telephone.replace(/\D/g, '')}` : undefined} target="_blank">
-                    WhatsApp
-                  </Button>
+                  <Button size="small" variant="contained" startIcon={<Visibility />} onClick={() => navigate(`/pasteurs/${pasteur.id}`)}>Fiche</Button>
+                  <Button size="small" variant="outlined" startIcon={<Call />} href={pasteur.telephone ? `tel:${digits(pasteur.telephone)}` : undefined}>Appel</Button>
+                  <Button size="small" variant="outlined" color="success" startIcon={<WhatsApp />} href={pasteur.telephone ? `https://wa.me/${digits(pasteur.telephone)}` : undefined} target="_blank">WhatsApp</Button>
                 </Stack>
               </Paper>
             </Grid>
@@ -301,75 +284,38 @@ export default function Pasteurs() {
       </Stack>
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="md">
-        <DialogTitle>Ajouter un pasteur</DialogTitle>
+        <DialogTitle>{editing ? 'Modifier la fiche' : 'Ajouter un pasteur'}</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ pt: 1 }}>
-            <Grid item xs={12}>
-              <Paper sx={{ p: 2, bgcolor: '#F7FAFE', borderRadius: 1 }}>
-                <Stack direction="row" spacing={1.5} alignItems="center">
-                  <Badge color="primary" />
-                  <Box>
-                    <Typography variant="caption" color="text.secondary">Matricule généré automatiquement</Typography>
-                    <Typography sx={{ fontWeight: 900 }}>{nextMatricule || 'Calcul en cours...'}</Typography>
-                  </Box>
-                </Stack>
-              </Paper>
-            </Grid>
+            {!editing && (
+              <Grid item xs={12}><Paper sx={{ p: 2, bgcolor: 'action.hover', borderRadius: 1 }}><Typography variant="caption" color="text.secondary">Matricule généré automatiquement</Typography><Typography sx={{ fontWeight: 950 }}>{nextMatricule || 'Calcul en cours...'}</Typography></Paper></Grid>
+            )}
             <Grid item xs={12} sm={6}><TextField fullWidth label="Nom" value={form.nom} onChange={(e) => handleForm('nom', e.target.value)} /></Grid>
             <Grid item xs={12} sm={6}><TextField fullWidth label="Prénom" value={form.prenom} onChange={(e) => handleForm('prenom', e.target.value)} /></Grid>
             <Grid item xs={12} sm={6}><TextField fullWidth type="date" label="Date d'ordination" InputLabelProps={{ shrink: true }} value={form.dateOrdination} onChange={(e) => handleForm('dateOrdination', e.target.value)} /></Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel>Grade</InputLabel>
-                <Select label="Grade" value={form.grade} onChange={(e) => handleForm('grade', e.target.value)}>
-                  {grades.map((item) => <MenuItem key={item} value={item}>{item}</MenuItem>)}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel>Responsabilité</InputLabel>
-                <Select label="Responsabilité" value={form.responsabilite} onChange={(e) => handleForm('responsabilite', e.target.value)}>
-                  {allowedResponsibilities.map((item) => <MenuItem key={item} value={item}>{item}</MenuItem>)}
-                </Select>
-              </FormControl>
-            </Grid>
+            <Grid item xs={12} sm={6}><FormControl fullWidth><InputLabel>Grade</InputLabel><Select label="Grade" value={form.grade} onChange={(e) => handleForm('grade', e.target.value)}>{grades.map((item) => <MenuItem key={item} value={item}>{item}</MenuItem>)}</Select></FormControl></Grid>
+            <Grid item xs={12} sm={6}><FormControl fullWidth><InputLabel>Responsabilité</InputLabel><Select label="Responsabilité" value={form.responsabilite} onChange={(e) => handleForm('responsabilite', e.target.value)}>{(editing ? allResponsabilites : allowedResponsibilities).map((item) => <MenuItem key={item} value={item}>{item}</MenuItem>)}</Select></FormControl></Grid>
+            <Grid item xs={12} sm={6}><FormControl fullWidth><InputLabel>Statut</InputLabel><Select label="Statut" value={form.statut} onChange={(e) => handleForm('statut', e.target.value)}>{statuts.map((item) => <MenuItem key={item} value={item}>{item}</MenuItem>)}</Select></FormControl></Grid>
             <Grid item xs={12} sm={6}><TextField fullWidth label="Fonction" value={form.fonction} onChange={(e) => handleForm('fonction', e.target.value)} /></Grid>
-            <Grid item xs={12} sm={6}><TextField fullWidth label="Téléphone WhatsApp" value={form.telephone} onChange={(e) => handleForm('telephone', e.target.value)} /></Grid>
+            <Grid item xs={12} sm={6}><TextField fullWidth label="Téléphone" value={form.telephone} onChange={(e) => handleForm('telephone', e.target.value)} /></Grid>
             <Grid item xs={12} sm={6}><TextField fullWidth label="Email" value={form.email} onChange={(e) => handleForm('email', e.target.value)} /></Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel>Poste</InputLabel>
-                <Select label="Poste" value={form.posteId} onChange={(e) => handleForm('posteId', e.target.value)} disabled={user?.role !== 'SUPER_ADMIN'}>
-                  {postes.map((item) => <MenuItem key={item.id} value={item.id}>{item.nom}</MenuItem>)}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel>Section</InputLabel>
-                <Select label="Section" value={form.sectionId} onChange={(e) => handleForm('sectionId', e.target.value)}>
-                  <MenuItem value="">Aucune</MenuItem>
-                  {availableSections.map((item) => <MenuItem key={item.id} value={item.id}>{item.nom}</MenuItem>)}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel>Paroisse</InputLabel>
-                <Select label="Paroisse" value={form.paroisseId} onChange={(e) => handleForm('paroisseId', e.target.value)}>
-                  <MenuItem value="">Aucune</MenuItem>
-                  {availableParoisses.map((item) => <MenuItem key={item.id} value={item.id}>{item.nom}</MenuItem>)}
-                </Select>
-              </FormControl>
-            </Grid>
+            <Grid item xs={12} sm={6}><FormControl fullWidth><InputLabel>Poste</InputLabel><Select label="Poste" value={form.posteId} onChange={(e) => handleForm('posteId', e.target.value)} disabled={user?.role !== 'SUPER_ADMIN'}>{postes.map((item) => <MenuItem key={item.id} value={item.id}>{item.nom}</MenuItem>)}</Select></FormControl></Grid>
+            <Grid item xs={12} sm={6}><FormControl fullWidth><InputLabel>Section</InputLabel><Select label="Section" value={form.sectionId} onChange={(e) => handleForm('sectionId', e.target.value)}><MenuItem value="">Aucune</MenuItem>{availableSections.map((item) => <MenuItem key={item.id} value={item.id}>{item.nom}</MenuItem>)}</Select></FormControl></Grid>
+            <Grid item xs={12} sm={6}><FormControl fullWidth><InputLabel>Paroisse</InputLabel><Select label="Paroisse" value={form.paroisseId} onChange={(e) => handleForm('paroisseId', e.target.value)}><MenuItem value="">Aucune</MenuItem>{availableParoisses.map((item) => <MenuItem key={item.id} value={item.id}>{item.nom}</MenuItem>)}</Select></FormControl></Grid>
           </Grid>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDialogOpen(false)}>Annuler</Button>
-          <Button variant="contained" onClick={handleCreate} disabled={!form.nom || !form.prenom || !form.dateOrdination || !form.posteId}>
-            Enregistrer
-          </Button>
+          <Button variant="contained" onClick={savePasteur} disabled={!form.nom || !form.prenom || !form.dateOrdination || !form.posteId}>Enregistrer</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth>
+        <DialogTitle>Supprimer la fiche</DialogTitle>
+        <DialogContent><Typography color="text.secondary">Confirmez-vous la suppression de {deleteTarget?.prenom} {deleteTarget?.nom} ?</Typography></DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteTarget(null)}>Annuler</Button>
+          <Button color="error" variant="contained" onClick={deletePasteur}>Supprimer</Button>
         </DialogActions>
       </Dialog>
     </AppShell>

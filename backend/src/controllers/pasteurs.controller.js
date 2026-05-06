@@ -271,7 +271,7 @@ exports.getNextMatricule = async (req, res, next) => {
 
 exports.deletePasteur = async (req, res, next) => {
   try {
-    const pasteur = await Pasteur.findByPk(req.params.id);
+    const pasteur = await Pasteur.findOne({ where: { id: req.params.id, ...getPasteurScope(req) } });
     if (!pasteur) {
       return res.status(404).json({
         success: false,

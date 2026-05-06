@@ -1,14 +1,13 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { ProtectedRoute, RoleProtectedRoute } from './utils/ProtectedRoute';
+import { ProtectedRoute } from './utils/ProtectedRoute';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Pasteurs from './pages/Pasteurs';
 import PasteurDetail from './pages/PasteurDetail';
-import Mouvements from './pages/Mouvements';
 import Communication from './pages/Communication';
-import Paroisses from './pages/Paroisses';
-import Audit from './pages/Audit';
+import Organisation from './pages/Organisation';
+import Etats from './pages/Etats';
 import Unauthorized from './pages/Unauthorized';
 
 function App() {
@@ -48,19 +47,19 @@ function App() {
         />
 
         <Route
-          path="/paroisses"
+          path="/organisation"
           element={
             <ProtectedRoute>
-              <Paroisses />
+              <Organisation />
             </ProtectedRoute>
           }
         />
 
         <Route
-          path="/mouvements"
+          path="/paroisses"
           element={
             <ProtectedRoute>
-              <Mouvements />
+              <Organisation />
             </ProtectedRoute>
           }
         />
@@ -75,11 +74,11 @@ function App() {
         />
 
         <Route
-          path="/audit"
+          path="/etats"
           element={
-            <RoleProtectedRoute allowedRoles={['SUPER_ADMIN']}>
-              <Audit />
-            </RoleProtectedRoute>
+            <ProtectedRoute>
+              <Etats />
+            </ProtectedRoute>
           }
         />
 

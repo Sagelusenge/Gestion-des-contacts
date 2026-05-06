@@ -6,6 +6,10 @@ import {
   BottomNavigation,
   BottomNavigationAction,
   Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Divider,
   Drawer,
   IconButton,
@@ -16,17 +20,20 @@ import {
   ListItemText,
   Menu,
   MenuItem,
+  Stack,
   TextField,
   Toolbar,
   Tooltip,
   Typography,
+  alpha,
   useMediaQuery
 } from '@mui/material';
 import {
-  Assessment,
   Campaign,
   Dashboard,
-  History,
+  DarkMode,
+  Description,
+  LightMode,
   Logout,
   MapsHomeWork,
   Menu as MenuIcon,
@@ -37,17 +44,17 @@ import {
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import { useAuthStore } from '../context/authStore';
+import { useThemeMode } from '../context/themeMode';
 
 const navItems = [
-  { label: 'Pilotage', path: '/', icon: <Dashboard /> },
+  { label: 'Tableau de bord', path: '/', icon: <Dashboard /> },
   { label: 'Pasteurs', path: '/pasteurs', icon: <People /> },
-  { label: 'Paroisses', path: '/paroisses', icon: <MapsHomeWork /> },
-  { label: 'Mouvements', path: '/mouvements', icon: <History /> },
-  { label: 'WhatsApp', path: '/communication', icon: <Campaign /> },
-  { label: 'Journal', path: '/audit', icon: <Assessment />, roles: ['SUPER_ADMIN'] }
+  { label: 'Organisation', path: '/organisation', icon: <MapsHomeWork /> },
+  { label: 'États', path: '/etats', icon: <Description /> },
+  { label: 'WhatsApp', path: '/communication', icon: <Campaign /> }
 ];
 
-const drawerWidth = 286;
+const drawerWidth = 292;
 
 const roleLabels = {
   SUPER_ADMIN: 'Représentant légal',
@@ -61,26 +68,42 @@ export default function AppShell({ children, onSearch }) {
   const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const { mode, toggleMode } = useThemeMode();
   const { user, logout } = useAuthStore();
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [anchorEl, setAnchorEl] = React.useState(null);
+  const [confirmLogout, setConfirmLogout] = React.useState(false);
 
-  const visibleItems = navItems.filter((item) => !item.roles || item.roles.includes(user?.role));
-  const activePath = visibleItems.find((item) => item.path === location.pathname)?.path || '/';
+  const activePath = navItems.find((item) => item.path === location.pathname)?.path || '/';
 
   const handleLogout = async () => {
     await logout();
+    setConfirmLogout(false);
     navigate('/login');
   };
 
   const drawerContent = (
     <Box sx={{ minHeight: '100%', bgcolor: 'background.paper', display: 'flex', flexDirection: 'column' }}>
-      <Box sx={{ p: 2.5 }}>
-        <StackLogo />
+      <Box sx={{ p: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box
+            component="img"
+            src="/cbca-logo.jpg"
+            alt="Logo CBCA"
+            sx={{ width: 54, height: 54, objectFit: 'contain' }}
+          />
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 950, lineHeight: 1, color: 'primary.dark' }}>
+              CBCA
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 800 }}>
+              Direction pastorale
+            </Typography>
+          </Box>
+        </Box>
       </Box>
-      <Divider />
-      <List sx={{ p: 1.25 }}>
-        {visibleItems.map((item) => (
+      <List sx={{ px: 1.5, py: 0 }}>
+        {navItems.map((item) => (
           <ListItemButton
             key={item.path}
             selected={activePath === item.path}
@@ -90,30 +113,45 @@ export default function AppShell({ children, onSearch }) {
             }}
             sx={{
               borderRadius: 1,
-              mb: 0.5,
-              minHeight: 48,
+              mb: 0.75,
+              minHeight: 52,
+              color: activePath === item.path ? 'common.white' : 'text.secondary',
+              bgcolor: activePath === item.path ? 'primary.main' : 'transparent',
+              boxShadow: activePath === item.path ? `0 12px 24px ${alpha(theme.palette.primary.main, 0.22)}` : 'none',
+              '&:hover': {
+                bgcolor: activePath === item.path ? 'primary.main' : alpha(theme.palette.primary.main, 0.08)
+              },
               '&.Mui-selected': {
-                bgcolor: 'primary.light',
-                color: 'primary.dark',
-                '& .MuiListItemIcon-root': { color: 'primary.main' }
+                bgcolor: 'primary.main',
+                color: 'common.white',
+                '& .MuiListItemIcon-root': { color: 'common.white' }
               }
             }}
           >
-            <ListItemIcon sx={{ minWidth: 42 }}>{item.icon}</ListItemIcon>
-            <ListItemText primary={item.label} primaryTypographyProps={{ fontWeight: activePath === item.path ? 800 : 650 }} />
+            <ListItemIcon sx={{ minWidth: 42, color: activePath === item.path ? 'common.white' : 'text.secondary' }}>{item.icon}</ListItemIcon>
+            <ListItemText primary={item.label} primaryTypographyProps={{ fontWeight: 850 }} />
           </ListItemButton>
         ))}
       </List>
       <Box sx={{ mt: 'auto', p: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, p: 1.5, border: '1px solid', borderColor: 'divider', borderRadius: 1, bgcolor: '#FAFBFC' }}>
-          <Security color="primary" />
-          <Box sx={{ minWidth: 0 }}>
-            <Typography variant="body2" sx={{ fontWeight: 800 }}>
-              Accès restreint
-            </Typography>
-            <Typography variant="caption" color="text.secondary" noWrap>
-              {roleLabels[user?.role] || 'Session sécurisée'}
-            </Typography>
+        <Box sx={{ p: 1.5, borderRadius: 1, bgcolor: mode === 'dark' ? alpha('#FFFFFF', 0.05) : '#0F172A', color: 'white' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+            <Avatar sx={{ width: 40, height: 40, bgcolor: 'primary.main', fontWeight: 900 }}>
+              {(user?.firstName?.[0] || user?.email?.[0] || 'C').toUpperCase()}
+            </Avatar>
+            <Box sx={{ minWidth: 0, flex: 1 }}>
+              <Typography variant="caption" sx={{ display: 'block', fontWeight: 900, textTransform: 'uppercase' }} noWrap>
+                {roleLabels[user?.role] || 'Utilisateur'}
+              </Typography>
+              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.62)' }} noWrap>
+                {user?.email || 'session CBCA'}
+              </Typography>
+            </Box>
+            <Tooltip title="Déconnexion">
+              <IconButton size="small" onClick={() => setConfirmLogout(true)} sx={{ color: 'rgba(255,255,255,0.75)' }}>
+                <Logout fontSize="small" />
+              </IconButton>
+            </Tooltip>
           </Box>
         </Box>
       </Box>
@@ -128,7 +166,7 @@ export default function AppShell({ children, onSearch }) {
           sx={{
             width: drawerWidth,
             flexShrink: 0,
-            '& .MuiDrawer-paper': { width: drawerWidth, boxSizing: 'border-box', borderRightColor: 'rgba(23,32,51,0.10)' }
+            '& .MuiDrawer-paper': { width: drawerWidth, boxSizing: 'border-box', borderRightColor: 'divider' }
           }}
         >
           {drawerContent}
@@ -144,11 +182,11 @@ export default function AppShell({ children, onSearch }) {
           borderColor: 'divider',
           width: { md: `calc(100% - ${drawerWidth}px)` },
           ml: { md: `${drawerWidth}px` },
-          bgcolor: 'rgba(255,255,255,0.96)',
-          backdropFilter: 'blur(10px)'
+          bgcolor: alpha(theme.palette.background.paper, 0.9),
+          backdropFilter: 'blur(12px)'
         }}
       >
-        <Toolbar sx={{ gap: 2, minHeight: 68 }}>
+        <Toolbar sx={{ gap: 2, minHeight: 72 }}>
           {isMobile && (
             <Tooltip title="Menu">
               <IconButton onClick={() => setDrawerOpen(true)} edge="start">
@@ -160,7 +198,7 @@ export default function AppShell({ children, onSearch }) {
             size="small"
             placeholder="Rechercher un pasteur, un poste, une paroisse..."
             onChange={(event) => onSearch?.(event.target.value)}
-            sx={{ flex: 1, maxWidth: 660 }}
+            sx={{ flex: 1, maxWidth: 680 }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -169,13 +207,18 @@ export default function AppShell({ children, onSearch }) {
               )
             }}
           />
+          <Tooltip title={mode === 'light' ? 'Mode sombre' : 'Mode clair'}>
+            <IconButton onClick={toggleMode} sx={{ bgcolor: alpha(theme.palette.primary.main, 0.08) }}>
+              {mode === 'light' ? <DarkMode /> : <LightMode />}
+            </IconButton>
+          </Tooltip>
           <Button color="inherit" onClick={(event) => setAnchorEl(event.currentTarget)} sx={{ minWidth: 0, gap: 1 }}>
-            <Avatar sx={{ width: 36, height: 36, bgcolor: 'primary.main', fontSize: 14, fontWeight: 800 }}>
+            <Avatar sx={{ width: 38, height: 38, bgcolor: 'primary.main', fontSize: 14, fontWeight: 900 }}>
               {(user?.firstName?.[0] || user?.email?.[0] || 'C').toUpperCase()}
             </Avatar>
             {!isMobile && (
               <Box sx={{ textAlign: 'left' }}>
-                <Typography variant="body2" sx={{ fontWeight: 800, lineHeight: 1 }}>
+                <Typography variant="body2" sx={{ fontWeight: 900, lineHeight: 1 }}>
                   {user?.firstName ? `${user.firstName} ${user.lastName || ''}` : user?.email || 'Cadre CBCA'}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
@@ -185,7 +228,12 @@ export default function AppShell({ children, onSearch }) {
             )}
           </Button>
           <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
-            <MenuItem onClick={handleLogout}>
+            <MenuItem disabled>
+              <ListItemIcon><Security fontSize="small" /></ListItemIcon>
+              {roleLabels[user?.role] || 'Session sécurisée'}
+            </MenuItem>
+            <Divider />
+            <MenuItem onClick={() => setConfirmLogout(true)}>
               <ListItemIcon><Logout fontSize="small" /></ListItemIcon>
               Déconnexion
             </MenuItem>
@@ -208,32 +256,24 @@ export default function AppShell({ children, onSearch }) {
           onChange={(_, value) => navigate(value)}
           sx={{ position: 'fixed', left: 0, right: 0, bottom: 0, borderTop: '1px solid', borderColor: 'divider', zIndex: 1200 }}
         >
-          {visibleItems.slice(0, 4).map((item) => (
+          {navItems.slice(0, 4).map((item) => (
             <BottomNavigationAction key={item.path} label={item.label} value={item.path} icon={item.icon} />
           ))}
         </BottomNavigation>
       )}
-    </Box>
-  );
-}
 
-function StackLogo() {
-  return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-      <Box
-        component="img"
-        src="/cbca-logo.jpg"
-        alt="Logo CBCA"
-        sx={{ width: 50, height: 50, objectFit: 'contain' }}
-      />
-      <Box>
-        <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 800 }}>
-          CBCA Interne
-        </Typography>
-        <Typography variant="h6" sx={{ fontWeight: 900, lineHeight: 1.05 }}>
-          Pilotage pastoral
-        </Typography>
-      </Box>
+      <Dialog open={confirmLogout} onClose={() => setConfirmLogout(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Confirmer la déconnexion</DialogTitle>
+        <DialogContent>
+          <Typography color="text.secondary">
+            Voulez-vous vraiment fermer cette session CBCA ?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmLogout(false)}>Annuler</Button>
+          <Button variant="contained" color="error" onClick={handleLogout}>Se déconnecter</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

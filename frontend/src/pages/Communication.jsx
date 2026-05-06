@@ -15,7 +15,7 @@ import {
   TextField,
   Typography
 } from '@mui/material';
-import { Campaign, CheckCircle, OpenInNew, Send, WhatsApp } from '@mui/icons-material';
+import { Campaign, CheckCircle, ContentCopy, OpenInNew, WhatsApp } from '@mui/icons-material';
 import AppShell from '../components/AppShell';
 import { messageService } from '../services';
 
@@ -30,12 +30,7 @@ export default function Communication() {
   const [audiences, setAudiences] = useState(fallbackAudiences);
   const [messages, setMessages] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [form, setForm] = useState({
-    objet: '',
-    contenu: '',
-    canal: 'WHATSAPP',
-    priorite: 'Normale'
-  });
+  const [form, setForm] = useState({ objet: '', contenu: '', canal: 'WHATSAPP', priorite: 'Normale' });
   const [whatsappLinks, setWhatsappLinks] = useState([]);
   const [notice, setNotice] = useState(null);
   const selectedAudience = useMemo(() => audiences[selectedIndex] || audiences[0], [audiences, selectedIndex]);
@@ -57,7 +52,7 @@ export default function Communication() {
     loadData();
   }, []);
 
-  const handleSend = async () => {
+  const handlePrepare = async () => {
     setNotice(null);
     setWhatsappLinks([]);
     try {
@@ -67,32 +62,38 @@ export default function Communication() {
         audienceType: selectedAudience.type,
         audienceValeur: selectedAudience.value
       });
-
       const links = response.data.data.whatsappLinks || [];
       setWhatsappLinks(links);
-      setNotice({ severity: 'success', text: `${links.length} lien(s) WhatsApp préparé(s) pour ${response.data.data.destinataires} destinataire(s).` });
+      setNotice({ severity: 'success', text: `${links.length} conversation(s) WhatsApp préparée(s) pour ${response.data.data.destinataires} destinataire(s).` });
       setForm({ objet: '', contenu: '', canal: 'WHATSAPP', priorite: 'Normale' });
       await loadData();
-
-      if (links.length === 1) {
-        window.open(links[0].url, '_blank', 'noopener,noreferrer');
-      }
     } catch (error) {
-      setNotice({
-        severity: 'error',
-        text: error.response?.data?.error?.message || 'Préparation WhatsApp impossible pour le moment.'
-      });
+      setNotice({ severity: 'error', text: error.response?.data?.error?.message || 'Préparation WhatsApp impossible pour le moment.' });
     }
+  };
+
+  const openBroadcast = () => {
+    whatsappLinks.forEach((item, index) => {
+      window.setTimeout(() => {
+        window.open(item.url, '_blank', 'noopener,noreferrer');
+      }, index * 450);
+    });
+  };
+
+  const copyNumbers = async () => {
+    const numbers = whatsappLinks.map((item) => item.telephone).filter(Boolean).join('\n');
+    await navigator.clipboard.writeText(numbers);
+    setNotice({ severity: 'success', text: 'Numéros copiés.' });
   };
 
   return (
     <AppShell>
       <Stack spacing={3}>
         <Box>
-          <Typography variant="overline" color="primary" sx={{ fontWeight: 800 }}>Communication stratégique</Typography>
-          <Typography variant="h4" sx={{ fontWeight: 900 }}>Diffusion WhatsApp ciblée</Typography>
+          <Typography variant="overline" color="primary" sx={{ fontWeight: 900 }}>Communication stratégique</Typography>
+          <Typography variant="h4" sx={{ fontWeight: 950 }}>Large diffusion WhatsApp</Typography>
           <Typography color="text.secondary">
-            Rédigez un texte, choisissez une cible, puis ouvrez les conversations WhatsApp des destinataires concernés.
+            Sélectionnez une cible, préparez le message, puis ouvrez toutes les conversations WhatsApp une seule fois.
           </Typography>
         </Box>
 
@@ -101,7 +102,7 @@ export default function Communication() {
         <Grid container spacing={2.5}>
           <Grid item xs={12} lg={4}>
             <Paper sx={{ p: 2.5, borderRadius: 1 }}>
-              <Typography variant="h6" sx={{ fontWeight: 900, mb: 2 }}>Cibles rapides</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 950, mb: 2 }}>Cibles rapides</Typography>
               <Stack spacing={1.25}>
                 {audiences.map((audience, index) => (
                   <Button
@@ -123,10 +124,8 @@ export default function Communication() {
             <Paper sx={{ p: 2.5, borderRadius: 1 }}>
               <Stack spacing={2}>
                 <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 900 }}>{selectedAudience.label}</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {selectedAudience.count} destinataire(s) dans cette cible
-                  </Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 950 }}>{selectedAudience.label}</Typography>
+                  <Typography variant="body2" color="text.secondary">{selectedAudience.count} destinataire(s) dans cette cible</Typography>
                 </Box>
                 <TextField label="Objet" value={form.objet} onChange={(event) => setForm((prev) => ({ ...prev, objet: event.target.value }))} />
                 <TextField
@@ -135,15 +134,13 @@ export default function Communication() {
                   onChange={(event) => setForm((prev) => ({ ...prev, contenu: event.target.value }))}
                   multiline
                   rows={7}
-                  placeholder="Exemple : Les pasteurs stagiaires sont convoqués à la réunion de suivi..."
+                  placeholder="Exemple : Les pasteurs du poste de Goma sont invités à la réunion de coordination..."
                 />
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6}>
                     <FormControl fullWidth>
                       <InputLabel>Canal</InputLabel>
-                      <Select label="Canal" value="WHATSAPP" disabled>
-                        <MenuItem value="WHATSAPP">WhatsApp</MenuItem>
-                      </Select>
+                      <Select label="Canal" value="WHATSAPP" disabled><MenuItem value="WHATSAPP">WhatsApp</MenuItem></Select>
                     </FormControl>
                   </Grid>
                   <Grid item xs={12} sm={6}>
@@ -157,8 +154,8 @@ export default function Communication() {
                     </FormControl>
                   </Grid>
                 </Grid>
-                <Button variant="contained" color="success" startIcon={<WhatsApp />} onClick={handleSend} disabled={!form.objet.trim() || !form.contenu.trim()}>
-                  Préparer sur WhatsApp
+                <Button variant="contained" color="success" startIcon={<WhatsApp />} onClick={handlePrepare} disabled={!form.objet.trim() || !form.contenu.trim()}>
+                  Préparer la diffusion
                 </Button>
               </Stack>
             </Paper>
@@ -167,7 +164,16 @@ export default function Communication() {
 
         {whatsappLinks.length > 0 && (
           <Paper sx={{ p: 2.5, borderRadius: 1 }}>
-            <Typography variant="h6" sx={{ fontWeight: 900, mb: 2 }}>Conversations WhatsApp préparées</Typography>
+            <Stack direction="row" spacing={1} justifyContent="space-between" alignItems="center" flexWrap="wrap" sx={{ mb: 2 }}>
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 950 }}>Conversations prêtes</Typography>
+                <Typography color="text.secondary">{whatsappLinks.length} numéro(s) avec message prérempli.</Typography>
+              </Box>
+              <Stack direction="row" spacing={1} flexWrap="wrap">
+                <Button variant="outlined" startIcon={<ContentCopy />} onClick={copyNumbers}>Copier les numéros</Button>
+                <Button variant="contained" color="success" startIcon={<OpenInNew />} onClick={openBroadcast}>Lancer la diffusion</Button>
+              </Stack>
+            </Stack>
             <Grid container spacing={1.5}>
               {whatsappLinks.map((item) => (
                 <Grid item xs={12} sm={6} lg={4} key={item.pasteurId}>
@@ -181,7 +187,7 @@ export default function Communication() {
         )}
 
         <Paper sx={{ p: 2.5, borderRadius: 1 }}>
-          <Typography variant="h6" sx={{ fontWeight: 900 }}>Journal des préparations WhatsApp</Typography>
+          <Typography variant="h6" sx={{ fontWeight: 950 }}>Historique des préparations</Typography>
           <Divider sx={{ my: 2 }} />
           <Stack spacing={1.5}>
             {messages.slice(0, 6).map((message) => (

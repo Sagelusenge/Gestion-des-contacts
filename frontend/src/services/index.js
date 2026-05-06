@@ -20,6 +20,8 @@ export const geographieService = {
   getPostes: (params) => apiClient.get('/geographie/postes', { params }),
   getSections: (params) => apiClient.get('/geographie/sections', { params }),
   getParoisses: (params) => apiClient.get('/geographie/paroisses', { params }),
+  createPoste: (data) => apiClient.post('/geographie/postes', data),
+  createSection: (data) => apiClient.post('/geographie/sections', data),
   createParoisse: (data) => apiClient.post('/geographie/paroisses', data)
 };
 

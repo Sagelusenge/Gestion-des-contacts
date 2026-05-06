@@ -5,18 +5,21 @@ import {
   Box,
   Button,
   CircularProgress,
+  IconButton,
+  InputAdornment,
   Paper,
   Stack,
   TextField,
   Typography
 } from '@mui/material';
-import { Lock } from '@mui/icons-material';
+import { Lock, Visibility, VisibilityOff } from '@mui/icons-material';
 import { useAuthStore } from '../context/authStore';
 
 export default function Login() {
   const navigate = useNavigate();
   const { login, loading, error } = useAuthStore();
   const [formData, setFormData] = useState({ email: '', password: '' });
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -37,39 +40,32 @@ export default function Login() {
         placeItems: 'center',
         px: 2,
         py: 5,
-        backgroundColor: '#F5F7FA',
-        backgroundImage: 'linear-gradient(180deg, rgba(11,92,171,0.10) 0%, rgba(245,247,250,0) 45%)'
+        bgcolor: 'background.default',
+        backgroundImage: 'radial-gradient(circle at 20% 10%, rgba(11,92,171,0.18), transparent 34%), radial-gradient(circle at 85% 20%, rgba(182,138,44,0.18), transparent 30%)'
       }}
     >
       <Paper
         elevation={0}
         sx={{
           width: '100%',
-          maxWidth: 460,
+          maxWidth: 480,
           p: { xs: 3, sm: 4 },
           borderRadius: 1,
-          borderTop: '5px solid',
-          borderTopColor: 'primary.main',
-          boxShadow: '0 20px 50px rgba(23,32,51,0.10)'
+          boxShadow: '0 24px 70px rgba(15,23,42,0.16)'
         }}
       >
         <Stack spacing={3}>
           <Stack spacing={1.5} alignItems="center" textAlign="center">
-            <Box
-              component="img"
-              src="/cbca-logo.jpg"
-              alt="Logo CBCA"
-              sx={{ width: 92, height: 92, objectFit: 'contain' }}
-            />
+            <Box component="img" src="/cbca-logo.jpg" alt="Logo CBCA" sx={{ width: 94, height: 94, objectFit: 'contain' }} />
             <Box>
-              <Typography variant="overline" color="primary" sx={{ fontWeight: 800 }}>
+              <Typography variant="overline" color="primary" sx={{ fontWeight: 900 }}>
                 Accès institutionnel
               </Typography>
-              <Typography variant="h4" sx={{ fontWeight: 900, mt: 0.5 }}>
-                CBCA Pilotage
+              <Typography variant="h4" sx={{ fontWeight: 950, mt: 0.5 }}>
+                CBCA Direction
               </Typography>
               <Typography color="text.secondary">
-                Connexion réservée aux responsables autorisés
+                Gestion pastorale sécurisée
               </Typography>
             </Box>
           </Stack>
@@ -92,13 +88,22 @@ export default function Login() {
                 fullWidth
                 label="Mot de passe"
                 name="password"
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 value={formData.password}
                 onChange={handleChange}
                 disabled={loading}
                 required
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton onClick={() => setShowPassword((value) => !value)} edge="end" aria-label="Afficher le mot de passe">
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  )
+                }}
               />
-              <Button fullWidth variant="contained" type="submit" startIcon={!loading && <Lock />} sx={{ py: 1.35 }} disabled={loading}>
+              <Button fullWidth variant="contained" type="submit" startIcon={!loading && <Lock />} sx={{ py: 1.4 }} disabled={loading}>
                 {loading ? <CircularProgress size={24} color="inherit" /> : 'Se connecter'}
               </Button>
             </Stack>
