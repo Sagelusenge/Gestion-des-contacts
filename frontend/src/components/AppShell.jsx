@@ -20,7 +20,6 @@ import {
   ListItemText,
   Menu,
   MenuItem,
-  Stack,
   TextField,
   Toolbar,
   Tooltip,
@@ -47,7 +46,7 @@ import { useAuthStore } from '../context/authStore';
 import { useThemeMode } from '../context/themeMode';
 
 const navItems = [
-  { label: 'Tableau de bord', path: '/', icon: <Dashboard /> },
+  { label: 'Home', path: '/', icon: <Dashboard /> },
   { label: 'Pasteurs', path: '/pasteurs', icon: <People /> },
   { label: 'Organisation', path: '/organisation', icon: <MapsHomeWork /> },
   { label: 'États', path: '/etats', icon: <Description /> },
@@ -83,58 +82,61 @@ export default function AppShell({ children, onSearch }) {
   };
 
   const drawerContent = (
-    <Box sx={{ minHeight: '100%', bgcolor: 'background.paper', display: 'flex', flexDirection: 'column' }}>
-      <Box sx={{ p: 3 }}>
+    <Box sx={{ minHeight: '100%', bgcolor: '#171820', color: 'white', display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ p: 3.5 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <Box
-            component="img"
-            src="/cbca-logo.jpg"
-            alt="Logo CBCA"
-            sx={{ width: 54, height: 54, objectFit: 'contain' }}
-          />
+          <Box component="img" src="/cbca-logo.jpg" alt="Logo CBCA" sx={{ width: 52, height: 52, objectFit: 'contain', bgcolor: 'white', borderRadius: 1.5, p: 0.5 }} />
           <Box>
-            <Typography variant="h6" sx={{ fontWeight: 950, lineHeight: 1, color: 'primary.dark' }}>
+            <Typography variant="h5" sx={{ fontWeight: 950, lineHeight: 1, color: 'white' }}>
               CBCA
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 800 }}>
-              Direction pastorale
+            <Typography variant="body2" sx={{ fontWeight: 800, color: '#48B8FF' }}>
+              Direction
             </Typography>
           </Box>
         </Box>
       </Box>
-      <List sx={{ px: 1.5, py: 0 }}>
-        {navItems.map((item) => (
-          <ListItemButton
-            key={item.path}
-            selected={activePath === item.path}
-            onClick={() => {
-              navigate(item.path);
-              setDrawerOpen(false);
-            }}
-            sx={{
-              borderRadius: 1,
-              mb: 0.75,
-              minHeight: 52,
-              color: activePath === item.path ? 'common.white' : 'text.secondary',
-              bgcolor: activePath === item.path ? 'primary.main' : 'transparent',
-              boxShadow: activePath === item.path ? `0 12px 24px ${alpha(theme.palette.primary.main, 0.22)}` : 'none',
-              '&:hover': {
-                bgcolor: activePath === item.path ? 'primary.main' : alpha(theme.palette.primary.main, 0.08)
-              },
-              '&.Mui-selected': {
-                bgcolor: 'primary.main',
-                color: 'common.white',
-                '& .MuiListItemIcon-root': { color: 'common.white' }
-              }
-            }}
-          >
-            <ListItemIcon sx={{ minWidth: 42, color: activePath === item.path ? 'common.white' : 'text.secondary' }}>{item.icon}</ListItemIcon>
-            <ListItemText primary={item.label} primaryTypographyProps={{ fontWeight: 850 }} />
-          </ListItemButton>
-        ))}
+
+      <List sx={{ px: 2, py: 0 }}>
+        {navItems.map((item) => {
+          const selected = activePath === item.path;
+          return (
+            <ListItemButton
+              key={item.path}
+              selected={selected}
+              onClick={() => {
+                navigate(item.path);
+                setDrawerOpen(false);
+              }}
+              sx={{
+                borderRadius: 2,
+                mb: 1.2,
+                minHeight: 58,
+                color: selected ? 'white' : 'rgba(255,255,255,0.74)',
+                bgcolor: selected ? 'transparent' : 'rgba(255,255,255,0.035)',
+                backgroundImage: selected ? 'linear-gradient(135deg, #7438F4 0%, #3BB5F6 100%)' : 'none',
+                border: '1px solid rgba(255,255,255,0.08)',
+                boxShadow: selected ? '0 18px 34px rgba(82,92,229,0.28)' : 'none',
+                '&:hover': {
+                  bgcolor: selected ? 'transparent' : 'rgba(255,255,255,0.07)'
+                },
+                '&.Mui-selected': {
+                  bgcolor: 'transparent',
+                  backgroundImage: 'linear-gradient(135deg, #7438F4 0%, #3BB5F6 100%)',
+                  color: 'white',
+                  '& .MuiListItemIcon-root': { color: 'white' }
+                }
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 42, color: selected ? 'white' : 'rgba(255,255,255,0.74)' }}>{item.icon}</ListItemIcon>
+              <ListItemText primary={item.label} primaryTypographyProps={{ fontWeight: 850 }} />
+            </ListItemButton>
+          );
+        })}
       </List>
+
       <Box sx={{ mt: 'auto', p: 2 }}>
-        <Box sx={{ p: 1.5, borderRadius: 1, bgcolor: mode === 'dark' ? alpha('#FFFFFF', 0.05) : '#0F172A', color: 'white' }}>
+        <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: '#23242D', color: 'white', border: '1px solid rgba(255,255,255,0.08)' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
             <Avatar sx={{ width: 40, height: 40, bgcolor: 'primary.main', fontWeight: 900 }}>
               {(user?.firstName?.[0] || user?.email?.[0] || 'C').toUpperCase()}
@@ -166,7 +168,7 @@ export default function AppShell({ children, onSearch }) {
           sx={{
             width: drawerWidth,
             flexShrink: 0,
-            '& .MuiDrawer-paper': { width: drawerWidth, boxSizing: 'border-box', borderRightColor: 'divider' }
+            '& .MuiDrawer-paper': { width: drawerWidth, boxSizing: 'border-box', borderRight: 0 }
           }}
         >
           {drawerContent}
@@ -182,11 +184,11 @@ export default function AppShell({ children, onSearch }) {
           borderColor: 'divider',
           width: { md: `calc(100% - ${drawerWidth}px)` },
           ml: { md: `${drawerWidth}px` },
-          bgcolor: alpha(theme.palette.background.paper, 0.9),
+          bgcolor: alpha(theme.palette.background.paper, 0.92),
           backdropFilter: 'blur(12px)'
         }}
       >
-        <Toolbar sx={{ gap: 2, minHeight: 72 }}>
+        <Toolbar sx={{ gap: 2, minHeight: 78 }}>
           {isMobile && (
             <Tooltip title="Menu">
               <IconButton onClick={() => setDrawerOpen(true)} edge="start">
@@ -198,7 +200,14 @@ export default function AppShell({ children, onSearch }) {
             size="small"
             placeholder="Rechercher un pasteur, un poste, une paroisse..."
             onChange={(event) => onSearch?.(event.target.value)}
-            sx={{ flex: 1, maxWidth: 680 }}
+            sx={{
+              flex: 1,
+              maxWidth: 680,
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 999,
+                bgcolor: mode === 'dark' ? 'rgba(255,255,255,0.04)' : '#F3F4FF'
+              }
+            }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -213,7 +222,7 @@ export default function AppShell({ children, onSearch }) {
             </IconButton>
           </Tooltip>
           <Button color="inherit" onClick={(event) => setAnchorEl(event.currentTarget)} sx={{ minWidth: 0, gap: 1 }}>
-            <Avatar sx={{ width: 38, height: 38, bgcolor: 'primary.main', fontSize: 14, fontWeight: 900 }}>
+            <Avatar sx={{ width: 40, height: 40, bgcolor: 'primary.main', fontSize: 14, fontWeight: 900 }}>
               {(user?.firstName?.[0] || user?.email?.[0] || 'C').toUpperCase()}
             </Avatar>
             {!isMobile && (
@@ -245,7 +254,7 @@ export default function AppShell({ children, onSearch }) {
         <Box sx={{ width: drawerWidth }}>{drawerContent}</Box>
       </Drawer>
 
-      <Box component="main" sx={{ ml: { md: `${drawerWidth}px` }, pt: 10, pb: { xs: 9, md: 4 }, px: { xs: 2, sm: 3, lg: 4 } }}>
+      <Box component="main" sx={{ ml: { md: `${drawerWidth}px` }, pt: 11, pb: { xs: 9, md: 4 }, px: { xs: 2, sm: 3, lg: 4 } }}>
         {children}
       </Box>
 
@@ -265,9 +274,7 @@ export default function AppShell({ children, onSearch }) {
       <Dialog open={confirmLogout} onClose={() => setConfirmLogout(false)} maxWidth="xs" fullWidth>
         <DialogTitle>Confirmer la déconnexion</DialogTitle>
         <DialogContent>
-          <Typography color="text.secondary">
-            Voulez-vous vraiment fermer cette session CBCA ?
-          </Typography>
+          <Typography color="text.secondary">Voulez-vous vraiment fermer cette session CBCA ?</Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirmLogout(false)}>Annuler</Button>
