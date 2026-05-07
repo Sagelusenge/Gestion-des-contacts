@@ -1,21 +1,7 @@
-import { MapPinned, Plus, Trash2 } from 'lucide-react';
+import { MapPinned, Pencil, Plus, Printer, Trash2, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../services/api.js';
-
-const quickPostes = [
-  'Goma',
-  'Kinshasa',
-  'Bukavu',
-  'Beni',
-  'Butembo',
-  'Lubero',
-  'Oicha',
-  'Kayna',
-  'Minova',
-  'Masisi',
-  'Rutshuru',
-  'Walikale'
-];
+import { printRecord } from '../utils/printRecord.js';
 
 const initialPoste = {
   nom: '',
@@ -29,6 +15,7 @@ export function AddPosteView({ token }) {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [editingPosteId, setEditingPosteId] = useState(null);
 
   const sortedPostes = useMemo(() => [...postes].sort((a, b) => a.nom.localeCompare(b.nom)), [postes]);
 
@@ -49,12 +36,28 @@ export function AddPosteView({ token }) {
     setForm((current) => ({ ...current, [field]: value }));
   }
 
-  function fillQuickPoste(poste) {
+  function resetForm() {
+    setForm(initialPoste);
+    setEditingPosteId(null);
+  }
+
+  function handleEdit(poste) {
+    setEditingPosteId(poste.id);
     setForm({
-      nom: poste,
-      region: poste,
-      description: `Poste ecclesiastique de ${poste}`
+      nom: poste.nom || '',
+      region: poste.region || '',
+      description: poste.description || ''
     });
+    setMessage('');
+    setError('');
+  }
+
+  function handlePrint(poste) {
+    printRecord(`Poste - ${poste.nom}`, [
+      { label: 'Nom du poste', value: poste.nom },
+      { label: 'Région', value: poste.region },
+      { label: 'Description', value: poste.description }
+    ]);
   }
 
   async function handleSubmit(event) {
@@ -64,13 +67,22 @@ export function AddPosteView({ token }) {
     setIsSaving(true);
 
     try {
-      await api.createPoste(token, {
+      const payload = {
         nom: form.nom,
         region: form.region || null,
         description: form.description || null
-      });
-      setForm(initialPoste);
-      setMessage('Poste ajouté avec succès.');
+      };
+
+      if (editingPosteId) {
+        await api.updatePoste(token, editingPosteId, payload);
+        setMessage('Poste mis à jour avec succès.');
+        resetForm();
+      } else {
+        await api.createPoste(token, payload);
+        setForm(initialPoste);
+        setMessage('Poste ajouté avec succès.');
+      }
+
       await loadPostes();
     } catch (saveError) {
       setError(saveError.message);
@@ -97,15 +109,7 @@ export function AddPosteView({ token }) {
       <form className="dark-form-panel" onSubmit={handleSubmit}>
         <div className="panel-title">
           <MapPinned size={22} />
-          <h2>Ajouter un poste</h2>
-        </div>
-
-        <div className="quick-postes">
-          {quickPostes.map((poste) => (
-            <button className="quick-poste" type="button" key={poste} onClick={() => fillQuickPoste(poste)}>
-              {poste}
-            </button>
-          ))}
+          <h2>{editingPosteId ? 'Modifier un poste' : 'Ajouter un poste'}</h2>
         </div>
 
         <label className="field dark-field">
@@ -124,10 +128,18 @@ export function AddPosteView({ token }) {
         {message ? <p className="notice success">{message}</p> : null}
         {error ? <p className="notice error">{error}</p> : null}
 
-        <button className="admin-primary" type="submit" disabled={isSaving}>
-          <Plus size={18} />
-          {isSaving ? 'Ajout...' : 'Ajouter le poste'}
-        </button>
+        <div className="form-actions-row">
+          <button className="admin-primary" type="submit" disabled={isSaving}>
+            <Plus size={18} />
+            {isSaving ? 'Enregistrement...' : editingPosteId ? 'Mettre à jour' : 'Ajouter le poste'}
+          </button>
+          {editingPosteId ? (
+            <button className="secondary-action" type="button" onClick={resetForm}>
+              <X size={18} />
+              Annuler
+            </button>
+          ) : null}
+        </div>
       </form>
 
       <article className="dark-panel">
@@ -142,9 +154,17 @@ export function AddPosteView({ token }) {
                 <strong>{poste.nom}</strong>
                 <span>{poste.region || 'Sans région'}</span>
               </div>
-              <button type="button" onClick={() => handleDelete(poste.id)} aria-label="Supprimer">
-                <Trash2 size={18} />
-              </button>
+              <div className="row-actions">
+                <button className="row-action update" type="button" onClick={() => handleEdit(poste)} aria-label="Modifier">
+                  <Pencil size={17} />
+                </button>
+                <button className="row-action print" type="button" onClick={() => handlePrint(poste)} aria-label="Imprimer">
+                  <Printer size={17} />
+                </button>
+                <button className="row-action delete" type="button" onClick={() => handleDelete(poste.id)} aria-label="Supprimer">
+                  <Trash2 size={17} />
+                </button>
+              </div>
             </div>
           ))}
         </div>

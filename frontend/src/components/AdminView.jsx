@@ -2,21 +2,6 @@ import { Plus, RefreshCw, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../services/api.js';
 
-const quickPostes = [
-  'Goma',
-  'Kinshasa',
-  'Bukavu',
-  'Beni',
-  'Butembo',
-  'Lubero',
-  'Oicha',
-  'Kayna',
-  'Minova',
-  'Masisi',
-  'Rutshuru',
-  'Walikale'
-];
-
 const initialPoste = {
   nom: '',
   region: '',
@@ -71,14 +56,6 @@ export function AdminView({ token }) {
 
   function updatePastorField(field, value) {
     setPastorForm((current) => ({ ...current, [field]: value }));
-  }
-
-  function fillQuickPoste(poste) {
-    setPosteForm({
-      nom: poste,
-      region: poste,
-      description: `Poste ecclesiastique de ${poste}`
-    });
   }
 
   async function handleCreatePoste(event) {
@@ -187,18 +164,6 @@ export function AdminView({ token }) {
         <section className="admin-grid">
           <form className="form-panel" onSubmit={handleCreatePoste}>
             <h2>Ajouter un poste</h2>
-            <div className="quick-postes" aria-label="Postes rapides">
-              {quickPostes.map((poste) => (
-                <button
-                  className="quick-poste"
-                  type="button"
-                  key={poste}
-                  onClick={() => fillQuickPoste(poste)}
-                >
-                  {poste}
-                </button>
-              ))}
-            </div>
             <label className="field">
               <span>Nom du poste</span>
               <input
@@ -225,10 +190,12 @@ export function AdminView({ token }) {
                 rows="3"
               />
             </label>
-            <button className="primary-button" type="submit" disabled={isSaving}>
-              <Plus size={18} />
-              Ajouter
-            </button>
+            <div className="form-actions-row">
+              <button className="primary-button" type="submit" disabled={isSaving}>
+                <Plus size={18} />
+                Ajouter
+              </button>
+            </div>
           </form>
 
           <section className="table-panel" aria-label="Postes existants">
@@ -319,10 +286,12 @@ export function AdminView({ token }) {
                 />
               </label>
             </div>
-            <button className="primary-button" type="submit" disabled={isSaving}>
-              <Plus size={18} />
-              Ajouter
-            </button>
+            <div className="form-actions-row">
+              <button className="primary-button" type="submit" disabled={isSaving}>
+                <Plus size={18} />
+                Ajouter
+              </button>
+            </div>
           </form>
 
           <section className="table-panel" aria-label="Pasteurs">

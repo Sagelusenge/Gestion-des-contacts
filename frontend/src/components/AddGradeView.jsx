@@ -1,6 +1,7 @@
-import { BadgePlus, Plus, Trash2 } from 'lucide-react';
+import { BadgePlus, Pencil, Plus, Printer, Trash2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { api } from '../services/api.js';
+import { printRecord } from '../utils/printRecord.js';
 
 const initialGrade = {
   nom: '',
@@ -13,6 +14,7 @@ export function AddGradeView({ token }) {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [editingGradeId, setEditingGradeId] = useState(null);
 
   async function loadGrades() {
     try {
@@ -31,6 +33,28 @@ export function AddGradeView({ token }) {
     setForm((current) => ({ ...current, [field]: value }));
   }
 
+  function resetForm() {
+    setForm(initialGrade);
+    setEditingGradeId(null);
+  }
+
+  function handleEdit(grade) {
+    setEditingGradeId(grade.id);
+    setForm({
+      nom: grade.nom || '',
+      description: grade.description || ''
+    });
+    setMessage('');
+    setError('');
+  }
+
+  function handlePrint(grade) {
+    printRecord(`Grade - ${grade.nom}`, [
+      { label: 'Nom du grade', value: grade.nom },
+      { label: 'Description', value: grade.description }
+    ]);
+  }
+
   async function handleSubmit(event) {
     event.preventDefault();
     setError('');
@@ -38,12 +62,21 @@ export function AddGradeView({ token }) {
     setIsSaving(true);
 
     try {
-      await api.createGrade(token, {
+      const payload = {
         nom: form.nom,
         description: form.description || null
-      });
-      setForm(initialGrade);
-      setMessage('Grade ajouté avec succès.');
+      };
+
+      if (editingGradeId) {
+        await api.updateGrade(token, editingGradeId, payload);
+        setMessage('Grade mis à jour avec succès.');
+        resetForm();
+      } else {
+        await api.createGrade(token, payload);
+        setForm(initialGrade);
+        setMessage('Grade ajouté avec succès.');
+      }
+
       await loadGrades();
     } catch (saveError) {
       setError(saveError.message);
@@ -70,7 +103,7 @@ export function AddGradeView({ token }) {
       <form className="dark-form-panel" onSubmit={handleSubmit}>
         <div className="panel-title">
           <BadgePlus size={22} />
-          <h2>Ajouter un grade</h2>
+          <h2>{editingGradeId ? 'Modifier un grade' : 'Ajouter un grade'}</h2>
         </div>
 
         <label className="field dark-field">
@@ -86,10 +119,18 @@ export function AddGradeView({ token }) {
         {message ? <p className="notice success">{message}</p> : null}
         {error ? <p className="notice error">{error}</p> : null}
 
-        <button className="admin-primary" type="submit" disabled={isSaving}>
-          <Plus size={18} />
-          {isSaving ? 'Ajout...' : 'Ajouter le grade'}
-        </button>
+        <div className="form-actions-row">
+          <button className="admin-primary" type="submit" disabled={isSaving}>
+            <Plus size={18} />
+            {isSaving ? 'Enregistrement...' : editingGradeId ? 'Mettre à jour' : 'Ajouter le grade'}
+          </button>
+          {editingGradeId ? (
+            <button className="secondary-action" type="button" onClick={resetForm}>
+              <X size={18} />
+              Annuler
+            </button>
+          ) : null}
+        </div>
       </form>
 
       <article className="dark-panel">
@@ -104,9 +145,17 @@ export function AddGradeView({ token }) {
                 <strong>{grade.nom}</strong>
                 <span>{grade.description || 'Sans description'}</span>
               </div>
-              <button type="button" onClick={() => handleDelete(grade.id)} aria-label="Supprimer">
-                <Trash2 size={18} />
-              </button>
+              <div className="row-actions">
+                <button className="row-action update" type="button" onClick={() => handleEdit(grade)} aria-label="Modifier">
+                  <Pencil size={17} />
+                </button>
+                <button className="row-action print" type="button" onClick={() => handlePrint(grade)} aria-label="Imprimer">
+                  <Printer size={17} />
+                </button>
+                <button className="row-action delete" type="button" onClick={() => handleDelete(grade.id)} aria-label="Supprimer">
+                  <Trash2 size={17} />
+                </button>
+              </div>
             </div>
           ))}
         </div>

@@ -38,6 +38,9 @@ export function DashboardView({ token, onNavigate }) {
     ];
   }, [pastors, postes, grades]);
 
+  const recentPastors = pastors.slice(0, 5);
+  const visiblePostes = postes.slice(0, 8);
+
   return (
     <div className="dashboard-page">
       {error ? <p className="notice error">{error}</p> : null}
@@ -56,10 +59,10 @@ export function DashboardView({ token, onNavigate }) {
       </section>
 
       <section className="dashboard-grid">
-        <article className="dark-panel">
+        <article className="dark-panel dashboard-main-panel">
           <div className="panel-title">
             <ContactRound size={22} />
-            <h2>Derniers pasteurs</h2>
+            <h2>Derniers pasteurs enregistrés</h2>
           </div>
           <div className="data-table">
             <div className="table-head">
@@ -67,7 +70,7 @@ export function DashboardView({ token, onNavigate }) {
               <span>Degré</span>
               <span>Poste</span>
             </div>
-            {pastors.slice(0, 7).map((pastor) => (
+            {recentPastors.map((pastor) => (
               <div className="table-row" key={pastor.id}>
                 <span>{pastor.nom}</span>
                 <span>{pastor.degre}</span>
@@ -77,21 +80,16 @@ export function DashboardView({ token, onNavigate }) {
           </div>
         </article>
 
-        <article className="dark-panel">
+        <article className="dark-panel dashboard-side-panel">
           <div className="panel-title">
             <MapPinned size={22} />
-            <h2>Postes à organiser</h2>
+            <h2>Postes</h2>
           </div>
-          <div className="data-table">
-            <div className="table-head two">
-              <span>Poste</span>
-              <span>Région</span>
-            </div>
-            {postes.slice(0, 8).map((poste) => (
-              <div className="table-row two" key={poste.id}>
-                <span>{poste.nom}</span>
-                <span>{poste.region || 'Non définie'}</span>
-              </div>
+          <div className="poste-pill-list">
+            {visiblePostes.map((poste) => (
+              <span className="poste-pill" key={poste.id}>
+                {poste.nom}
+              </span>
             ))}
           </div>
         </article>
