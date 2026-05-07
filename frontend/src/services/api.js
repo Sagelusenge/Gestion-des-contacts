@@ -1,34 +1,56 @@
-import axios from 'axios';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
+async function request(path, { token, method = 'GET', body } = {}) {
+  const headers = {
+    Accept: 'application/json'
+  };
 
-export const apiClient = axios.create({
-  baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json'
+  if (body) {
+    headers['Content-Type'] = 'application/json';
   }
-});
 
-// Interceptor pour ajouter le token
-apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    headers.Authorization = `Bearer ${token}`;
   }
-  return config;
-});
 
-// Interceptor pour gérer les erreurs
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
-    }
-    return Promise.reject(error);
+  const response = await fetch(`${API_URL}${path}`, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined
+  });
+
+  if (response.status === 204) {
+    return null;
   }
-);
 
-export default apiClient;
+  const payload = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(payload.message || 'Erreur reseau.');
+  }
+
+  return payload;
+}
+
+export const api = {
+  login: (credentials) => request('/auth/login', { method: 'POST', body: credentials }),
+  getGrades: (token) => request('/grades', { token }),
+  createGrade: (token, data) => request('/grades', { token, method: 'POST', body: data }),
+  updateGrade: (token, id, data) => request(`/grades/${id}`, { token, method: 'PUT', body: data }),
+  deleteGrade: (token, id) => request(`/grades/${id}`, { token, method: 'DELETE' }),
+  getPastors: (token, params = {}) => {
+    const query = new URLSearchParams(params);
+    return request(`/pastors?${query.toString()}`, { token });
+  },
+  searchPastors: (token, params = {}) => {
+    const query = new URLSearchParams(params);
+    return request(`/pastors/search?${query.toString()}`, { token });
+  },
+  createPastor: (token, data) => request('/pastors', { token, method: 'POST', body: data }),
+  updatePastor: (token, id, data) => request(`/pastors/${id}`, { token, method: 'PUT', body: data }),
+  deletePastor: (token, id) => request(`/pastors/${id}`, { token, method: 'DELETE' }),
+  getPostes: (token) => request('/postes', { token }),
+  createPoste: (token, data) => request('/postes', { token, method: 'POST', body: data }),
+  updatePoste: (token, id, data) => request(`/postes/${id}`, { token, method: 'PUT', body: data }),
+  deletePoste: (token, id) => request(`/postes/${id}`, { token, method: 'DELETE' })
+};

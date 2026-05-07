@@ -1,0 +1,17 @@
+{
+  "name": "Annuaire CBCA",
+  "short_name": "CBCA",
+  "description": "Annuaire rapide des pasteurs CBCA",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f7faf8",
+  "theme_color": "#123c43",
+  "icons": [
+    {
+      "src": "/icons/cbca-mark.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

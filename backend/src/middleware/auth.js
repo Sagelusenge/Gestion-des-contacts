@@ -1,32 +1,27 @@
-const jwt = require('jsonwebtoken');
-const config = require('../config');
+import jwt from 'jsonwebtoken';
+import { env } from '../config/env.js';
+import { httpError } from '../utils/httpError.js';
 
-const authMiddleware = (req, res, next) => {
-  try {
-    const token = req.headers.authorization?.split(' ')[1];
-    
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        error: {
-          code: 'AUTH_REQUIRED',
-          message: 'Token manquant'
-        }
-      });
-    }
-    
-    const decoded = jwt.verify(token, config.jwt.secret);
-    req.user = decoded;
-    next();
-  } catch (error) {
-    return res.status(401).json({
-      success: false,
-      error: {
-        code: 'AUTH_INVALID',
-        message: 'Token invalide ou expiré'
-      }
-    });
+export function authenticate(req, _res, next) {
+  const header = req.headers.authorization || '';
+  const [scheme, token] = header.split(' ');
+
+  if (scheme !== 'Bearer' || !token) {
+    return next(httpError(401, 'Authentification requise.'));
   }
-};
 
-module.exports = authMiddleware;
+  try {
+    req.user = jwt.verify(token, env.jwt.secret);
+    return next();
+  } catch {
+    return next(httpError(401, 'Session invalide ou expiree.'));
+  }
+}
+
+export function requireAdmin(req, _res, next) {
+  if (req.user?.role !== 'admin') {
+    return next(httpError(403, "Acces reserve a l'admin."));
+  }
+
+  return next();
+}

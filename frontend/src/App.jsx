@@ -1,92 +1,111 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { ProtectedRoute } from './utils/ProtectedRoute';
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import Pasteurs from './pages/Pasteurs';
-import PasteurDetail from './pages/PasteurDetail';
-import Communication from './pages/Communication';
-import Organisation from './pages/Organisation';
-import Etats from './pages/Etats';
-import Unauthorized from './pages/Unauthorized';
+import { RefreshCw } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { AddPastorView } from './components/AddPastorView.jsx';
+import { AddGradeView } from './components/AddGradeView.jsx';
+import { AddPosteView } from './components/AddPosteView.jsx';
+import { DashboardView } from './components/DashboardView.jsx';
+import { DirectoryView } from './components/DirectoryView.jsx';
+import { LoginView } from './components/LoginView.jsx';
+import { Sidebar } from './components/Sidebar.jsx';
 
-function App() {
-  return (
-    <BrowserRouter>
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/unauthorized" element={<Unauthorized />} />
+const SESSION_KEY = 'cbca_session';
 
-        {/* Protected Routes */}
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
+const pageMeta = {
+  dashboard: {
+    title: 'Dashboard',
+    subtitle: 'Vue générale de l’annuaire pastoral CBCA'
+  },
+  directory: {
+    title: 'Annuaire',
+    subtitle: 'Recherche rapide par nom, degré, poste ou région'
+  },
+  addPastor: {
+    title: 'Ajout des pasteurs',
+    subtitle: 'Enregistrer un nouveau pasteur et ses coordonnées'
+  },
+  addPoste: {
+    title: 'Ajout des postes',
+    subtitle: 'Créer les postes, paroisses, régions et départements'
+  },
+  addGrade: {
+    title: 'Gestion des grades',
+    subtitle: 'Créer les grades que l’admin utilisera pour les pasteurs'
+  }
+};
 
-        <Route
-          path="/pasteurs"
-          element={
-            <ProtectedRoute>
-              <Pasteurs />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/pasteurs/:id"
-          element={
-            <ProtectedRoute>
-              <PasteurDetail />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/organisation"
-          element={
-            <ProtectedRoute>
-              <Organisation />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/paroisses"
-          element={
-            <ProtectedRoute>
-              <Organisation />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/communication"
-          element={
-            <ProtectedRoute>
-              <Communication />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/etats"
-          element={
-            <ProtectedRoute>
-              <Etats />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Catch All */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
-  );
+function readSession() {
+  try {
+    return JSON.parse(localStorage.getItem(SESSION_KEY)) || null;
+  } catch {
+    return null;
+  }
 }
 
-export default App;
+export default function App() {
+  const [session, setSession] = useState(readSession);
+  const [activeView, setActiveView] = useState('dashboard');
+  const token = session?.token;
+  const user = session?.user;
+  const activeMeta = pageMeta[activeView] || pageMeta.dashboard;
+
+  const content = useMemo(() => {
+    if (!session) {
+      return null;
+    }
+
+    if (activeView === 'dashboard') {
+      return <DashboardView token={token} onNavigate={setActiveView} />;
+    }
+
+    if (activeView === 'addPastor') {
+      return <AddPastorView token={token} />;
+    }
+
+    if (activeView === 'addPoste') {
+      return <AddPosteView token={token} />;
+    }
+
+    if (activeView === 'addGrade') {
+      return <AddGradeView token={token} />;
+    }
+
+    return <DirectoryView token={token} onUnauthorized={handleLogout} />;
+  }, [activeView, session, token]);
+
+  function handleLogin(nextSession) {
+    localStorage.setItem(SESSION_KEY, JSON.stringify(nextSession));
+    setSession(nextSession);
+    setActiveView('dashboard');
+  }
+
+  function handleLogout() {
+    localStorage.removeItem(SESSION_KEY);
+    setSession(null);
+    setActiveView('dashboard');
+  }
+
+  if (!session) {
+    return <LoginView onLogin={handleLogin} />;
+  }
+
+  return (
+    <div className="admin-shell">
+      <Sidebar activeView={activeView} onViewChange={setActiveView} onLogout={handleLogout} user={user} />
+
+      <section className="admin-workspace">
+        <header className="workspace-header">
+          <div>
+            <h1>{activeMeta.title}</h1>
+            <p>{activeMeta.subtitle}</p>
+          </div>
+          <button className="workspace-tool" type="button" onClick={() => window.location.reload()}>
+            <RefreshCw size={20} />
+            Actualiser
+          </button>
+        </header>
+
+        <div className="workspace-content">{content}</div>
+      </section>
+    </div>
+  );
+}

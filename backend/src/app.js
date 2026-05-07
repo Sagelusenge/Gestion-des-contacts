@@ -1,67 +1,29 @@
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const morgan = require('morgan');
-const rateLimit = require('express-rate-limit');
-const config = require('./config');
+import cors from 'cors';
+import express from 'express';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import { env } from './config/env.js';
+import { errorHandler, notFound } from './middleware/errorHandler.js';
+import authRoutes from './routes/auth.routes.js';
+import gradeRoutes from './routes/grades.routes.js';
+import pastorRoutes from './routes/pastors.routes.js';
+import posteRoutes from './routes/postes.routes.js';
 
-const authMiddleware = require('./middleware/auth');
-const errorHandler = require('./middleware/errorHandler');
-
-const authRoutes = require('./routes/auth');
-const pasteurRoutes = require('./routes/pasteurs');
-const geographieRoutes = require('./routes/geographie');
-const mouvementRoutes = require('./routes/mouvements');
-const dashboardRoutes = require('./routes/dashboard');
-const auditRoutes = require('./routes/audit');
-const messageRoutes = require('./routes/messages');
-
-const app = express();
+export const app = express();
 
 app.use(helmet());
-app.use(cors(config.cors));
+app.use(cors({ origin: env.corsOrigin, credentials: true }));
+app.use(express.json({ limit: '1mb' }));
+app.use(morgan(env.nodeEnv === 'production' ? 'combined' : 'dev'));
 
-const limiter = rateLimit({
-  windowMs: config.rateLimit.windowMs,
-  max: config.rateLimit.maxRequests,
-  message: 'Trop de requêtes, veuillez réessayer plus tard'
-});
-app.use('/api/v1/auth', limiter);
-
-app.use(morgan('combined'));
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
-
-app.get('/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date() });
+app.get('/api/health', (_req, res) => {
+  res.json({ status: 'ok', service: 'cbca-annuaire-api' });
 });
 
-app.get('/', (req, res) => {
-  res.json({
-    message: 'CBCA Pastor Management API',
-    version: config.app.version,
-    docs: `${config.app.apiPrefix}/docs`
-  });
-});
+app.use('/api/auth', authRoutes);
+app.use('/api/grades', gradeRoutes);
+app.use('/api/pastors', pastorRoutes);
+app.use('/api/postes', posteRoutes);
 
-app.use(`${config.app.apiPrefix}/auth`, authRoutes);
-app.use(`${config.app.apiPrefix}/pasteurs`, authMiddleware, pasteurRoutes);
-app.use(`${config.app.apiPrefix}/geographie`, authMiddleware, geographieRoutes);
-app.use(`${config.app.apiPrefix}/mouvements`, authMiddleware, mouvementRoutes);
-app.use(`${config.app.apiPrefix}/dashboard`, authMiddleware, dashboardRoutes);
-app.use(`${config.app.apiPrefix}/audit`, authMiddleware, auditRoutes);
-app.use(`${config.app.apiPrefix}/messages`, authMiddleware, messageRoutes);
-
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    error: {
-      code: 'NOT_FOUND',
-      message: 'Route non trouvée'
-    }
-  });
-});
-
+app.use(notFound);
 app.use(errorHandler);
-
-module.exports = app;
