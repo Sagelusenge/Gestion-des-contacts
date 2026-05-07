@@ -1973,3 +1973,146 @@ body {
     width: max-content;
   }
 }
+
+/* Final layout polish */
+.login-panel {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+}
+
+.brand-mark {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.login-form {
+  width: 100%;
+  text-align: left;
+}
+
+.directory-panel-simple {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  max-width: 980px;
+}
+
+.directory-panel-simple .search-group,
+.directory-panel-simple .simple-filter-bar,
+.directory-panel-simple .directory-summary-row,
+.directory-panel-simple .directory-summary,
+.directory-panel-simple .notice,
+.directory-panel-simple .connect-list {
+  grid-column: 1 / -1;
+}
+
+.simple-filter-bar {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 240px));
+  gap: 12px;
+}
+
+.simple-filter-bar label {
+  display: grid;
+  gap: 6px;
+  color: var(--cbca-muted);
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+.simple-filter-bar select {
+  min-height: 44px;
+  border: 1px solid var(--cbca-line);
+  border-radius: 12px;
+  background: var(--cbca-white);
+  color: var(--cbca-text);
+  padding: 0 12px;
+  outline: none;
+}
+
+.simple-filter-bar select:focus {
+  border-color: var(--cbca-blue);
+  box-shadow: 0 0 0 3px rgba(18, 63, 140, 0.12);
+}
+
+.directory-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  color: var(--cbca-muted);
+  font-weight: 800;
+}
+
+.directory-summary strong {
+  color: var(--cbca-blue);
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.directory-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.print-all-button {
+  min-height: 42px;
+  border: 1px solid var(--cbca-line);
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--cbca-white);
+  color: var(--cbca-blue);
+  padding: 0 14px;
+  font-weight: 900;
+  box-shadow: 0 8px 20px rgba(18, 63, 140, 0.08);
+}
+
+.print-all-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.admin-shell .connect-avatar {
+  border: 1px solid var(--cbca-line);
+  background: #eef3fb;
+  color: var(--cbca-blue);
+  box-shadow: none;
+}
+
+.admin-shell .connect-card {
+  box-shadow: 0 8px 22px rgba(18, 63, 140, 0.06);
+}
+
+.admin-shell .square-action.whatsapp-call {
+  border: 1px solid rgba(37, 211, 102, 0.22);
+}
+
+@media (min-width: 760px) {
+  .directory-panel-simple {
+    grid-template-columns: 1fr;
+  }
+
+  .directory-panel-simple .search-group {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 560px) {
+  .simple-filter-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .directory-summary-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .print-all-button {
+    width: 100%;
+  }
+}

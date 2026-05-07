@@ -20,10 +20,10 @@ mysql -u root -p < ../database/seed.sql
 
 ## Authentification
 
-Le seed cree un admin de test :
+Le seed cree l'admin initial :
 
-- username : `admin`
-- password : `admin123`
+- username : `sagelusenge@gmail.com`
+- password : `Bonsoirs`
 
 Les routes de lecture sont protegees par token JWT. Les routes d'ecriture sont reservees au role `admin`.
 

@@ -18,10 +18,10 @@ http://localhost:5173
 
 ## Connexion
 
-Compte de test apres import du seed MySQL :
+Compte admin apres import du seed MySQL :
 
-- utilisateur : `admin`
-- mot de passe : `admin123`
+- utilisateur : `sagelusenge@gmail.com`
+- mot de passe : `Bonsoirs`
 
 ## Fonctionnalites
 

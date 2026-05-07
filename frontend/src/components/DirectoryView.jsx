@@ -1,7 +1,8 @@
-import { Filter, MapPin, RefreshCw, Search } from 'lucide-react';
+import { Printer, RefreshCw, Search } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useDebounce } from '../hooks/useDebounce.js';
 import { api } from '../services/api.js';
+import { printPastorsList } from '../utils/printRecord.js';
 import { PastorCard } from './PastorCard.jsx';
 
 export function DirectoryView({ token, onUnauthorized }) {
@@ -15,29 +16,10 @@ export function DirectoryView({ token, onUnauthorized }) {
   const [error, setError] = useState('');
   const debouncedQuery = useDebounce(query, 300);
 
-  const posteChips = useMemo(() => {
-    const recommended = [
-      'Goma',
-      'Kinshasa',
-      'Bukavu',
-      'Beni',
-      'Butembo',
-      'Lubero',
-      'Oicha',
-      'Kayna',
-      'Minova',
-      'Masisi',
-      'Rutshuru',
-      'Walikale'
-    ];
-    const fromDatabase = postes.flatMap((poste) => [poste.region, poste.nom]).filter(Boolean);
-    return ['Tous', ...new Set([...recommended, ...fromDatabase])];
+  const posteOptions = useMemo(() => {
+    const values = postes.flatMap((poste) => [poste.region, poste.nom]).filter(Boolean);
+    return [...new Set(values)].sort((a, b) => a.localeCompare(b));
   }, [postes]);
-
-  const degres = useMemo(
-    () => ['Tous', ...grades.map((grade) => grade.nom)],
-    [grades]
-  );
 
   async function loadPastors() {
     setError('');
@@ -63,6 +45,24 @@ export function DirectoryView({ token, onUnauthorized }) {
     }
   }
 
+  async function handlePrintAllPastors() {
+    setError('');
+
+    try {
+      const payload = await api.getPastors(token, {
+        page: 1,
+        limit: 1000
+      });
+      printPastorsList(payload.data || []);
+    } catch (printError) {
+      if (printError.message.includes('Authentification') || printError.message.includes('Session')) {
+        onUnauthorized();
+        return;
+      }
+      setError(printError.message);
+    }
+  }
+
   useEffect(() => {
     Promise.all([api.getPostes(token), api.getGrades(token)])
       .then(([postesPayload, gradesPayload]) => {
@@ -81,29 +81,14 @@ export function DirectoryView({ token, onUnauthorized }) {
 
   return (
     <main className="app-main connect-main">
-      <section className="directory-panel">
-        <section className="overview-band" aria-label="Aperçu">
-          <div>
-            <span className="stat-value">{pastors.length}</span>
-            <span className="stat-label">résultats</span>
-          </div>
-          <div>
-            <span className="stat-value">{postes.length}</span>
-            <span className="stat-label">postes</span>
-          </div>
-          <div>
-            <span className="stat-value">{activeDegree || 'Tous'}</span>
-            <span className="stat-label">degré</span>
-          </div>
-        </section>
-
+      <section className="directory-panel directory-panel-simple">
         <div className="search-group">
           <label className="connect-search">
             <Search size={21} />
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Rechercher par nom, degré ou poste..."
+              placeholder="Rechercher un pasteur..."
             />
           </label>
           <button className="refresh-inline" type="button" onClick={loadPastors} aria-label="Actualiser">
@@ -111,46 +96,48 @@ export function DirectoryView({ token, onUnauthorized }) {
           </button>
         </div>
 
-        <div className="filter-block">
-          <div className="filter-label">
-            <MapPin size={16} />
-            <span>Postes Ecclésiastiques</span>
-          </div>
-          <div className="connect-chip-row" aria-label="Filtres postes">
-            {posteChips.map((poste) => {
-              const value = poste === 'Tous' ? '' : poste;
-              return (
-                <button
-                  className={activePoste === value ? 'connect-chip active' : 'connect-chip'}
-                  type="button"
-                  key={poste}
-                  onClick={() => setActivePoste(value)}
-                >
+        <div className="simple-filter-bar">
+          <label>
+            <span>Poste</span>
+            <select value={activePoste} onChange={(event) => setActivePoste(event.target.value)}>
+              <option value="">Tous les postes</option>
+              {posteOptions.map((poste) => (
+                <option value={poste} key={poste}>
                   {poste}
-                </button>
-              );
-            })}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            <span>Grade</span>
+            <select value={activeDegree} onChange={(event) => setActiveDegree(event.target.value)}>
+              <option value="">Tous les grades</option>
+              {grades.map((grade) => (
+                <option value={grade.nom} key={grade.id}>
+                  {grade.nom}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <div className="directory-summary-row">
+          <div className="directory-summary">
+            <strong>{pastors.length}</strong>
+            <span>{pastors.length > 1 ? 'pasteurs trouvés' : 'pasteur trouvé'}</span>
           </div>
+          <button
+            className="print-all-button"
+            type="button"
+            onClick={handlePrintAllPastors}
+            disabled={isLoading}
+          >
+            <Printer size={18} />
+            Imprimer tous
+          </button>
         </div>
 
-        <div className="degree-filter-row" aria-label="Filtres degrés">
-          <Filter size={16} />
-          {degres.map((degre) => {
-            const value = degre === 'Tous' ? '' : degre;
-            return (
-              <button
-                className={activeDegree === value ? 'degree-chip active' : 'degree-chip'}
-                type="button"
-                key={degre}
-                onClick={() => setActiveDegree(value)}
-              >
-                {degre}
-              </button>
-            );
-          })}
-        </div>
-
-        <p className="result-count">{pastors.length} Résultats trouvés</p>
         {error ? <p className="notice error">{error}</p> : null}
         {isLoading ? <p className="notice">Chargement...</p> : null}
 

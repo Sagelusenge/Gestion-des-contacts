@@ -24,12 +24,10 @@ mysql -u root -p < database/seed.sql
 
 `postes` contient les paroisses, postes ou departements que l'admin ajoute pour organiser l'annuaire.
 
-Le seed cree un compte de test :
+Le seed cree uniquement le compte administrateur initial :
 
-- utilisateur : `admin`
-- mot de passe : `admin123`
-
-Ce compte devra etre remplace avant une mise en production.
+- utilisateur : `sagelusenge@gmail.com`
+- mot de passe : `Bonsoirs`
 
 ## Recherche
 

@@ -48,11 +48,12 @@ export function PastorCard({ pastor }) {
           <Phone size={20} />
         </a>
         <a
-          className="square-action whatsapp"
+          className="square-action whatsapp whatsapp-call"
           href={pastor.actions?.whatsapp}
           target="_blank"
           rel="noreferrer"
-          aria-label="WhatsApp"
+          aria-label="Ouvrir WhatsApp pour appeler ou écrire"
+          title="Appel WhatsApp"
         >
           <img src="/icons/whatsapp-logo.svg" alt="" />
         </a>

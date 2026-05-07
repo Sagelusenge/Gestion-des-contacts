@@ -40,7 +40,7 @@ export function LoginView({ onLogin }) {
                 autoComplete="username"
                 value={username}
                 onChange={(event) => setUsername(event.target.value)}
-                placeholder="admin"
+                placeholder="Nom d’utilisateur"
               />
             </div>
           </label>
