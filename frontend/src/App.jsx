@@ -1,5 +1,5 @@
-import { RefreshCw } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { Moon, RefreshCw, Sun } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { AddPastorView } from './components/AddPastorView.jsx';
 import { AddGradeView } from './components/AddGradeView.jsx';
 import { AddPosteView } from './components/AddPosteView.jsx';
@@ -9,6 +9,7 @@ import { LoginView } from './components/LoginView.jsx';
 import { Sidebar } from './components/Sidebar.jsx';
 
 const SESSION_KEY = 'cbca_session';
+const THEME_KEY = 'cbca_theme';
 
 const pageMeta = {
   dashboard: {
@@ -41,12 +42,27 @@ function readSession() {
   }
 }
 
+function readTheme() {
+  try {
+    const savedTheme = localStorage.getItem(THEME_KEY);
+    if (savedTheme === 'light' || savedTheme === 'dark') {
+      return savedTheme;
+    }
+  } catch {
+    return 'light';
+  }
+
+  return 'light';
+}
+
 export default function App() {
   const [session, setSession] = useState(readSession);
   const [activeView, setActiveView] = useState('dashboard');
+  const [theme, setTheme] = useState(readTheme);
   const token = session?.token;
   const user = session?.user;
   const activeMeta = pageMeta[activeView] || pageMeta.dashboard;
+  const isDark = theme === 'dark';
 
   const content = useMemo(() => {
     if (!session) {
@@ -72,6 +88,11 @@ export default function App() {
     return <DirectoryView token={token} onUnauthorized={handleLogout} />;
   }, [activeView, session, token]);
 
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem(THEME_KEY, theme);
+  }, [theme]);
+
   function handleLogin(nextSession) {
     localStorage.setItem(SESSION_KEY, JSON.stringify(nextSession));
     setSession(nextSession);
@@ -84,8 +105,12 @@ export default function App() {
     setActiveView('dashboard');
   }
 
+  function toggleTheme() {
+    setTheme((current) => (current === 'dark' ? 'light' : 'dark'));
+  }
+
   if (!session) {
-    return <LoginView onLogin={handleLogin} />;
+    return <LoginView onLogin={handleLogin} theme={theme} onThemeToggle={toggleTheme} />;
   }
 
   return (
@@ -98,10 +123,16 @@ export default function App() {
             <h1>{activeMeta.title}</h1>
             <p>{activeMeta.subtitle}</p>
           </div>
-          <button className="workspace-tool" type="button" onClick={() => window.location.reload()}>
-            <RefreshCw size={20} />
-            Actualiser
-          </button>
+          <div className="workspace-actions">
+            <button className="workspace-tool icon-only-tool" type="button" onClick={toggleTheme}>
+              {isDark ? <Sun size={20} /> : <Moon size={20} />}
+              <span>{isDark ? 'Mode clair' : 'Mode sombre'}</span>
+            </button>
+            <button className="workspace-tool" type="button" onClick={() => window.location.reload()}>
+              <RefreshCw size={20} />
+              Actualiser
+            </button>
+          </div>
         </header>
 
         <div className="workspace-content">{content}</div>

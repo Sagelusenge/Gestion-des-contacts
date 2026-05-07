@@ -12,7 +12,7 @@ export function Sidebar({ activeView, onViewChange, onLogout, user }) {
   return (
     <aside className="side-nav">
       <div className="side-brand">
-        <img src="/cbca-logo.jpg" alt="Logo CBCA" />
+        <img src="/cbca-logo.png" alt="Logo CBCA" />
         <div>
           <strong>CBCA Connect</strong>
           <span>{user?.role === 'admin' ? 'Administration' : 'Annuaire'}</span>

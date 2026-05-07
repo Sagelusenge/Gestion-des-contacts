@@ -1,7 +1,7 @@
 :root {
   color: #182526;
   background: #f7faf8;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: "Poppins", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-synthesis: none;
   line-height: 1.5;
   text-rendering: optimizeLegibility;
@@ -2114,5 +2114,229 @@ body {
 
   .print-all-button {
     width: 100%;
+  }
+}
+
+/* Light and dark modes */
+:root {
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --cbca-blue: #5f8df7;
+  --cbca-blue-deep: #071a3f;
+  --cbca-red: #ff6b73;
+  --cbca-red-soft: rgba(255, 107, 115, 0.14);
+  --cbca-white: #101b2d;
+  --cbca-page: #07111f;
+  --cbca-line: rgba(180, 198, 228, 0.18);
+  --cbca-text: #eef4ff;
+  --cbca-muted: #a7b6cf;
+}
+
+.workspace-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.login-theme-toggle {
+  position: fixed;
+  top: 22px;
+  right: 22px;
+  min-height: 42px;
+  border: 1px solid var(--cbca-line);
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--cbca-white);
+  color: var(--cbca-blue);
+  padding: 0 14px;
+  font-size: 0.82rem;
+  font-weight: 900;
+  box-shadow: 0 12px 26px rgba(18, 63, 140, 0.1);
+}
+
+.login-theme-toggle:hover,
+.workspace-tool:hover,
+.print-all-button:hover {
+  transform: translateY(-1px);
+}
+
+:root[data-theme='dark'] body {
+  background: var(--cbca-page);
+  color: var(--cbca-text);
+}
+
+:root[data-theme='dark'] .admin-shell {
+  background:
+    radial-gradient(circle at top right, rgba(95, 141, 247, 0.14), transparent 34%),
+    var(--cbca-page);
+  color: var(--cbca-text);
+}
+
+:root[data-theme='dark'] .side-nav {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 180px),
+    #071a3f;
+  border-right-color: rgba(180, 198, 228, 0.18);
+}
+
+:root[data-theme='dark'] .workspace-header {
+  background: rgba(8, 17, 31, 0.92);
+  border-bottom-color: var(--cbca-line);
+}
+
+:root[data-theme='dark'] .workspace-header h1,
+:root[data-theme='dark'] h1,
+:root[data-theme='dark'] h2 {
+  color: var(--cbca-text);
+}
+
+:root[data-theme='dark'] .workspace-header p,
+:root[data-theme='dark'] .field,
+:root[data-theme='dark'] .eyebrow {
+  color: var(--cbca-muted);
+}
+
+:root[data-theme='dark'] .login-screen {
+  background:
+    linear-gradient(135deg, rgba(95, 141, 247, 0.14), rgba(255, 107, 115, 0.08)),
+    var(--cbca-page);
+}
+
+:root[data-theme='dark'] .login-panel,
+:root[data-theme='dark'] .form-panel,
+:root[data-theme='dark'] .table-panel,
+:root[data-theme='dark'] .workspace-tool,
+:root[data-theme='dark'] .login-theme-toggle,
+:root[data-theme='dark'] .metric-card,
+:root[data-theme='dark'] .dark-panel,
+:root[data-theme='dark'] .dark-form-panel,
+:root[data-theme='dark'] .quick-actions-panel,
+:root[data-theme='dark'] .admin-shell .overview-band,
+:root[data-theme='dark'] .admin-shell .connect-search,
+:root[data-theme='dark'] .admin-shell .refresh-inline,
+:root[data-theme='dark'] .admin-shell .connect-card,
+:root[data-theme='dark'] .print-all-button,
+:root[data-theme='dark'] .secondary-action {
+  border-color: var(--cbca-line);
+  background: var(--cbca-white);
+  color: var(--cbca-text);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.24);
+}
+
+:root[data-theme='dark'] .input-shell,
+:root[data-theme='dark'] .search-shell,
+:root[data-theme='dark'] .field input,
+:root[data-theme='dark'] .field select,
+:root[data-theme='dark'] .field textarea,
+:root[data-theme='dark'] .dark-field input,
+:root[data-theme='dark'] .dark-field select,
+:root[data-theme='dark'] .dark-field textarea,
+:root[data-theme='dark'] .simple-filter-bar select {
+  border-color: var(--cbca-line);
+  background: #0b1627;
+  color: var(--cbca-text);
+}
+
+:root[data-theme='dark'] .input-shell input,
+:root[data-theme='dark'] .search-shell input,
+:root[data-theme='dark'] .admin-shell .connect-search input,
+:root[data-theme='dark'] .admin-shell .connect-search input::placeholder {
+  color: var(--cbca-text);
+}
+
+:root[data-theme='dark'] .input-shell input::placeholder,
+:root[data-theme='dark'] .search-shell input::placeholder,
+:root[data-theme='dark'] .field input::placeholder {
+  color: rgba(238, 244, 255, 0.54);
+}
+
+:root[data-theme='dark'] .password-toggle {
+  color: var(--cbca-muted);
+}
+
+:root[data-theme='dark'] .password-toggle:hover {
+  background: rgba(95, 141, 247, 0.13);
+  color: var(--cbca-text);
+}
+
+:root[data-theme='dark'] .brand-mark.cbca-logo,
+:root[data-theme='dark'] .side-brand img {
+  border-color: rgba(255, 255, 255, 0.3);
+  background: #ffffff;
+}
+
+:root[data-theme='dark'] .admin-list-row {
+  border-color: var(--cbca-line);
+  background: #111f32;
+}
+
+:root[data-theme='dark'] .metric-card strong,
+:root[data-theme='dark'] .panel-title h2,
+:root[data-theme='dark'] .table-row,
+:root[data-theme='dark'] .admin-list-row strong,
+:root[data-theme='dark'] .admin-shell .stat-value,
+:root[data-theme='dark'] .admin-shell .connect-card-title h2 {
+  color: var(--cbca-text);
+}
+
+:root[data-theme='dark'] .metric-card span,
+:root[data-theme='dark'] .table-head,
+:root[data-theme='dark'] .admin-list-row span,
+:root[data-theme='dark'] .admin-shell .stat-label,
+:root[data-theme='dark'] .admin-shell .filter-label,
+:root[data-theme='dark'] .admin-shell .result-count,
+:root[data-theme='dark'] .admin-shell .connect-meta,
+:root[data-theme='dark'] .simple-filter-bar label,
+:root[data-theme='dark'] .directory-summary {
+  color: var(--cbca-muted);
+}
+
+:root[data-theme='dark'] .admin-shell .connect-avatar {
+  background: #152844;
+  color: #dbe8ff;
+}
+
+:root[data-theme='dark'] .admin-shell .square-action.call {
+  background: rgba(95, 141, 247, 0.16);
+  color: #b9ccff;
+}
+
+:root[data-theme='dark'] .admin-shell .square-action.whatsapp,
+:root[data-theme='dark'] .admin-shell .square-action.whatsapp-call {
+  background: rgba(37, 211, 102, 0.16);
+}
+
+:root[data-theme='dark'] .admin-primary,
+:root[data-theme='dark'] .quick-actions-panel button,
+:root[data-theme='dark'] .primary-button {
+  background: #5f8df7;
+  color: #061126;
+}
+
+@media (max-width: 860px) {
+  .workspace-actions {
+    flex: 0 0 auto;
+  }
+
+  .workspace-actions .workspace-tool {
+    width: 44px;
+  }
+}
+
+@media (max-width: 520px) {
+  .login-theme-toggle {
+    top: 12px;
+    right: 12px;
+  }
+
+  .login-theme-toggle span {
+    display: none;
   }
 }

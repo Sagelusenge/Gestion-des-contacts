@@ -8,9 +8,9 @@
   "theme_color": "#123f8c",
   "icons": [
     {
-      "src": "/cbca-logo.jpg",
+      "src": "/cbca-logo.png",
       "sizes": "512x512",
-      "type": "image/jpeg",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ]

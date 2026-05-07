@@ -32,11 +32,17 @@ export function printRecord(title, fields) {
     <html lang="fr">
       <head>
         <meta charset="utf-8" />
-        <title>${title}</title>
+        <title>${escapeHtml(title)}</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
+          rel="stylesheet"
+        />
         <style>
           body {
             color: #172033;
-            font-family: Arial, sans-serif;
+            font-family: Poppins, Arial, sans-serif;
             margin: 42px;
           }
           header {
@@ -118,6 +124,12 @@ export function printPastorsList(pastors) {
       <head>
         <meta charset="utf-8" />
         <title>Liste des pasteurs CBCA</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
+          rel="stylesheet"
+        />
         <style>
           @page {
             size: A4 landscape;
@@ -126,7 +138,7 @@ export function printPastorsList(pastors) {
 
           body {
             color: #172033;
-            font-family: Arial, sans-serif;
+            font-family: Poppins, Arial, sans-serif;
             margin: 0;
           }
 

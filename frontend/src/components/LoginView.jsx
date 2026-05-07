@@ -1,13 +1,14 @@
-import { Eye, EyeOff, LockKeyhole, UserRound } from 'lucide-react';
+import { Eye, EyeOff, LockKeyhole, Moon, Sun, UserRound } from 'lucide-react';
 import { useState } from 'react';
 import { api } from '../services/api.js';
 
-export function LoginView({ onLogin }) {
+export function LoginView({ onLogin, theme, onThemeToggle }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const isDark = theme === 'dark';
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -26,8 +27,13 @@ export function LoginView({ onLogin }) {
 
   return (
     <main className="login-screen">
+      <button className="login-theme-toggle" type="button" onClick={onThemeToggle}>
+        {isDark ? <Sun size={18} /> : <Moon size={18} />}
+        <span>{isDark ? 'Mode clair' : 'Mode sombre'}</span>
+      </button>
+
       <section className="login-panel" aria-labelledby="login-title">
-        <img className="brand-mark cbca-logo" src="/cbca-logo.jpg" alt="Logo CBCA" />
+        <img className="brand-mark cbca-logo" src="/cbca-logo.png" alt="Logo CBCA" />
         <p className="eyebrow">Annuaire CBCA</p>
         <h1 id="login-title">Connexion</h1>
 
