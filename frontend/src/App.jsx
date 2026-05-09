@@ -34,14 +34,6 @@ const pageMeta = {
   }
 };
 
-function readSession() {
-  try {
-    return JSON.parse(localStorage.getItem(SESSION_KEY)) || null;
-  } catch {
-    return null;
-  }
-}
-
 function readTheme() {
   try {
     const savedTheme = localStorage.getItem(THEME_KEY);
@@ -56,7 +48,7 @@ function readTheme() {
 }
 
 export default function App() {
-  const [session, setSession] = useState(readSession);
+  const [session, setSession] = useState(null);
   const [activeView, setActiveView] = useState('dashboard');
   const [theme, setTheme] = useState(readTheme);
   const token = session?.token;
@@ -93,8 +85,11 @@ export default function App() {
     localStorage.setItem(THEME_KEY, theme);
   }, [theme]);
 
+  useEffect(() => {
+    localStorage.removeItem(SESSION_KEY);
+  }, []);
+
   function handleLogin(nextSession) {
-    localStorage.setItem(SESSION_KEY, JSON.stringify(nextSession));
     setSession(nextSession);
     setActiveView('dashboard');
   }
