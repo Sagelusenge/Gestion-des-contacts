@@ -1,4 +1,4 @@
-import { Download, Printer, RefreshCw, RotateCcw, Search } from 'lucide-react';
+import { Download, MessageCircle, Printer, RefreshCw, RotateCcw, Search, Send } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useDebounce } from '../hooks/useDebounce.js';
 import { api } from '../services/api.js';
@@ -12,6 +12,8 @@ export function DirectoryView({ token, onUnauthorized }) {
   const [query, setQuery] = useState('');
   const [activeDegree, setActiveDegree] = useState('');
   const [activePoste, setActivePoste] = useState('');
+  const [bulkMessage, setBulkMessage] = useState('');
+  const [showBulkLinks, setShowBulkLinks] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const debouncedQuery = useDebounce(query, 300);
@@ -21,6 +23,20 @@ export function DirectoryView({ token, onUnauthorized }) {
     return [...new Set(values)].sort((a, b) => a.localeCompare(b));
   }, [postes]);
   const hasActiveFilters = Boolean(query || activeDegree || activePoste);
+  const whatsappTargets = useMemo(() => pastors
+    .map((pastor) => {
+      const phone = String(pastor.telephone || '').replace(/[^\d]/g, '');
+      return {
+        id: pastor.id,
+        name: pastor.nom,
+        phone,
+        url: phone && bulkMessage.trim()
+          ? `https://wa.me/${phone}?text=${encodeURIComponent(bulkMessage.trim())}`
+          : ''
+      };
+    })
+    .filter((target) => target.phone), [pastors, bulkMessage]);
+  const canPrepareBulkMessage = Boolean(bulkMessage.trim() && whatsappTargets.length);
 
   function resetFilters() {
     setQuery('');
@@ -51,6 +67,15 @@ export function DirectoryView({ token, onUnauthorized }) {
     URL.revokeObjectURL(url);
   }
 
+  function openFirstWhatsAppMessage() {
+    if (!canPrepareBulkMessage) {
+      return;
+    }
+
+    setShowBulkLinks(true);
+    window.open(whatsappTargets[0].url, '_blank', 'noopener,noreferrer');
+  }
+
   async function loadPastors() {
     setError('');
     setIsLoading(true);
@@ -61,7 +86,7 @@ export function DirectoryView({ token, onUnauthorized }) {
         degre: activeDegree,
         poste: activePoste,
         page: 1,
-        limit: 50
+        limit: 1000
       });
       setPastors(payload.data || []);
     } catch (loadError) {
@@ -187,6 +212,64 @@ export function DirectoryView({ token, onUnauthorized }) {
             </button>
           </div>
         </div>
+
+        <section className="bulk-whatsapp-panel" aria-label="Message WhatsApp groupe">
+          <div className="bulk-whatsapp-heading">
+            <div>
+              <h2>Message WhatsApp groupe</h2>
+              <p>
+                {whatsappTargets.length} destinataire{whatsappTargets.length > 1 ? 's' : ''} avec numero
+                {activePoste ? ` pour ${activePoste}` : ' dans les resultats affiches'}
+              </p>
+            </div>
+            <MessageCircle size={24} />
+          </div>
+
+          <label className="bulk-message-field">
+            <span>Message a envoyer</span>
+            <textarea
+              rows="4"
+              value={bulkMessage}
+              onChange={(event) => {
+                setBulkMessage(event.target.value);
+                setShowBulkLinks(false);
+              }}
+              placeholder="Ex: Bonjour Pasteur, reunion ce samedi a 10h au bureau CBCA..."
+            />
+          </label>
+
+          <div className="bulk-whatsapp-actions">
+            <button
+              className="admin-primary"
+              type="button"
+              onClick={openFirstWhatsAppMessage}
+              disabled={!canPrepareBulkMessage}
+            >
+              <Send size={18} />
+              Ouvrir le 1er WhatsApp
+            </button>
+            <button
+              className="print-all-button quiet-action"
+              type="button"
+              onClick={() => setShowBulkLinks((current) => !current)}
+              disabled={!canPrepareBulkMessage}
+            >
+              <MessageCircle size={18} />
+              {showBulkLinks ? 'Masquer la liste' : 'Voir les destinataires'}
+            </button>
+          </div>
+
+          {showBulkLinks ? (
+            <div className="bulk-link-list">
+              {whatsappTargets.map((target, index) => (
+                <a href={target.url} target="_blank" rel="noreferrer" key={target.id}>
+                  <span>{index + 1}. {target.name}</span>
+                  <strong>Ouvrir</strong>
+                </a>
+              ))}
+            </div>
+          ) : null}
+        </section>
 
         {error ? <p className="notice error">{error}</p> : null}
         {isLoading ? <p className="notice">Chargement...</p> : null}
