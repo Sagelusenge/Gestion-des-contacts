@@ -3105,3 +3105,269 @@ body {
     width: 100%;
   }
 }
+
+/* Dark mode refinement */
+:root[data-theme='dark'] {
+  --cbca-blue: #8fb5ff;
+  --cbca-red: #ff7b86;
+  --cbca-red-soft: rgba(255, 123, 134, 0.16);
+  --cbca-white: #111c2f;
+  --cbca-page: #07101d;
+  --cbca-line: rgba(158, 180, 218, 0.22);
+  --cbca-text: #f4f8ff;
+  --cbca-muted: #a8b8d2;
+  --cbca-dark-surface: #111c2f;
+  --cbca-dark-surface-2: #15243a;
+  --cbca-dark-field: #0b1526;
+  --cbca-dark-hover: #1b2d48;
+  --cbca-dark-shadow: 0 18px 42px rgba(0, 0, 0, 0.34);
+}
+
+:root[data-theme='dark'] body {
+  background:
+    radial-gradient(circle at top left, rgba(143, 181, 255, 0.12), transparent 34%),
+    var(--cbca-page);
+}
+
+:root[data-theme='dark'] .admin-shell {
+  background:
+    radial-gradient(circle at 88% 0%, rgba(255, 123, 134, 0.1), transparent 30%),
+    linear-gradient(180deg, #081121 0%, #07101d 55%, #050b15 100%);
+}
+
+:root[data-theme='dark'] .side-nav {
+  background:
+    linear-gradient(180deg, rgba(143, 181, 255, 0.12), transparent 220px),
+    #071936;
+  border-color: rgba(143, 181, 255, 0.18);
+}
+
+:root[data-theme='dark'] .side-link {
+  color: #dbe7ff;
+}
+
+:root[data-theme='dark'] .side-brand strong {
+  color: #ffffff;
+}
+
+:root[data-theme='dark'] .side-brand span {
+  color: #b8c8e4;
+}
+
+:root[data-theme='dark'] .side-link:hover {
+  background: rgba(143, 181, 255, 0.12);
+}
+
+:root[data-theme='dark'] .side-link.active {
+  border-left-color: var(--cbca-red);
+  border-bottom-color: var(--cbca-red);
+  background: rgba(143, 181, 255, 0.18);
+  color: #ffffff;
+}
+
+:root[data-theme='dark'] .side-session {
+  border-color: rgba(143, 181, 255, 0.24);
+  background: rgba(143, 181, 255, 0.13);
+}
+
+:root[data-theme='dark'] .workspace-header {
+  background: rgba(8, 16, 30, 0.88);
+  border-bottom-color: rgba(158, 180, 218, 0.2);
+  backdrop-filter: blur(18px);
+}
+
+:root[data-theme='dark'] .workspace-tool,
+:root[data-theme='dark'] .login-theme-toggle,
+:root[data-theme='dark'] .print-all-button,
+:root[data-theme='dark'] .secondary-action {
+  border-color: var(--cbca-line);
+  background: var(--cbca-dark-surface-2);
+  color: #dfeaff;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.22);
+}
+
+:root[data-theme='dark'] .workspace-tool:hover,
+:root[data-theme='dark'] .login-theme-toggle:hover,
+:root[data-theme='dark'] .print-all-button:hover,
+:root[data-theme='dark'] .secondary-action:hover {
+  background: var(--cbca-dark-hover);
+  border-color: rgba(143, 181, 255, 0.38);
+}
+
+:root[data-theme='dark'] .login-screen {
+  background:
+    radial-gradient(circle at 50% 10%, rgba(143, 181, 255, 0.16), transparent 28%),
+    radial-gradient(circle at 90% 80%, rgba(255, 123, 134, 0.1), transparent 30%),
+    var(--cbca-page);
+}
+
+:root[data-theme='dark'] .login-panel,
+:root[data-theme='dark'] .metric-card,
+:root[data-theme='dark'] .dark-panel,
+:root[data-theme='dark'] .dark-form-panel,
+:root[data-theme='dark'] .quick-actions-panel,
+:root[data-theme='dark'] .admin-shell .overview-band,
+:root[data-theme='dark'] .admin-shell .connect-search,
+:root[data-theme='dark'] .admin-shell .refresh-inline,
+:root[data-theme='dark'] .admin-shell .connect-card,
+:root[data-theme='dark'] .bulk-whatsapp-panel {
+  border-color: var(--cbca-line);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent),
+    var(--cbca-dark-surface);
+  color: var(--cbca-text);
+  box-shadow: var(--cbca-dark-shadow);
+}
+
+:root[data-theme='dark'] .metric-card:hover,
+:root[data-theme='dark'] .dark-panel:hover,
+:root[data-theme='dark'] .dark-form-panel:hover,
+:root[data-theme='dark'] .admin-shell .connect-card:hover {
+  border-color: rgba(143, 181, 255, 0.34);
+  background:
+    linear-gradient(180deg, rgba(143, 181, 255, 0.04), transparent),
+    var(--cbca-dark-surface-2);
+}
+
+:root[data-theme='dark'] .field input,
+:root[data-theme='dark'] .field select,
+:root[data-theme='dark'] .field textarea,
+:root[data-theme='dark'] .input-shell,
+:root[data-theme='dark'] .search-shell,
+:root[data-theme='dark'] .dark-field input,
+:root[data-theme='dark'] .dark-field select,
+:root[data-theme='dark'] .dark-field textarea,
+:root[data-theme='dark'] .simple-filter-bar select,
+:root[data-theme='dark'] .bulk-message-field textarea {
+  border-color: rgba(158, 180, 218, 0.26);
+  background: var(--cbca-dark-field);
+  color: var(--cbca-text);
+}
+
+:root[data-theme='dark'] .field input:focus,
+:root[data-theme='dark'] .field select:focus,
+:root[data-theme='dark'] .field textarea:focus,
+:root[data-theme='dark'] .input-shell:focus-within,
+:root[data-theme='dark'] .search-shell:focus-within,
+:root[data-theme='dark'] .dark-field input:focus,
+:root[data-theme='dark'] .dark-field select:focus,
+:root[data-theme='dark'] .dark-field textarea:focus,
+:root[data-theme='dark'] .simple-filter-bar select:focus,
+:root[data-theme='dark'] .bulk-message-field textarea:focus {
+  border-color: var(--cbca-blue);
+  box-shadow: 0 0 0 3px rgba(143, 181, 255, 0.18);
+}
+
+:root[data-theme='dark'] .notice,
+:root[data-theme='dark'] .form-error {
+  border: 1px solid rgba(143, 181, 255, 0.2);
+  background: rgba(143, 181, 255, 0.1);
+  color: #dbe7ff;
+}
+
+:root[data-theme='dark'] .notice.error,
+:root[data-theme='dark'] .form-error {
+  border-color: rgba(255, 123, 134, 0.28);
+  background: rgba(255, 123, 134, 0.12);
+  color: #ffd5d9;
+}
+
+:root[data-theme='dark'] .notice.success {
+  border-color: rgba(74, 222, 128, 0.28);
+  background: rgba(74, 222, 128, 0.12);
+  color: #bbf7d0;
+}
+
+:root[data-theme='dark'] .admin-primary,
+:root[data-theme='dark'] .quick-actions-panel button,
+:root[data-theme='dark'] .primary-button {
+  background: linear-gradient(135deg, #8fb5ff, #668ff0);
+  color: #061126;
+  box-shadow: 0 14px 30px rgba(102, 143, 240, 0.22);
+}
+
+:root[data-theme='dark'] .admin-primary:hover,
+:root[data-theme='dark'] .quick-actions-panel button:hover,
+:root[data-theme='dark'] .primary-button:hover {
+  filter: brightness(1.06);
+}
+
+:root[data-theme='dark'] .admin-primary:disabled,
+:root[data-theme='dark'] .primary-button:disabled,
+:root[data-theme='dark'] .print-all-button:disabled {
+  opacity: 0.52;
+  box-shadow: none;
+}
+
+:root[data-theme='dark'] .admin-list-row,
+:root[data-theme='dark'] .compact-row,
+:root[data-theme='dark'] .region-summary-row,
+:root[data-theme='dark'] .bulk-link-list a {
+  border-color: rgba(158, 180, 218, 0.18);
+  background: rgba(11, 21, 38, 0.78);
+}
+
+:root[data-theme='dark'] .table-head,
+:root[data-theme='dark'] .table-row {
+  border-color: rgba(158, 180, 218, 0.16);
+}
+
+:root[data-theme='dark'] .badge.gold {
+  background: rgba(250, 204, 21, 0.18);
+  color: #fde68a;
+}
+
+:root[data-theme='dark'] .badge.teal {
+  background: rgba(45, 212, 191, 0.16);
+  color: #99f6e4;
+}
+
+:root[data-theme='dark'] .badge.blue,
+:root[data-theme='dark'] .badge.violet {
+  background: rgba(143, 181, 255, 0.18);
+  color: #dbe7ff;
+}
+
+:root[data-theme='dark'] .badge.gray {
+  background: rgba(148, 163, 184, 0.14);
+  color: #cbd5e1;
+}
+
+:root[data-theme='dark'] .admin-shell .connect-avatar {
+  border-color: rgba(143, 181, 255, 0.24);
+  background: linear-gradient(135deg, #19345d, #10253f);
+  color: #dbeafe;
+}
+
+:root[data-theme='dark'] .admin-shell .square-action.call,
+:root[data-theme='dark'] .square-action.email {
+  background: rgba(143, 181, 255, 0.16);
+  color: #cfe0ff;
+}
+
+:root[data-theme='dark'] .admin-shell .square-action.whatsapp,
+:root[data-theme='dark'] .admin-shell .square-action.whatsapp-call {
+  background: rgba(37, 211, 102, 0.16);
+  color: #86efac;
+}
+
+:root[data-theme='dark'] .square-action.copy-contact {
+  background: rgba(158, 180, 218, 0.12);
+  color: #c7d5ef;
+}
+
+:root[data-theme='dark'] .bulk-whatsapp-panel {
+  background:
+    linear-gradient(135deg, rgba(37, 211, 102, 0.1), rgba(143, 181, 255, 0.06)),
+    var(--cbca-dark-surface);
+}
+
+:root[data-theme='dark'] .bulk-whatsapp-heading svg,
+:root[data-theme='dark'] .bulk-link-list strong {
+  color: #86efac;
+}
+
+:root[data-theme='dark'] ::selection {
+  background: rgba(143, 181, 255, 0.32);
+  color: #ffffff;
+}
