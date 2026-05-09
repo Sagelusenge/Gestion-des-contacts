@@ -1,4 +1,4 @@
-import { BadgePlus, CalendarDays, ContactRound, MapPinned } from 'lucide-react';
+import { BadgePlus, CalendarDays, ContactRound, MapPinned, Search, UserPlus } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../services/api.js';
 
@@ -40,6 +40,18 @@ export function DashboardView({ token, onNavigate }) {
 
   const recentPastors = pastors.slice(0, 5);
   const visiblePostes = postes.slice(0, 8);
+  const regionStats = useMemo(() => {
+    const counts = postes.reduce((accumulator, poste) => {
+      const region = poste.region || 'Sans region';
+      accumulator.set(region, (accumulator.get(region) || 0) + 1);
+      return accumulator;
+    }, new Map());
+
+    return [...counts.entries()]
+      .map(([region, count]) => ({ region, count }))
+      .sort((a, b) => b.count - a.count || a.region.localeCompare(b.region))
+      .slice(0, 4);
+  }, [postes]);
 
   return (
     <div className="dashboard-page">
@@ -56,6 +68,25 @@ export function DashboardView({ token, onNavigate }) {
             </article>
           );
         })}
+      </section>
+
+      <section className="quick-actions-panel dashboard-actions-panel" aria-label="Actions rapides">
+        <button type="button" onClick={() => onNavigate('directory')}>
+          <Search size={18} />
+          Voir l'annuaire
+        </button>
+        <button type="button" onClick={() => onNavigate('addPastor')}>
+          <UserPlus size={18} />
+          Ajouter un pasteur
+        </button>
+        <button type="button" onClick={() => onNavigate('addPoste')}>
+          <MapPinned size={18} />
+          Ajouter un poste
+        </button>
+        <button type="button" onClick={() => onNavigate('addGrade')}>
+          <BadgePlus size={18} />
+          Gerer les grades
+        </button>
       </section>
 
       <section className="dashboard-grid">
@@ -92,6 +123,16 @@ export function DashboardView({ token, onNavigate }) {
               </span>
             ))}
           </div>
+          {regionStats.length ? (
+            <div className="region-summary-list">
+              {regionStats.map((item) => (
+                <div className="region-summary-row" key={item.region}>
+                  <span>{item.region}</span>
+                  <strong>{item.count}</strong>
+                </div>
+              ))}
+            </div>
+          ) : null}
         </article>
       </section>
 

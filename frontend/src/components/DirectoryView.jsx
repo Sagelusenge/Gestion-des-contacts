@@ -1,4 +1,4 @@
-import { Printer, RefreshCw, Search } from 'lucide-react';
+import { Download, Printer, RefreshCw, RotateCcw, Search } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useDebounce } from '../hooks/useDebounce.js';
 import { api } from '../services/api.js';
@@ -20,6 +20,36 @@ export function DirectoryView({ token, onUnauthorized }) {
     const values = postes.flatMap((poste) => [poste.region, poste.nom]).filter(Boolean);
     return [...new Set(values)].sort((a, b) => a.localeCompare(b));
   }, [postes]);
+  const hasActiveFilters = Boolean(query || activeDegree || activePoste);
+
+  function resetFilters() {
+    setQuery('');
+    setActivePoste('');
+    setActiveDegree('');
+  }
+
+  function downloadCsv(rows) {
+    const headers = ['Nom', 'Grade', 'Poste', 'Telephone', 'Email', 'Date affectation'];
+    const csvRows = rows.map((pastor) => [
+      pastor.nom,
+      pastor.degre,
+      pastor.poste,
+      pastor.telephone,
+      pastor.email,
+      pastor.date_affectation
+    ]);
+    const escapeValue = (value) => `"${String(value || '').replaceAll('"', '""')}"`;
+    const csv = [headers, ...csvRows].map((row) => row.map(escapeValue).join(',')).join('\n');
+    const blob = new Blob([`\ufeff${csv}`], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `pasteurs-cbca-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
 
   async function loadPastors() {
     setError('');
@@ -127,15 +157,35 @@ export function DirectoryView({ token, onUnauthorized }) {
             <strong>{pastors.length}</strong>
             <span>{pastors.length > 1 ? 'pasteurs trouvés' : 'pasteur trouvé'}</span>
           </div>
-          <button
-            className="print-all-button"
-            type="button"
-            onClick={handlePrintAllPastors}
-            disabled={isLoading}
-          >
-            <Printer size={18} />
-            Imprimer tous
-          </button>
+          <div className="directory-actions">
+            <button
+              className="print-all-button"
+              type="button"
+              onClick={() => downloadCsv(pastors)}
+              disabled={isLoading || pastors.length === 0}
+            >
+              <Download size={18} />
+              Export CSV
+            </button>
+            <button
+              className="print-all-button"
+              type="button"
+              onClick={handlePrintAllPastors}
+              disabled={isLoading}
+            >
+              <Printer size={18} />
+              Imprimer tous
+            </button>
+            <button
+              className="print-all-button quiet-action"
+              type="button"
+              onClick={resetFilters}
+              disabled={!hasActiveFilters}
+            >
+              <RotateCcw size={18} />
+              Reinitialiser
+            </button>
+          </div>
         </div>
 
         {error ? <p className="notice error">{error}</p> : null}
@@ -150,11 +200,7 @@ export function DirectoryView({ token, onUnauthorized }) {
               <p>Aucun pasteur trouvé pour cette recherche.</p>
               <button
                 type="button"
-                onClick={() => {
-                  setQuery('');
-                  setActivePoste('');
-                  setActiveDegree('');
-                }}
+                onClick={resetFilters}
               >
                 Réinitialiser les filtres
               </button>
