@@ -10,8 +10,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   RefreshControl,
-  SafeAreaView,
   ScrollView,
+  StatusBar as RNStatusBar,
   Text,
   TextInput,
   TouchableOpacity,
@@ -87,7 +87,7 @@ export default function App() {
 }
 
 function LoginScreen({ onLogin }) {
-  const [username, setUsername] = useState('sagelusenge@gmail.com');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -579,6 +579,14 @@ function Header({ title, subtitle, rightIcon, onRightPress }) {
           <Ionicons name={rightIcon} color={colors.teal} size={23} />
         </TouchableOpacity>
       ) : null}
+    </View>
+  );
+}
+
+function SafeAreaView({ children, style }) {
+  return (
+    <View style={[style, { paddingTop: Platform.OS === 'android' ? RNStatusBar.currentHeight || 0 : 0 }]}>
+      {children}
     </View>
   );
 }
