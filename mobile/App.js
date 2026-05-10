@@ -120,7 +120,7 @@ function LoginScreen({ onLogin }) {
           {error ? <Notice type="error" message={error} /> : null}
 
           <TouchableOpacity style={styles.primaryButton} onPress={submit} disabled={loading}>
-            {loading ? <ActivityIndicator color={colors.ink} /> : <Ionicons name="log-in-outline" color={colors.ink} size={21} />}
+            {loading ? <ActivityIndicator color={colors.white} /> : <Ionicons name="log-in-outline" color={colors.white} size={21} />}
             <Text style={styles.primaryButtonText}>{loading ? 'Connexion...' : 'Se connecter'}</Text>
           </TouchableOpacity>
         </View>
@@ -558,7 +558,7 @@ function BottomNav({ activeTab, onChange }) {
         const active = activeTab === tab.key;
         return (
           <TouchableOpacity style={[styles.navItem, active && styles.navItemActive]} onPress={() => onChange(tab.key)} key={tab.key}>
-            <Ionicons name={tab.icon} color={active ? colors.ink : colors.muted} size={22} />
+            <Ionicons name={tab.icon} color={active ? colors.blue : colors.white} size={22} />
             <Text style={[styles.navText, active && styles.navTextActive]}>{tab.label}</Text>
           </TouchableOpacity>
         );
@@ -676,7 +676,7 @@ function SubmitRow({ saving, onSubmit, onCancel }) {
   return (
     <View style={styles.actionRow}>
       <TouchableOpacity style={styles.primaryButton} onPress={onSubmit} disabled={saving}>
-        {saving ? <ActivityIndicator color={colors.ink} /> : <Ionicons name="save-outline" color={colors.ink} size={20} />}
+        {saving ? <ActivityIndicator color={colors.white} /> : <Ionicons name="save-outline" color={colors.white} size={20} />}
         <Text style={styles.primaryButtonText}>{saving ? 'Enregistrement...' : 'Enregistrer'}</Text>
       </TouchableOpacity>
       {onCancel ? <ActionButton label="Annuler" icon="close-outline" onPress={onCancel} /> : null}

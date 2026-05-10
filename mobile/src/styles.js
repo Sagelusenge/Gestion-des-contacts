@@ -1,20 +1,21 @@
 import { StyleSheet } from 'react-native';
 
 export const colors = {
-  ink: '#071411',
-  panel: '#10251e',
-  panelSoft: '#163126',
-  text: '#f5fff9',
-  muted: '#a7b8b2',
-  line: 'rgba(161, 239, 215, 0.18)',
-  gold: '#f5bf3b',
-  green: '#39d98a',
-  teal: '#7df6d2',
-  blue: '#82aaff',
-  red: '#ef4444',
-  redSoft: '#3b1d22',
+  ink: '#f4f7fb',
+  panel: '#ffffff',
+  panelSoft: '#eef4fb',
+  text: '#071b3f',
+  muted: '#657389',
+  line: '#d9e3f2',
+  gold: '#194a9a',
+  green: '#16a34a',
+  teal: '#194a9a',
+  blue: '#194a9a',
+  red: '#d71920',
+  redSoft: '#fff1f2',
   white: '#ffffff',
-  paper: '#f4faf6'
+  paper: '#f4f7fb',
+  navy: '#0f3675'
 };
 
 export const styles = StyleSheet.create({
@@ -34,14 +35,14 @@ export const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     padding: 22,
-    backgroundColor: colors.ink
+    backgroundColor: colors.navy
   },
   loginPanel: {
     borderWidth: 1,
     borderColor: colors.line,
     borderRadius: 24,
     padding: 22,
-    backgroundColor: colors.panel
+    backgroundColor: colors.white
   },
   logo: {
     width: 86,
@@ -52,7 +53,7 @@ export const styles = StyleSheet.create({
     marginBottom: 20
   },
   eyebrow: {
-    color: colors.teal,
+    color: colors.red,
     fontSize: 12,
     fontWeight: '900',
     textAlign: 'center',
@@ -92,7 +93,7 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.line,
     borderRadius: 14,
-    backgroundColor: colors.panel
+    backgroundColor: colors.white
   },
   field: {
     marginBottom: 14
@@ -109,7 +110,7 @@ export const styles = StyleSheet.create({
     borderColor: colors.line,
     borderRadius: 14,
     paddingHorizontal: 14,
-    backgroundColor: '#071b15',
+    backgroundColor: '#f8fbff',
     color: colors.text,
     fontSize: 16,
     fontWeight: '700'
@@ -130,7 +131,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 18
   },
   primaryButtonText: {
-    color: colors.ink,
+    color: colors.white,
     fontSize: 16,
     fontWeight: '900'
   },
@@ -147,7 +148,7 @@ export const styles = StyleSheet.create({
     backgroundColor: colors.panel
   },
   ghostText: {
-    color: colors.text,
+    color: colors.blue,
     fontWeight: '800'
   },
   notice: {
@@ -167,7 +168,7 @@ export const styles = StyleSheet.create({
   },
   successNotice: {
     borderColor: 'rgba(57, 217, 138, 0.45)',
-    backgroundColor: '#123623'
+    backgroundColor: '#ecfdf3'
   },
   card: {
     borderWidth: 1,
@@ -199,10 +200,10 @@ export const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 6,
-    backgroundColor: '#213b30'
+    backgroundColor: '#eaf1ff'
   },
   badgeText: {
-    color: colors.teal,
+    color: colors.blue,
     fontSize: 11,
     fontWeight: '900'
   },
@@ -234,15 +235,15 @@ export const styles = StyleSheet.create({
     backgroundColor: colors.panel
   },
   chipActive: {
-    borderColor: colors.gold,
-    backgroundColor: colors.gold
+    borderColor: colors.blue,
+    backgroundColor: colors.blue
   },
   chipText: {
     color: colors.text,
     fontWeight: '800'
   },
   chipTextActive: {
-    color: colors.ink
+    color: colors.white
   },
   statsGrid: {
     flexDirection: 'row',
@@ -300,7 +301,7 @@ export const styles = StyleSheet.create({
     borderColor: colors.line,
     borderRadius: 24,
     padding: 8,
-    backgroundColor: '#0b1b16'
+    backgroundColor: colors.navy
   },
   navItem: {
     flex: 1,
@@ -310,7 +311,7 @@ export const styles = StyleSheet.create({
     borderRadius: 18
   },
   navItemActive: {
-    backgroundColor: colors.gold
+    backgroundColor: colors.white
   },
   navText: {
     color: colors.muted,
@@ -319,6 +320,6 @@ export const styles = StyleSheet.create({
     marginTop: 3
   },
   navTextActive: {
-    color: colors.ink
+    color: colors.blue
   }
 });
