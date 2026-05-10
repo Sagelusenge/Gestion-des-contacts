@@ -55,7 +55,17 @@ export function DirectoryView({ token, onUnauthorized }) {
       pastor.date_affectation
     ]);
     const escapeValue = (value) => `"${String(value || '').replaceAll('"', '""')}"`;
-    const csv = [headers, ...csvRows].map((row) => row.map(escapeValue).join(',')).join('\n');
+    const generatedAt = new Intl.DateTimeFormat('fr-FR', {
+      dateStyle: 'medium',
+      timeStyle: 'short'
+    }).format(new Date());
+    const intro = [
+      ['Annuaire CBCA'],
+      [`Etat de sortie genere le ${generatedAt}`],
+      [`Nombre de pasteurs`, rows.length],
+      []
+    ];
+    const csv = [...intro, headers, ...csvRows].map((row) => row.map(escapeValue).join(';')).join('\n');
     const blob = new Blob([`\ufeff${csv}`], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -108,7 +118,11 @@ export function DirectoryView({ token, onUnauthorized }) {
         page: 1,
         limit: 1000
       });
-      printPastorsList(payload.data || []);
+      printPastorsList(payload.data || [], {
+        query: debouncedQuery,
+        degre: activeDegree,
+        poste: activePoste
+      });
     } catch (printError) {
       if (printError.message.includes('Authentification') || printError.message.includes('Session')) {
         onUnauthorized();

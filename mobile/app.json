@@ -1,0 +1,31 @@
+{
+  "expo": {
+    "name": "Annuaire CBCA",
+    "slug": "annuaire-cbca",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/cbca-logo.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/cbca-logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#071411"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/cbca-logo.png",
+        "backgroundColor": "#071411"
+      },
+      "package": "com.cbca.annuaire"
+    },
+    "web": {
+      "favicon": "./assets/cbca-logo.png"
+    }
+  }
+}

@@ -66,3 +66,27 @@ Fonctions livrees :
 - espace admin pour ajouter les postes
 - espace admin pour ajouter les pasteurs
 - manifest PWA et service worker
+
+## Application mobile Expo
+
+L'application mobile se trouve dans `mobile/`.
+
+```bash
+cd mobile
+npm install
+npm start
+```
+
+Elle utilise par defaut l'API de production Render :
+
+```text
+https://gestionannuaire-3a46.onrender.com/api
+```
+
+Fonctions livrees :
+
+- connexion admin
+- dashboard mobile
+- recherche et filtres de l'annuaire
+- appel, WhatsApp, email et copie de contact
+- gestion des pasteurs, postes et grades
