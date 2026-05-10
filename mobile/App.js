@@ -27,6 +27,7 @@ const SESSION_KEY = 'cbca_mobile_session';
 const tabs = [
   { key: 'dashboard', label: 'Accueil', icon: 'grid-outline' },
   { key: 'directory', label: 'Annuaire', icon: 'search-outline' },
+  { key: 'broadcast', label: 'Diffusion', icon: 'megaphone-outline' },
   { key: 'manage', label: 'Gestion', icon: 'create-outline' }
 ];
 
@@ -77,6 +78,9 @@ export default function App() {
       ) : null}
       {activeTab === 'directory' ? (
         <DirectoryScreen token={session.token} onLogout={handleLogout} />
+      ) : null}
+      {activeTab === 'broadcast' ? (
+        <BroadcastScreen token={session.token} />
       ) : null}
       {activeTab === 'manage' ? (
         <ManageScreen token={session.token} />
@@ -190,6 +194,7 @@ function DashboardScreen({ token, onNavigate, onLogout }) {
         <Text style={styles.cardTitle}>Actions rapides</Text>
         <View style={styles.actionRow}>
           <ActionButton label="Annuaire" icon="search-outline" onPress={() => onNavigate('directory')} />
+          <ActionButton label="Diffusion" icon="megaphone-outline" onPress={() => onNavigate('broadcast')} />
           <ActionButton label="Gestion" icon="create-outline" onPress={() => onNavigate('manage')} />
         </View>
       </View>
@@ -278,6 +283,191 @@ function DirectoryScreen({ token, onLogout }) {
       {loading && pastors.length === 0 ? <ActivityIndicator color={colors.gold} /> : null}
       {!loading && pastors.length === 0 ? <EmptyState title="Aucun resultat" text="Essayez une autre recherche ou reinitialisez les filtres." /> : null}
       {pastors.map((pastor) => <PastorCard pastor={pastor} key={pastor.id} />)}
+    </ScrollView>
+  );
+}
+
+function BroadcastScreen({ token }) {
+  const [pastors, setPastors] = useState([]);
+  const [postes, setPostes] = useState([]);
+  const [grades, setGrades] = useState([]);
+  const [filterType, setFilterType] = useState('poste');
+  const [selectedValue, setSelectedValue] = useState('');
+  const [message, setMessage] = useState('');
+  const [showRecipients, setShowRecipients] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  async function load() {
+    setError('');
+    setLoading(true);
+    try {
+      const [pastorsPayload, postesPayload, gradesPayload] = await Promise.all([
+        api.getPastors(token, { page: 1, limit: 1000 }),
+        api.getPostes(token),
+        api.getGrades(token)
+      ]);
+      setPastors(pastorsPayload.data || []);
+      setPostes(postesPayload.data || []);
+      setGrades(gradesPayload.data || []);
+    } catch (loadError) {
+      setError(loadError.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    load();
+  }, [token]);
+
+  const regionByPoste = useMemo(() => {
+    return postes.reduce((accumulator, poste) => {
+      if (poste.nom) {
+        accumulator.set(poste.nom, poste.region || '');
+      }
+      return accumulator;
+    }, new Map());
+  }, [postes]);
+
+  const filterValues = useMemo(() => {
+    if (filterType === 'poste') {
+      return [...new Set(postes.map((poste) => poste.nom).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+    }
+
+    if (filterType === 'region') {
+      return [...new Set(postes.map((poste) => poste.region).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+    }
+
+    return [...new Set(grades.map((grade) => grade.nom).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  }, [filterType, postes, grades]);
+
+  const recipients = useMemo(() => {
+    return pastors
+      .filter((pastor) => {
+        if (!selectedValue) {
+          return true;
+        }
+
+        if (filterType === 'poste') {
+          return pastor.poste === selectedValue;
+        }
+
+        if (filterType === 'region') {
+          return regionByPoste.get(pastor.poste) === selectedValue;
+        }
+
+        return pastor.degre === selectedValue;
+      })
+      .map((pastor) => ({
+        ...pastor,
+        whatsappPhone: phoneDigits(pastor.telephone)
+      }))
+      .filter((pastor) => pastor.whatsappPhone);
+  }, [filterType, pastors, regionByPoste, selectedValue]);
+
+  const canSend = Boolean(message.trim() && recipients.length);
+
+  function whatsappUrl(recipient) {
+    return `https://wa.me/${recipient.whatsappPhone}?text=${encodeURIComponent(message.trim())}`;
+  }
+
+  async function copyMessage() {
+    if (!message.trim()) {
+      return;
+    }
+    await Clipboard.setStringAsync(message.trim());
+    Alert.alert('Message copie', 'Le message est pret a coller dans WhatsApp.');
+  }
+
+  function openFirstRecipient() {
+    if (!canSend) {
+      return;
+    }
+    setShowRecipients(true);
+    Linking.openURL(whatsappUrl(recipients[0]));
+  }
+
+  return (
+    <ScrollView
+      style={styles.screen}
+      contentContainerStyle={styles.content}
+      refreshControl={<RefreshControl tintColor={colors.gold} refreshing={loading} onRefresh={load} />}
+    >
+      <Header title="Diffusion" subtitle="Message WhatsApp par poste, region ou grade" rightIcon="refresh-outline" onRightPress={load} />
+      {error ? <Notice type="error" message={error} /> : null}
+
+      <FormPanel title="Cible de diffusion">
+        <ChipList
+          label="Categorie"
+          values={['poste', 'region', 'grade']}
+          labels={{ poste: 'Poste', region: 'Region', grade: 'Grade' }}
+          active={filterType}
+          includeAll={false}
+          onChange={(value) => {
+            setFilterType(value);
+            setSelectedValue('');
+            setShowRecipients(false);
+          }}
+        />
+        <ChipList
+          label={filterType === 'poste' ? 'Postes' : filterType === 'region' ? 'Regions' : 'Grades'}
+          values={filterValues}
+          active={selectedValue}
+          onChange={(value) => {
+            setSelectedValue(value);
+            setShowRecipients(false);
+          }}
+        />
+        <Field
+          label="Message a envoyer"
+          value={message}
+          onChangeText={(value) => {
+            setMessage(value);
+            setShowRecipients(false);
+          }}
+          multiline
+          placeholder="Ex: Bonjour Pasteur, reunion ce samedi a 10h au bureau CBCA..."
+        />
+        <View style={styles.cardHeader}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.cardTitle}>{recipients.length} destinataire{recipients.length > 1 ? 's' : ''}</Text>
+            <Text style={styles.meta}>
+              {selectedValue ? `${filterType}: ${selectedValue}` : 'Tous les pasteurs avec numero WhatsApp'}
+            </Text>
+          </View>
+        </View>
+        <View style={styles.actionRow}>
+          <TouchableOpacity style={styles.primaryButton} onPress={openFirstRecipient} disabled={!canSend}>
+            <Ionicons name="logo-whatsapp" color={colors.white} size={20} />
+            <Text style={styles.primaryButtonText}>Ouvrir WhatsApp</Text>
+          </TouchableOpacity>
+          <ActionButton label="Copier" icon="copy-outline" onPress={copyMessage} />
+          <ActionButton
+            label={showRecipients ? 'Masquer' : 'Liste'}
+            icon="people-outline"
+            onPress={() => setShowRecipients((current) => !current)}
+          />
+        </View>
+      </FormPanel>
+
+      {loading && recipients.length === 0 ? <ActivityIndicator color={colors.gold} /> : null}
+      {!loading && recipients.length === 0 ? (
+        <EmptyState title="Aucun destinataire" text="Choisissez une autre categorie ou verifiez les numeros de telephone." />
+      ) : null}
+
+      {showRecipients ? recipients.map((recipient, index) => (
+        <View style={styles.card} key={recipient.id}>
+          <View style={styles.cardHeader}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.cardTitle}>{index + 1}. {recipient.nom}</Text>
+              <Text style={styles.meta}>{recipient.degre} - {recipient.poste}</Text>
+              <Text style={styles.meta}>WhatsApp: {recipient.whatsappPhone}</Text>
+            </View>
+            <RoundAction icon="logo-whatsapp" color={colors.green} onPress={() => Linking.openURL(whatsappUrl(recipient))} />
+          </View>
+        </View>
+      )) : null}
     </ScrollView>
   );
 }
@@ -432,7 +622,7 @@ function ManageScreen({ token }) {
       refreshControl={<RefreshControl tintColor={colors.gold} refreshing={loading} onRefresh={load} />}
     >
       <Header title="Gestion" subtitle="Ajouter, modifier et supprimer les donnees" rightIcon="refresh-outline" onRightPress={load} />
-      <ChipList values={['pastors', 'postes', 'grades']} labels={{ pastors: 'Pasteurs', postes: 'Postes', grades: 'Grades' }} active={section} onChange={(value) => { setSection(value); resetForms(); }} />
+      <ChipList values={['pastors', 'postes', 'grades']} labels={{ pastors: 'Pasteurs', postes: 'Postes', grades: 'Grades' }} active={section} onChange={(value) => { setSection(value); resetForms(); }} includeAll={false} />
 
       {message ? <Notice type="success" message={message} /> : null}
       {error ? <Notice type="error" message={error} /> : null}
@@ -605,15 +795,17 @@ function Field({ label, multiline, style, ...props }) {
   );
 }
 
-function ChipList({ label, values, labels = {}, active, onChange }) {
+function ChipList({ label, values, labels = {}, active, onChange, includeAll = true }) {
   if (!values.length) return null;
   return (
     <View>
       {label ? <Text style={styles.label}>{label}</Text> : null}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
-        <TouchableOpacity style={[styles.chip, !active && styles.chipActive]} onPress={() => onChange('')}>
-          <Text style={[styles.chipText, !active && styles.chipTextActive]}>Tous</Text>
-        </TouchableOpacity>
+        {includeAll ? (
+          <TouchableOpacity style={[styles.chip, !active && styles.chipActive]} onPress={() => onChange('')}>
+            <Text style={[styles.chipText, !active && styles.chipTextActive]}>Tous</Text>
+          </TouchableOpacity>
+        ) : null}
         {values.map((value) => {
           const selected = active === value;
           return (

@@ -47,6 +47,7 @@ npm start
 - Recherche des pasteurs
 - Filtres par grade et poste
 - Appel, WhatsApp, email et copie de contact
+- Large diffusion WhatsApp par poste, region ou grade
 - Ajout, modification et suppression des pasteurs
 - Ajout, modification et suppression des postes
 - Ajout, modification et suppression des grades
