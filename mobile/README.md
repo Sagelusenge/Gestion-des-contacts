@@ -12,6 +12,19 @@ npm start
 
 Scanne le QR code avec Expo Go sur Android.
 
+## Creer une app Android installable
+
+Pour generer un fichier APK installable sur un telephone Android :
+
+```bash
+cd mobile
+npm install
+npx eas-cli login
+npx eas-cli build -p android --profile preview
+```
+
+Quand le build finit, Expo donne un lien de telechargement. Ouvre ce lien sur le telephone, telecharge le `.apk`, puis installe l'application.
+
 ## API
 
 Par defaut, l'application utilise:
