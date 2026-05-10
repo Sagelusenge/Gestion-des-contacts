@@ -101,8 +101,8 @@ async function listPastors(req, res) {
      FROM pastors
      ${where}
      ORDER BY nom ASC
-     LIMIT :limit OFFSET :offset`,
-    { ...params, limit, offset }
+     LIMIT ${limit} OFFSET ${offset}`,
+    params
   );
 
   res.json({
