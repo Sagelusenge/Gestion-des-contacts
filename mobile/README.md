@@ -51,3 +51,4 @@ npm start
 - Ajout, modification et suppression des pasteurs
 - Ajout, modification et suppression des postes
 - Ajout, modification et suppression des grades
+- Creation d'utilisateurs avec email et mot de passe

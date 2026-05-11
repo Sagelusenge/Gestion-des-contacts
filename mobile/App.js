@@ -506,9 +506,11 @@ function ManageScreen({ token }) {
   const [pastors, setPastors] = useState([]);
   const [postes, setPostes] = useState([]);
   const [grades, setGrades] = useState([]);
+  const [users, setUsers] = useState([]);
   const [pastorForm, setPastorForm] = useState(blankPastor());
   const [posteForm, setPosteForm] = useState(blankPoste());
   const [gradeForm, setGradeForm] = useState(blankGrade());
+  const [userForm, setUserForm] = useState({ username: '', password: '' });
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -524,9 +526,11 @@ function ManageScreen({ token }) {
         api.getPostes(token),
         api.getGrades(token)
       ]);
+      const usersPayload = await api.getUsers(token).catch(() => ({ data: [] }));
       setPastors(pastorsPayload.data || []);
       setPostes(postesPayload.data || []);
       setGrades(gradesPayload.data || []);
+      setUsers(usersPayload.data || []);
     } catch (loadError) {
       setError(loadError.message);
     } finally {
@@ -543,6 +547,7 @@ function ManageScreen({ token }) {
     setPastorForm(blankPastor(grades[0]?.nom || 'Pasteur'));
     setPosteForm(blankPoste());
     setGradeForm(blankGrade());
+    setUserForm({ username: '', password: '' });
   }
 
   async function savePastor() {
@@ -622,6 +627,25 @@ function ManageScreen({ token }) {
     }
   }
 
+  async function saveUser() {
+    setMessage('');
+    setError('');
+    setSaving(true);
+    try {
+      await api.createUser(token, {
+        username: userForm.username,
+        password: userForm.password
+      });
+      setMessage('Utilisateur ajoute.');
+      resetForms();
+      await load();
+    } catch (saveError) {
+      setError(saveError.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function remove(kind, id) {
     setError('');
     setMessage('');
@@ -651,7 +675,7 @@ function ManageScreen({ token }) {
       refreshControl={<RefreshControl tintColor={colors.gold} refreshing={loading} onRefresh={load} />}
     >
       <Header title="Gestion" subtitle="Ajouter, modifier et supprimer les donnees" rightIcon="refresh-outline" onRightPress={load} />
-      <ChipList values={['pastors', 'postes', 'grades']} labels={{ pastors: 'Pasteurs', postes: 'Postes', grades: 'Grades' }} active={section} onChange={(value) => { setSection(value); resetForms(); }} includeAll={false} />
+      <ChipList values={['pastors', 'postes', 'grades', 'users']} labels={{ pastors: 'Pasteurs', postes: 'Postes', grades: 'Grades', users: 'Users' }} active={section} onChange={(value) => { setSection(value); resetForms(); }} includeAll={false} />
 
       {message ? <Notice type="success" message={message} /> : null}
       {error ? <Notice type="error" message={error} /> : null}
@@ -733,6 +757,35 @@ function ManageScreen({ token }) {
               }}
               onDelete={() => confirmRemove('grade', grade.id)}
             />
+          ))}
+        </View>
+      ) : null}
+
+      {section === 'users' ? (
+        <View>
+          <FormPanel title="Creer un utilisateur">
+            <Field
+              label="Email"
+              value={userForm.username}
+              onChangeText={(value) => setUserForm({ ...userForm, username: value })}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              placeholder="email@exemple.com"
+            />
+            <Field
+              label="Mot de passe"
+              value={userForm.password}
+              onChangeText={(value) => setUserForm({ ...userForm, password: value })}
+              secureTextEntry
+              placeholder="Minimum 6 caracteres"
+            />
+            <SubmitRow saving={saving} onSubmit={saveUser} />
+          </FormPanel>
+          {users.map((user) => (
+            <View style={styles.card} key={user.id}>
+              <Text style={styles.cardTitle}>{user.username}</Text>
+              <Text style={styles.meta}>{user.role}</Text>
+            </View>
           ))}
         </View>
       ) : null}
