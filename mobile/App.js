@@ -37,18 +37,11 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
 
   useEffect(() => {
-    AsyncStorage.getItem(SESSION_KEY)
-      .then((value) => {
-        if (value) {
-          setSession(JSON.parse(value));
-        }
-      })
-      .finally(() => setBooting(false));
+    AsyncStorage.removeItem(SESSION_KEY).finally(() => setBooting(false));
   }, []);
 
   async function handleLogin(nextSession) {
     setSession(nextSession);
-    await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(nextSession));
     setActiveTab('dashboard');
   }
 
@@ -295,6 +288,7 @@ function BroadcastScreen({ token }) {
   const [selectedValue, setSelectedValue] = useState('');
   const [message, setMessage] = useState('');
   const [showRecipients, setShowRecipients] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(-1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -367,6 +361,7 @@ function BroadcastScreen({ token }) {
   }, [filterType, pastors, regionByPoste, selectedValue]);
 
   const canSend = Boolean(message.trim() && recipients.length);
+  const activeRecipient = currentIndex >= 0 ? recipients[currentIndex] : null;
 
   function whatsappUrl(recipient) {
     return `https://wa.me/${recipient.whatsappPhone}?text=${encodeURIComponent(message.trim())}`;
@@ -380,12 +375,28 @@ function BroadcastScreen({ token }) {
     Alert.alert('Message copie', 'Le message est pret a coller dans WhatsApp.');
   }
 
-  function openFirstRecipient() {
+  function openRecipientAt(index) {
     if (!canSend) {
       return;
     }
+    const recipient = recipients[index];
+
+    if (!recipient) {
+      Alert.alert('Diffusion terminee', 'Tous les destinataires de cette categorie ont ete ouverts.');
+      return;
+    }
+
+    setCurrentIndex(index);
     setShowRecipients(true);
-    Linking.openURL(whatsappUrl(recipients[0]));
+    Linking.openURL(whatsappUrl(recipient));
+  }
+
+  function openFirstRecipient() {
+    openRecipientAt(0);
+  }
+
+  function openNextRecipient() {
+    openRecipientAt(currentIndex + 1);
   }
 
   return (
@@ -408,6 +419,7 @@ function BroadcastScreen({ token }) {
             setFilterType(value);
             setSelectedValue('');
             setShowRecipients(false);
+            setCurrentIndex(-1);
           }}
         />
         <ChipList
@@ -417,6 +429,7 @@ function BroadcastScreen({ token }) {
           onChange={(value) => {
             setSelectedValue(value);
             setShowRecipients(false);
+            setCurrentIndex(-1);
           }}
         />
         <Field
@@ -425,9 +438,13 @@ function BroadcastScreen({ token }) {
           onChangeText={(value) => {
             setMessage(value);
             setShowRecipients(false);
+            setCurrentIndex(-1);
           }}
           multiline
           placeholder="Ex: Bonjour Pasteur, reunion ce samedi a 10h au bureau CBCA..."
+        />
+        <Notice
+          message="WhatsApp demande de valider chaque envoi. L'application prepare le message et ouvre chaque pasteur automatiquement, puis vous appuyez sur Envoyer dans WhatsApp."
         />
         <View style={styles.cardHeader}>
           <View style={{ flex: 1 }}>
@@ -440,8 +457,15 @@ function BroadcastScreen({ token }) {
         <View style={styles.actionRow}>
           <TouchableOpacity style={styles.primaryButton} onPress={openFirstRecipient} disabled={!canSend}>
             <Ionicons name="logo-whatsapp" color={colors.white} size={20} />
-            <Text style={styles.primaryButtonText}>Ouvrir WhatsApp</Text>
+            <Text style={styles.primaryButtonText}>Demarrer</Text>
           </TouchableOpacity>
+          {activeRecipient ? (
+            <ActionButton
+              label={currentIndex + 1 >= recipients.length ? 'Termine' : 'Suivant'}
+              icon="arrow-forward-outline"
+              onPress={openNextRecipient}
+            />
+          ) : null}
           <ActionButton label="Copier" icon="copy-outline" onPress={copyMessage} />
           <ActionButton
             label={showRecipients ? 'Masquer' : 'Liste'}
@@ -449,6 +473,11 @@ function BroadcastScreen({ token }) {
             onPress={() => setShowRecipients((current) => !current)}
           />
         </View>
+        {activeRecipient ? (
+          <Text style={styles.meta}>
+            Progression: {currentIndex + 1}/{recipients.length} - {activeRecipient.nom}
+          </Text>
+        ) : null}
       </FormPanel>
 
       {loading && recipients.length === 0 ? <ActivityIndicator color={colors.gold} /> : null}
