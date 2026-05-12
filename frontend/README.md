@@ -25,7 +25,7 @@ Compte admin apres import du seed MySQL :
 
 ## Fonctionnalites
 
-- recherche instantanee par nom, degre ou poste
+- recherche instantanee par nom, fonction ou poste
 - filtres rapides pour les reverends et les regions
 - boutons `tel:` et WhatsApp sur chaque fiche
 - navigation mobile en bas

@@ -38,6 +38,10 @@ export const api = {
   createGrade: (token, data) => request('/grades', { token, method: 'POST', body: data }),
   updateGrade: (token, id, data) => request(`/grades/${id}`, { token, method: 'PUT', body: data }),
   deleteGrade: (token, id) => request(`/grades/${id}`, { token, method: 'DELETE' }),
+  getFonctions: (token) => request('/grades', { token }),
+  createFonction: (token, data) => request('/grades', { token, method: 'POST', body: data }),
+  updateFonction: (token, id, data) => request(`/grades/${id}`, { token, method: 'PUT', body: data }),
+  deleteFonction: (token, id) => request(`/grades/${id}`, { token, method: 'DELETE' }),
   getPastors: (token, params = {}) => {
     const query = new URLSearchParams(params);
     return request(`/pastors?${query.toString()}`, { token });
@@ -47,6 +51,7 @@ export const api = {
     return request(`/pastors/search?${query.toString()}`, { token });
   },
   createPastor: (token, data) => request('/pastors', { token, method: 'POST', body: data }),
+  importPastors: (token, rows) => request('/pastors/import', { token, method: 'POST', body: { rows } }),
   updatePastor: (token, id, data) => request(`/pastors/${id}`, { token, method: 'PUT', body: data }),
   deletePastor: (token, id) => request(`/pastors/${id}`, { token, method: 'DELETE' }),
   getPostes: (token) => request('/postes', { token }),

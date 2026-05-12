@@ -5,20 +5,20 @@ import { api } from '../services/api.js';
 export function DashboardView({ token, onNavigate }) {
   const [pastors, setPastors] = useState([]);
   const [postes, setPostes] = useState([]);
-  const [grades, setGrades] = useState([]);
+  const [fonctions, setFonctions] = useState([]);
   const [error, setError] = useState('');
 
   useEffect(() => {
     async function loadDashboard() {
       try {
-        const [pastorsPayload, postesPayload, gradesPayload] = await Promise.all([
+        const [pastorsPayload, postesPayload, fonctionsPayload] = await Promise.all([
           api.getPastors(token, { page: 1, limit: 100 }),
           api.getPostes(token),
-          api.getGrades(token)
+          api.getFonctions(token)
         ]);
         setPastors(pastorsPayload.data || []);
         setPostes(postesPayload.data || []);
-        setGrades(gradesPayload.data || []);
+        setFonctions(fonctionsPayload.data || []);
       } catch (loadError) {
         setError(loadError.message);
       }
@@ -34,9 +34,9 @@ export function DashboardView({ token, onNavigate }) {
       { label: 'Pasteurs', value: pastors.length, icon: ContactRound },
       { label: 'Postes', value: postes.length, icon: MapPinned },
       { label: 'Régions', value: regions, icon: CalendarDays },
-      { label: 'Grades', value: grades.length, icon: BadgePlus }
+      { label: 'Fonctions', value: fonctions.length, icon: BadgePlus }
     ];
-  }, [pastors, postes, grades]);
+  }, [pastors, postes, fonctions]);
 
   const recentPastors = pastors.slice(0, 5);
   const visiblePostes = postes.slice(0, 8);
@@ -83,9 +83,9 @@ export function DashboardView({ token, onNavigate }) {
           <MapPinned size={18} />
           Ajouter un poste
         </button>
-        <button type="button" onClick={() => onNavigate('addGrade')}>
+        <button type="button" onClick={() => onNavigate('addFonction')}>
           <BadgePlus size={18} />
-          Gerer les grades
+          Gerer les fonctions
         </button>
       </section>
 

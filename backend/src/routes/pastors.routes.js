@@ -36,13 +36,13 @@ async function readPastorPayload(body) {
     throw httpError(400, 'Le nom du pasteur est requis.');
   }
 
-  const [gradeRows] = await pool.execute(
+  const [fonctionRows] = await pool.execute(
     'SELECT id FROM grades WHERE nom = :degre LIMIT 1',
     { degre: payload.degre }
   );
 
-  if (!gradeRows[0]) {
-    throw httpError(400, 'Degre invalide.');
+  if (!fonctionRows[0]) {
+    throw httpError(400, 'Fonction invalide.');
   }
 
   if (!payload.poste) {
@@ -83,6 +83,15 @@ function buildPastorFilters(query) {
     where: filters.length ? `WHERE ${filters.join(' AND ')}` : '',
     params
   };
+}
+
+function normalizeImportDate(value) {
+  if (!value) {
+    return null;
+  }
+
+  const text = String(value).trim();
+  return /^\d{4}-\d{2}-\d{2}/.test(text) ? text.slice(0, 10) : text;
 }
 
 async function listPastors(req, res) {
@@ -163,6 +172,123 @@ router.post(
     );
 
     res.status(201).json({ data: withCommunicationLinks(rows[0]) });
+  })
+);
+
+router.post(
+  '/import',
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const rows = Array.isArray(req.body.rows) ? req.body.rows : [];
+
+    if (!rows.length) {
+      throw httpError(400, 'Aucune ligne a importer.');
+    }
+
+    const connection = await pool.getConnection();
+    const summary = {
+      imported: 0,
+      skipped: 0,
+      createdFunctions: 0,
+      createdPostes: 0,
+      errors: []
+    };
+
+    try {
+      await connection.beginTransaction();
+
+      for (const [index, row] of rows.entries()) {
+        const payload = {
+          nom: String(row.nom || row.Nom || row.name || '').trim(),
+          degre: String(row.degre || row.fonction || row.Fonction || row.grade || row.Grade || '').trim(),
+          poste: String(row.poste || row.Poste || '').trim(),
+          region: String(row.region || row.Region || '').trim(),
+          telephone: String(row.telephone || row.Telephone || row.Téléphone || row.phone || '').trim(),
+          email: row.email || row.Email ? String(row.email || row.Email).trim() : null,
+          date_affectation: normalizeImportDate(row.date_affectation || row.Affectation || row['Date affectation'])
+        };
+
+        if (!payload.nom || !payload.degre || !payload.poste || !payload.telephone) {
+          summary.skipped += 1;
+          summary.errors.push(`Ligne ${index + 2}: nom, fonction, poste et telephone sont requis.`);
+          continue;
+        }
+
+        const [fonctionRows] = await connection.execute(
+          'SELECT id FROM grades WHERE nom = :nom LIMIT 1',
+          { nom: payload.degre }
+        );
+
+        if (!fonctionRows[0]) {
+          await connection.execute(
+            `INSERT INTO grades (nom, description, created_by)
+             VALUES (:nom, :description, :createdBy)`,
+            {
+              nom: payload.degre,
+              description: 'Fonction creee par import Excel',
+              createdBy: req.user.id
+            }
+          );
+          summary.createdFunctions += 1;
+        }
+
+        const [posteRows] = await connection.execute(
+          'SELECT id FROM postes WHERE nom = :nom LIMIT 1',
+          { nom: payload.poste }
+        );
+
+        if (!posteRows[0]) {
+          await connection.execute(
+            `INSERT INTO postes (nom, region, description, created_by)
+             VALUES (:nom, :region, :description, :createdBy)`,
+            {
+              nom: payload.poste,
+              region: payload.region || null,
+              description: 'Poste cree par import Excel',
+              createdBy: req.user.id
+            }
+          );
+          summary.createdPostes += 1;
+        } else if (payload.region) {
+          await connection.execute(
+            `UPDATE postes
+             SET region = COALESCE(NULLIF(region, ''), :region)
+             WHERE nom = :nom`,
+            { nom: payload.poste, region: payload.region }
+          );
+        }
+
+        await connection.execute(
+          `INSERT INTO pastors (nom, degre, poste, telephone, email, date_affectation)
+           VALUES (:nom, :degre, :poste, :telephone, :email, :date_affectation)
+           ON DUPLICATE KEY UPDATE
+             nom = VALUES(nom),
+             degre = VALUES(degre),
+             poste = VALUES(poste),
+             telephone = VALUES(telephone),
+             email = VALUES(email),
+             date_affectation = VALUES(date_affectation)`,
+          {
+            nom: payload.nom,
+            degre: payload.degre,
+            poste: payload.poste,
+            telephone: payload.telephone,
+            email: payload.email || null,
+            date_affectation: payload.date_affectation || null
+          }
+        );
+
+        summary.imported += 1;
+      }
+
+      await connection.commit();
+      res.status(201).json({ data: summary });
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
   })
 );
 

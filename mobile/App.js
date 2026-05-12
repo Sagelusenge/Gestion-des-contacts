@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Clipboard from 'expo-clipboard';
 import * as Linking from 'expo-linking';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -19,10 +19,34 @@ import {
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { api } from './src/services/api.js';
-import { blankGrade, blankPastor, blankPoste, pastorContactText, phoneDigits } from './src/utils/format.js';
+import { blankFonction, blankPastor, blankPoste, pastorContactText, phoneDigits } from './src/utils/format.js';
 import { colors, styles } from './src/styles.js';
 
 const SESSION_KEY = 'cbca_mobile_session';
+const THEME_KEY = 'cbca_mobile_theme';
+
+const darkColors = {
+  ...colors,
+  ink: '#081221',
+  panel: '#101d34',
+  panelSoft: '#172846',
+  text: '#f8fbff',
+  muted: '#a7b4c8',
+  line: '#2e466c',
+  white: '#ffffff',
+  navy: '#06122a',
+  redSoft: 'rgba(215, 25, 32, 0.18)'
+};
+
+const ThemeContext = createContext({
+  palette: colors,
+  themeName: 'light',
+  toggleTheme: () => {}
+});
+
+function useTheme() {
+  return useContext(ThemeContext);
+}
 
 const tabs = [
   { key: 'dashboard', label: 'Accueil', icon: 'grid-outline' },
@@ -35,10 +59,25 @@ export default function App() {
   const [session, setSession] = useState(null);
   const [booting, setBooting] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [themeName, setThemeName] = useState('light');
+  const palette = themeName === 'dark' ? darkColors : colors;
 
   useEffect(() => {
-    AsyncStorage.removeItem(SESSION_KEY).finally(() => setBooting(false));
+    Promise.all([
+      AsyncStorage.removeItem(SESSION_KEY),
+      AsyncStorage.getItem(THEME_KEY).then((value) => {
+        if (value === 'dark' || value === 'light') {
+          setThemeName(value);
+        }
+      })
+    ]).finally(() => setBooting(false));
   }, []);
+
+  async function toggleTheme() {
+    const nextTheme = themeName === 'dark' ? 'light' : 'dark';
+    setThemeName(nextTheme);
+    await AsyncStorage.setItem(THEME_KEY, nextTheme);
+  }
 
   async function handleLogin(nextSession) {
     setSession(nextSession);
@@ -53,19 +92,26 @@ export default function App() {
 
   if (booting) {
     return (
-      <SafeAreaView style={styles.centerScreen}>
-        <ActivityIndicator color={colors.gold} size="large" />
-      </SafeAreaView>
+      <ThemeContext.Provider value={{ palette, themeName, toggleTheme }}>
+        <SafeAreaView style={styles.centerScreen}>
+        <ActivityIndicator color={palette.blue} size="large" />
+        </SafeAreaView>
+      </ThemeContext.Provider>
     );
   }
 
   if (!session) {
-    return <LoginScreen onLogin={handleLogin} />;
+    return (
+      <ThemeContext.Provider value={{ palette, themeName, toggleTheme }}>
+        <LoginScreen onLogin={handleLogin} />
+      </ThemeContext.Provider>
+    );
   }
 
   return (
+    <ThemeContext.Provider value={{ palette, themeName, toggleTheme }}>
     <SafeAreaView style={styles.safe}>
-      <StatusBar style="light" />
+      <StatusBar style={themeName === 'dark' ? 'light' : 'dark'} />
       {activeTab === 'dashboard' ? (
         <DashboardScreen token={session.token} onNavigate={setActiveTab} onLogout={handleLogout} />
       ) : null}
@@ -80,14 +126,17 @@ export default function App() {
       ) : null}
       <BottomNav activeTab={activeTab} onChange={setActiveTab} />
     </SafeAreaView>
+    </ThemeContext.Provider>
   );
 }
 
 function LoginScreen({ onLogin }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const { palette, themeName, toggleTheme } = useTheme();
 
   async function submit() {
     setError('');
@@ -104,21 +153,32 @@ function LoginScreen({ onLogin }) {
 
   return (
     <SafeAreaView style={styles.centerScreen}>
-      <StatusBar style="light" />
+      <StatusBar style={themeName === 'dark' ? 'light' : 'dark'} />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <View style={styles.loginPanel}>
+        <View style={[styles.loginPanel, { backgroundColor: palette.panel, borderColor: palette.line }]}>
           <Image source={require('./assets/cbca-logo.png')} style={styles.logo} />
           <Text style={styles.eyebrow}>Annuaire CBCA</Text>
-          <Text style={styles.title}>Connexion</Text>
+          <Text style={[styles.title, { color: palette.text }]}>Connexion</Text>
 
           <Field label="Utilisateur" value={username} onChangeText={setUsername} autoCapitalize="none" keyboardType="email-address" />
-          <Field label="Mot de passe" value={password} onChangeText={setPassword} secureTextEntry />
+          <Field
+            label="Mot de passe"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={!showPassword}
+            rightIcon={showPassword ? 'eye-off-outline' : 'eye-outline'}
+            onRightPress={() => setShowPassword((current) => !current)}
+          />
 
           {error ? <Notice type="error" message={error} /> : null}
 
           <TouchableOpacity style={styles.primaryButton} onPress={submit} disabled={loading}>
             {loading ? <ActivityIndicator color={colors.white} /> : <Ionicons name="log-in-outline" color={colors.white} size={21} />}
             <Text style={styles.primaryButtonText}>{loading ? 'Connexion...' : 'Se connecter'}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.ghostButton, { marginTop: 12, borderColor: palette.line, backgroundColor: palette.panelSoft }]} onPress={toggleTheme}>
+            <Ionicons name={themeName === 'dark' ? 'sunny-outline' : 'moon-outline'} color={palette.blue} size={20} />
+            <Text style={[styles.ghostText, { color: palette.blue }]}>{themeName === 'dark' ? 'Mode clair' : 'Mode sombre'}</Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -129,22 +189,23 @@ function LoginScreen({ onLogin }) {
 function DashboardScreen({ token, onNavigate, onLogout }) {
   const [pastors, setPastors] = useState([]);
   const [postes, setPostes] = useState([]);
-  const [grades, setGrades] = useState([]);
+  const [fonctions, setFonctions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const { palette } = useTheme();
 
   async function load() {
     setError('');
     setLoading(true);
     try {
-      const [pastorsPayload, postesPayload, gradesPayload] = await Promise.all([
+      const [pastorsPayload, postesPayload, fonctionsPayload] = await Promise.all([
         api.getPastors(token, { page: 1, limit: 1000 }),
         api.getPostes(token),
-        api.getGrades(token)
+        api.getFonctions(token)
       ]);
       setPastors(pastorsPayload.data || []);
       setPostes(postesPayload.data || []);
-      setGrades(gradesPayload.data || []);
+      setFonctions(fonctionsPayload.data || []);
     } catch (loadError) {
       setError(loadError.message);
     } finally {
@@ -161,30 +222,30 @@ function DashboardScreen({ token, onNavigate, onLogout }) {
     { label: 'Pasteurs', value: pastors.length, icon: 'account-group-outline' },
     { label: 'Postes', value: postes.length, icon: 'map-marker-radius-outline' },
     { label: 'Regions', value: regions, icon: 'map-outline' },
-    { label: 'Grades', value: grades.length, icon: 'badge-account-outline' }
+    { label: 'Fonctions', value: fonctions.length, icon: 'badge-account-outline' }
   ];
 
   return (
     <ScrollView
-      style={styles.screen}
+      style={[styles.screen, { backgroundColor: palette.ink }]}
       contentContainerStyle={styles.content}
-      refreshControl={<RefreshControl tintColor={colors.gold} refreshing={loading} onRefresh={load} />}
+      refreshControl={<RefreshControl tintColor={palette.blue} refreshing={loading} onRefresh={load} />}
     >
       <Header title="Accueil" subtitle="Vue mobile de l'annuaire pastoral" rightIcon="log-out-outline" onRightPress={onLogout} />
       {error ? <Notice type="error" message={error} /> : null}
 
       <View style={styles.statsGrid}>
         {stats.map((stat) => (
-          <View style={styles.statCard} key={stat.label}>
-            <MaterialCommunityIcons name={stat.icon} color={colors.teal} size={25} />
-            <Text style={styles.statValue}>{stat.value}</Text>
-            <Text style={styles.statLabel}>{stat.label}</Text>
+          <View style={[styles.statCard, { backgroundColor: palette.panel, borderColor: palette.line }]} key={stat.label}>
+            <MaterialCommunityIcons name={stat.icon} color={palette.red} size={25} />
+            <Text style={[styles.statValue, { color: palette.text }]}>{stat.value}</Text>
+            <Text style={[styles.statLabel, { color: palette.muted }]}>{stat.label}</Text>
           </View>
         ))}
       </View>
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Actions rapides</Text>
+      <View style={[styles.card, { backgroundColor: palette.panel, borderColor: palette.line }]}>
+        <Text style={[styles.cardTitle, { color: palette.text }]}>Actions rapides</Text>
         <View style={styles.actionRow}>
           <ActionButton label="Annuaire" icon="search-outline" onPress={() => onNavigate('directory')} />
           <ActionButton label="Diffusion" icon="megaphone-outline" onPress={() => onNavigate('broadcast')} />
@@ -192,8 +253,8 @@ function DashboardScreen({ token, onNavigate, onLogout }) {
         </View>
       </View>
 
-      <Text style={[styles.pageSubtitle, { marginBottom: 10 }]}>Derniers pasteurs</Text>
-      {loading && pastors.length === 0 ? <ActivityIndicator color={colors.gold} /> : null}
+      <Text style={[styles.pageSubtitle, { marginBottom: 10, color: palette.muted }]}>Derniers pasteurs</Text>
+      {loading && pastors.length === 0 ? <ActivityIndicator color={palette.blue} /> : null}
       {!loading && pastors.length === 0 ? <EmptyState title="Aucun pasteur" text="Ajoutez le premier pasteur depuis l'onglet Gestion." /> : null}
       {pastors.slice(0, 5).map((pastor) => (
         <MiniRow title={pastor.nom} subtitle={`${pastor.degre} - ${pastor.poste}`} key={pastor.id} />
@@ -204,22 +265,23 @@ function DashboardScreen({ token, onNavigate, onLogout }) {
 
 function DirectoryScreen({ token, onLogout }) {
   const [query, setQuery] = useState('');
-  const [activeGrade, setActiveGrade] = useState('');
+  const [activeFonction, setActiveFonction] = useState('');
   const [activePoste, setActivePoste] = useState('');
   const [pastors, setPastors] = useState([]);
   const [postes, setPostes] = useState([]);
-  const [grades, setGrades] = useState([]);
+  const [fonctions, setFonctions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const { palette } = useTheme();
 
   async function loadReferences() {
     try {
-      const [postesPayload, gradesPayload] = await Promise.all([api.getPostes(token), api.getGrades(token)]);
+      const [postesPayload, fonctionsPayload] = await Promise.all([api.getPostes(token), api.getFonctions(token)]);
       setPostes(postesPayload.data || []);
-      setGrades(gradesPayload.data || []);
+      setFonctions(fonctionsPayload.data || []);
     } catch {
       setPostes([]);
-      setGrades([]);
+      setFonctions([]);
     }
   }
 
@@ -229,7 +291,7 @@ function DirectoryScreen({ token, onLogout }) {
     try {
       const payload = await api.searchPastors(token, {
         q: query,
-        degre: activeGrade,
+        degre: activeFonction,
         poste: activePoste,
         page: 1,
         limit: 1000
@@ -253,7 +315,7 @@ function DirectoryScreen({ token, onLogout }) {
   useEffect(() => {
     const timer = setTimeout(loadPastors, 300);
     return () => clearTimeout(timer);
-  }, [query, activeGrade, activePoste]);
+  }, [query, activeFonction, activePoste]);
 
   const posteOptions = useMemo(() => {
     const values = postes.flatMap((poste) => [poste.nom, poste.region]).filter(Boolean);
@@ -262,18 +324,18 @@ function DirectoryScreen({ token, onLogout }) {
 
   return (
     <ScrollView
-      style={styles.screen}
+      style={[styles.screen, { backgroundColor: palette.ink }]}
       contentContainerStyle={styles.content}
-      refreshControl={<RefreshControl tintColor={colors.gold} refreshing={loading} onRefresh={loadPastors} />}
+      refreshControl={<RefreshControl tintColor={palette.blue} refreshing={loading} onRefresh={loadPastors} />}
     >
       <Header title="Annuaire" subtitle={`${pastors.length} contact${pastors.length > 1 ? 's' : ''} affiche${pastors.length > 1 ? 's' : ''}`} />
-      <Field label="Recherche" value={query} onChangeText={setQuery} placeholder="Nom, grade, poste..." />
+      <Field label="Recherche" value={query} onChangeText={setQuery} placeholder="Nom, fonction, poste..." />
 
-      <ChipList label="Grades" values={grades.map((grade) => grade.nom)} active={activeGrade} onChange={setActiveGrade} />
+      <ChipList label="Fonctions" values={fonctions.map((fonction) => fonction.nom)} active={activeFonction} onChange={setActiveFonction} />
       <ChipList label="Postes" values={posteOptions} active={activePoste} onChange={setActivePoste} />
 
       {error ? <Notice type="error" message={error} /> : null}
-      {loading && pastors.length === 0 ? <ActivityIndicator color={colors.gold} /> : null}
+      {loading && pastors.length === 0 ? <ActivityIndicator color={palette.blue} /> : null}
       {!loading && pastors.length === 0 ? <EmptyState title="Aucun resultat" text="Essayez une autre recherche ou reinitialisez les filtres." /> : null}
       {pastors.map((pastor) => <PastorCard pastor={pastor} key={pastor.id} />)}
     </ScrollView>
@@ -283,7 +345,7 @@ function DirectoryScreen({ token, onLogout }) {
 function BroadcastScreen({ token }) {
   const [pastors, setPastors] = useState([]);
   const [postes, setPostes] = useState([]);
-  const [grades, setGrades] = useState([]);
+  const [fonctions, setFonctions] = useState([]);
   const [filterType, setFilterType] = useState('poste');
   const [selectedValue, setSelectedValue] = useState('');
   const [message, setMessage] = useState('');
@@ -291,19 +353,20 @@ function BroadcastScreen({ token }) {
   const [currentIndex, setCurrentIndex] = useState(-1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const { palette } = useTheme();
 
   async function load() {
     setError('');
     setLoading(true);
     try {
-      const [pastorsPayload, postesPayload, gradesPayload] = await Promise.all([
+      const [pastorsPayload, postesPayload, fonctionsPayload] = await Promise.all([
         api.getPastors(token, { page: 1, limit: 1000 }),
         api.getPostes(token),
-        api.getGrades(token)
+        api.getFonctions(token)
       ]);
       setPastors(pastorsPayload.data || []);
       setPostes(postesPayload.data || []);
-      setGrades(gradesPayload.data || []);
+      setFonctions(fonctionsPayload.data || []);
     } catch (loadError) {
       setError(loadError.message);
     } finally {
@@ -333,8 +396,8 @@ function BroadcastScreen({ token }) {
       return [...new Set(postes.map((poste) => poste.region).filter(Boolean))].sort((a, b) => a.localeCompare(b));
     }
 
-    return [...new Set(grades.map((grade) => grade.nom).filter(Boolean))].sort((a, b) => a.localeCompare(b));
-  }, [filterType, postes, grades]);
+    return [...new Set(fonctions.map((fonction) => fonction.nom).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  }, [filterType, postes, fonctions]);
 
   const recipients = useMemo(() => {
     return pastors
@@ -401,18 +464,18 @@ function BroadcastScreen({ token }) {
 
   return (
     <ScrollView
-      style={styles.screen}
+      style={[styles.screen, { backgroundColor: palette.ink }]}
       contentContainerStyle={styles.content}
-      refreshControl={<RefreshControl tintColor={colors.gold} refreshing={loading} onRefresh={load} />}
+      refreshControl={<RefreshControl tintColor={palette.blue} refreshing={loading} onRefresh={load} />}
     >
-      <Header title="Diffusion" subtitle="Message WhatsApp par poste, region ou grade" rightIcon="refresh-outline" onRightPress={load} />
+      <Header title="Diffusion" subtitle="Message WhatsApp par poste, region ou fonction" rightIcon="refresh-outline" onRightPress={load} />
       {error ? <Notice type="error" message={error} /> : null}
 
       <FormPanel title="Cible de diffusion">
         <ChipList
           label="Categorie"
-          values={['poste', 'region', 'grade']}
-          labels={{ poste: 'Poste', region: 'Region', grade: 'Grade' }}
+          values={['poste', 'region', 'fonction']}
+          labels={{ poste: 'Poste', region: 'Region', fonction: 'Fonction' }}
           active={filterType}
           includeAll={false}
           onChange={(value) => {
@@ -423,7 +486,7 @@ function BroadcastScreen({ token }) {
           }}
         />
         <ChipList
-          label={filterType === 'poste' ? 'Postes' : filterType === 'region' ? 'Regions' : 'Grades'}
+          label={filterType === 'poste' ? 'Postes' : filterType === 'region' ? 'Regions' : 'Fonctions'}
           values={filterValues}
           active={selectedValue}
           onChange={(value) => {
@@ -448,8 +511,8 @@ function BroadcastScreen({ token }) {
         />
         <View style={styles.cardHeader}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.cardTitle}>{recipients.length} destinataire{recipients.length > 1 ? 's' : ''}</Text>
-            <Text style={styles.meta}>
+            <Text style={[styles.cardTitle, { color: palette.text }]}>{recipients.length} destinataire{recipients.length > 1 ? 's' : ''}</Text>
+            <Text style={[styles.meta, { color: palette.muted }]}>
               {selectedValue ? `${filterType}: ${selectedValue}` : 'Tous les pasteurs avec numero WhatsApp'}
             </Text>
           </View>
@@ -474,24 +537,24 @@ function BroadcastScreen({ token }) {
           />
         </View>
         {activeRecipient ? (
-          <Text style={styles.meta}>
+          <Text style={[styles.meta, { color: palette.muted }]}>
             Progression: {currentIndex + 1}/{recipients.length} - {activeRecipient.nom}
           </Text>
         ) : null}
       </FormPanel>
 
-      {loading && recipients.length === 0 ? <ActivityIndicator color={colors.gold} /> : null}
+      {loading && recipients.length === 0 ? <ActivityIndicator color={palette.blue} /> : null}
       {!loading && recipients.length === 0 ? (
         <EmptyState title="Aucun destinataire" text="Choisissez une autre categorie ou verifiez les numeros de telephone." />
       ) : null}
 
       {showRecipients ? recipients.map((recipient, index) => (
-        <View style={styles.card} key={recipient.id}>
+        <View style={[styles.card, { backgroundColor: palette.panel, borderColor: palette.line }]} key={recipient.id}>
           <View style={styles.cardHeader}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.cardTitle}>{index + 1}. {recipient.nom}</Text>
-              <Text style={styles.meta}>{recipient.degre} - {recipient.poste}</Text>
-              <Text style={styles.meta}>WhatsApp: {recipient.whatsappPhone}</Text>
+              <Text style={[styles.cardTitle, { color: palette.text }]}>{index + 1}. {recipient.nom}</Text>
+              <Text style={[styles.meta, { color: palette.muted }]}>{recipient.degre} - {recipient.poste}</Text>
+              <Text style={[styles.meta, { color: palette.muted }]}>WhatsApp: {recipient.whatsappPhone}</Text>
             </View>
             <RoundAction icon="logo-whatsapp" color={colors.green} onPress={() => Linking.openURL(whatsappUrl(recipient))} />
           </View>
@@ -505,31 +568,32 @@ function ManageScreen({ token }) {
   const [section, setSection] = useState('pastors');
   const [pastors, setPastors] = useState([]);
   const [postes, setPostes] = useState([]);
-  const [grades, setGrades] = useState([]);
+  const [fonctions, setFonctions] = useState([]);
   const [users, setUsers] = useState([]);
   const [pastorForm, setPastorForm] = useState(blankPastor());
   const [posteForm, setPosteForm] = useState(blankPoste());
-  const [gradeForm, setGradeForm] = useState(blankGrade());
+  const [fonctionForm, setFonctionForm] = useState(blankFonction());
   const [userForm, setUserForm] = useState({ username: '', password: '' });
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const { palette } = useTheme();
 
   async function load() {
     setError('');
     setLoading(true);
     try {
-      const [pastorsPayload, postesPayload, gradesPayload] = await Promise.all([
+      const [pastorsPayload, postesPayload, fonctionsPayload] = await Promise.all([
         api.getPastors(token, { page: 1, limit: 1000 }),
         api.getPostes(token),
-        api.getGrades(token)
+        api.getFonctions(token)
       ]);
       const usersPayload = await api.getUsers(token).catch(() => ({ data: [] }));
       setPastors(pastorsPayload.data || []);
       setPostes(postesPayload.data || []);
-      setGrades(gradesPayload.data || []);
+      setFonctions(fonctionsPayload.data || []);
       setUsers(usersPayload.data || []);
     } catch (loadError) {
       setError(loadError.message);
@@ -544,9 +608,9 @@ function ManageScreen({ token }) {
 
   function resetForms() {
     setEditingId(null);
-    setPastorForm(blankPastor(grades[0]?.nom || 'Pasteur'));
+    setPastorForm(blankPastor(fonctions[0]?.nom || 'Pasteur'));
     setPosteForm(blankPoste());
-    setGradeForm(blankGrade());
+    setFonctionForm(blankFonction());
     setUserForm({ username: '', password: '' });
   }
 
@@ -602,21 +666,21 @@ function ManageScreen({ token }) {
     }
   }
 
-  async function saveGrade() {
+  async function saveFonction() {
     setMessage('');
     setError('');
     setSaving(true);
     try {
       const payload = {
-        nom: gradeForm.nom,
-        description: gradeForm.description || null
+        nom: fonctionForm.nom,
+        description: fonctionForm.description || null
       };
       if (editingId) {
-        await api.updateGrade(token, editingId, payload);
-        setMessage('Grade mis a jour.');
+        await api.updateFonction(token, editingId, payload);
+        setMessage('Fonction mise a jour.');
       } else {
-        await api.createGrade(token, payload);
-        setMessage('Grade ajoute.');
+        await api.createFonction(token, payload);
+        setMessage('Fonction ajoutee.');
       }
       resetForms();
       await load();
@@ -652,7 +716,7 @@ function ManageScreen({ token }) {
     try {
       if (kind === 'pastor') await api.deletePastor(token, id);
       if (kind === 'poste') await api.deletePoste(token, id);
-      if (kind === 'grade') await api.deleteGrade(token, id);
+      if (kind === 'fonction') await api.deleteFonction(token, id);
       setMessage('Element supprime.');
       resetForms();
       await load();
@@ -670,12 +734,12 @@ function ManageScreen({ token }) {
 
   return (
     <ScrollView
-      style={styles.screen}
+      style={[styles.screen, { backgroundColor: palette.ink }]}
       contentContainerStyle={styles.content}
-      refreshControl={<RefreshControl tintColor={colors.gold} refreshing={loading} onRefresh={load} />}
+      refreshControl={<RefreshControl tintColor={palette.blue} refreshing={loading} onRefresh={load} />}
     >
       <Header title="Gestion" subtitle="Ajouter, modifier et supprimer les donnees" rightIcon="refresh-outline" onRightPress={load} />
-      <ChipList values={['pastors', 'postes', 'grades', 'users']} labels={{ pastors: 'Pasteurs', postes: 'Postes', grades: 'Grades', users: 'Users' }} active={section} onChange={(value) => { setSection(value); resetForms(); }} includeAll={false} />
+      <ChipList values={['pastors', 'postes', 'fonctions', 'users']} labels={{ pastors: 'Pasteurs', postes: 'Postes', fonctions: 'Fonctions', users: 'Users' }} active={section} onChange={(value) => { setSection(value); resetForms(); }} includeAll={false} />
 
       {message ? <Notice type="success" message={message} /> : null}
       {error ? <Notice type="error" message={error} /> : null}
@@ -684,7 +748,7 @@ function ManageScreen({ token }) {
         <View>
           <FormPanel title={editingId ? 'Modifier pasteur' : 'Ajouter pasteur'}>
             <Field label="Nom complet" value={pastorForm.nom} onChangeText={(value) => setPastorForm({ ...pastorForm, nom: value })} />
-            <ChipList label="Grade" values={grades.map((grade) => grade.nom)} active={pastorForm.degre} onChange={(value) => setPastorForm({ ...pastorForm, degre: value })} />
+            <ChipList label="Fonction" values={fonctions.map((fonction) => fonction.nom)} active={pastorForm.degre} onChange={(value) => setPastorForm({ ...pastorForm, degre: value })} />
             <ChipList label="Poste" values={postes.map((poste) => poste.nom)} active={pastorForm.poste} onChange={(value) => setPastorForm({ ...pastorForm, poste: value })} />
             <Field label="Telephone" value={pastorForm.telephone} onChangeText={(value) => setPastorForm({ ...pastorForm, telephone: value })} keyboardType="phone-pad" />
             <Field label="Email" value={pastorForm.email} onChangeText={(value) => setPastorForm({ ...pastorForm, email: value })} keyboardType="email-address" autoCapitalize="none" />
@@ -701,7 +765,7 @@ function ManageScreen({ token }) {
                 setEditingId(pastor.id);
                 setPastorForm({
                   nom: pastor.nom || '',
-                  degre: pastor.degre || grades[0]?.nom || 'Pasteur',
+                  degre: pastor.degre || fonctions[0]?.nom || 'Pasteur',
                   poste: pastor.poste || '',
                   telephone: pastor.telephone || '',
                   email: pastor.email || '',
@@ -738,24 +802,24 @@ function ManageScreen({ token }) {
         </View>
       ) : null}
 
-      {section === 'grades' ? (
+      {section === 'fonctions' ? (
         <View>
-          <FormPanel title={editingId ? 'Modifier grade' : 'Ajouter grade'}>
-            <Field label="Nom du grade" value={gradeForm.nom} onChangeText={(value) => setGradeForm({ ...gradeForm, nom: value })} />
-            <Field label="Description" value={gradeForm.description} onChangeText={(value) => setGradeForm({ ...gradeForm, description: value })} multiline />
-            <SubmitRow saving={saving} onSubmit={saveGrade} onCancel={editingId ? resetForms : null} />
+          <FormPanel title={editingId ? 'Modifier fonction' : 'Ajouter fonction'}>
+            <Field label="Nom de la fonction" value={fonctionForm.nom} onChangeText={(value) => setFonctionForm({ ...fonctionForm, nom: value })} />
+            <Field label="Description" value={fonctionForm.description} onChangeText={(value) => setFonctionForm({ ...fonctionForm, description: value })} multiline />
+            <SubmitRow saving={saving} onSubmit={saveFonction} onCancel={editingId ? resetForms : null} />
           </FormPanel>
-          {grades.map((grade) => (
+          {fonctions.map((fonction) => (
             <ManageRow
-              title={grade.nom}
-              subtitle={grade.description || 'Sans description'}
-              key={grade.id}
+              title={fonction.nom}
+              subtitle={fonction.description || 'Sans description'}
+              key={fonction.id}
               onEdit={() => {
-                setSection('grades');
-                setEditingId(grade.id);
-                setGradeForm({ nom: grade.nom || '', description: grade.description || '' });
+                setSection('fonctions');
+                setEditingId(fonction.id);
+                setFonctionForm({ nom: fonction.nom || '', description: fonction.description || '' });
               }}
-              onDelete={() => confirmRemove('grade', grade.id)}
+              onDelete={() => confirmRemove('fonction', fonction.id)}
             />
           ))}
         </View>
@@ -782,9 +846,9 @@ function ManageScreen({ token }) {
             <SubmitRow saving={saving} onSubmit={saveUser} />
           </FormPanel>
           {users.map((user) => (
-            <View style={styles.card} key={user.id}>
-              <Text style={styles.cardTitle}>{user.username}</Text>
-              <Text style={styles.meta}>{user.role}</Text>
+            <View style={[styles.card, { backgroundColor: palette.panel, borderColor: palette.line }]} key={user.id}>
+              <Text style={[styles.cardTitle, { color: palette.text }]}>{user.username}</Text>
+              <Text style={[styles.meta, { color: palette.muted }]}>{user.role}</Text>
             </View>
           ))}
         </View>
@@ -794,6 +858,7 @@ function ManageScreen({ token }) {
 }
 
 function PastorCard({ pastor }) {
+  const { palette } = useTheme();
   const digits = phoneDigits(pastor.telephone);
   const whatsapp = digits
     ? `https://wa.me/${digits}?text=${encodeURIComponent(`Bonjour Pasteur ${pastor.nom}, je vous contacte via l'annuaire CBCA...`)}`
@@ -805,14 +870,14 @@ function PastorCard({ pastor }) {
   }
 
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, { backgroundColor: palette.panel, borderColor: palette.line }]}>
       <View style={styles.cardHeader}>
-        <Text style={styles.cardTitle}>{pastor.degre} {pastor.nom}</Text>
-        <View style={styles.badge}><Text style={styles.badgeText}>{pastor.degre}</Text></View>
+        <Text style={[styles.cardTitle, { color: palette.text }]}>{pastor.degre} {pastor.nom}</Text>
+        <View style={[styles.badge, { backgroundColor: palette.panelSoft }]}><Text style={[styles.badgeText, { color: palette.blue }]}>{pastor.degre}</Text></View>
       </View>
-      <Text style={styles.meta}>{pastor.poste}</Text>
-      {pastor.telephone ? <Text style={styles.meta}>{pastor.telephone}</Text> : null}
-      {pastor.email ? <Text style={styles.meta}>{pastor.email}</Text> : null}
+      <Text style={[styles.meta, { color: palette.muted }]}>{pastor.poste}</Text>
+      {pastor.telephone ? <Text style={[styles.meta, { color: palette.muted }]}>{pastor.telephone}</Text> : null}
+      {pastor.email ? <Text style={[styles.meta, { color: palette.muted }]}>{pastor.email}</Text> : null}
       <View style={styles.actionRow}>
         {pastor.telephone ? <RoundAction icon="call-outline" color={colors.blue} onPress={() => Linking.openURL(`tel:${pastor.telephone}`)} /> : null}
         {whatsapp ? <RoundAction icon="logo-whatsapp" color={colors.green} onPress={() => Linking.openURL(whatsapp)} /> : null}
@@ -824,14 +889,15 @@ function PastorCard({ pastor }) {
 }
 
 function BottomNav({ activeTab, onChange }) {
+  const { palette } = useTheme();
   return (
-    <View style={styles.bottomNav}>
+    <View style={[styles.bottomNav, { backgroundColor: palette.navy, borderColor: palette.line }]}>
       {tabs.map((tab) => {
         const active = activeTab === tab.key;
         return (
-          <TouchableOpacity style={[styles.navItem, active && styles.navItemActive]} onPress={() => onChange(tab.key)} key={tab.key}>
-            <Ionicons name={tab.icon} color={active ? colors.blue : colors.white} size={22} />
-            <Text style={[styles.navText, active && styles.navTextActive]}>{tab.label}</Text>
+          <TouchableOpacity style={[styles.navItem, active && { backgroundColor: palette.panel }]} onPress={() => onChange(tab.key)} key={tab.key}>
+            <Ionicons name={tab.icon} color={active ? palette.blue : palette.white} size={22} />
+            <Text style={[styles.navText, { color: active ? palette.blue : palette.muted }]}>{tab.label}</Text>
           </TouchableOpacity>
         );
       })}
@@ -840,59 +906,75 @@ function BottomNav({ activeTab, onChange }) {
 }
 
 function Header({ title, subtitle, rightIcon, onRightPress }) {
+  const { palette, themeName, toggleTheme } = useTheme();
   return (
     <View style={styles.pageHeader}>
       <View style={{ flex: 1 }}>
-        <Text style={styles.pageTitle}>{title}</Text>
-        {subtitle ? <Text style={styles.pageSubtitle}>{subtitle}</Text> : null}
+        <Text style={[styles.pageTitle, { color: palette.text }]}>{title}</Text>
+        {subtitle ? <Text style={[styles.pageSubtitle, { color: palette.muted }]}>{subtitle}</Text> : null}
       </View>
-      {rightIcon ? (
-        <TouchableOpacity style={styles.iconButton} onPress={onRightPress}>
-          <Ionicons name={rightIcon} color={colors.teal} size={23} />
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        <TouchableOpacity style={[styles.iconButton, { backgroundColor: palette.panel, borderColor: palette.line }]} onPress={toggleTheme}>
+          <Ionicons name={themeName === 'dark' ? 'sunny-outline' : 'moon-outline'} color={palette.blue} size={23} />
         </TouchableOpacity>
-      ) : null}
+        {rightIcon ? (
+          <TouchableOpacity style={[styles.iconButton, { backgroundColor: palette.panel, borderColor: palette.line }]} onPress={onRightPress}>
+            <Ionicons name={rightIcon} color={palette.red} size={23} />
+          </TouchableOpacity>
+        ) : null}
+      </View>
     </View>
   );
 }
 
 function SafeAreaView({ children, style }) {
+  const { palette } = useTheme();
   return (
-    <View style={[style, { paddingTop: Platform.OS === 'android' ? RNStatusBar.currentHeight || 0 : 0 }]}>
+    <View style={[style, { paddingTop: Platform.OS === 'android' ? RNStatusBar.currentHeight || 0 : 0, backgroundColor: palette.ink }]}>
       {children}
     </View>
   );
 }
 
-function Field({ label, multiline, style, ...props }) {
+function Field({ label, multiline, style, rightIcon, onRightPress, ...props }) {
+  const { palette } = useTheme();
   return (
     <View style={styles.field}>
-      <Text style={styles.label}>{label}</Text>
-      <TextInput
-        placeholderTextColor="#6f857e"
-        style={[styles.input, multiline && styles.textArea, style]}
-        multiline={multiline}
-        {...props}
-      />
+      <Text style={[styles.label, { color: palette.muted }]}>{label}</Text>
+      <View style={[styles.input, multiline && styles.textArea, { backgroundColor: palette.panelSoft, borderColor: palette.line, flexDirection: 'row', alignItems: multiline ? 'flex-start' : 'center', paddingHorizontal: 0 }]}>
+        <TextInput
+          placeholderTextColor={palette.muted}
+          style={[{ flex: 1, minHeight: multiline ? 68 : 50, paddingHorizontal: 14, color: palette.text, fontSize: 16, fontWeight: '700' }, multiline && { paddingTop: 12, textAlignVertical: 'top' }, style]}
+          multiline={multiline}
+          {...props}
+        />
+        {rightIcon ? (
+          <TouchableOpacity style={{ width: 48, minHeight: 50, alignItems: 'center', justifyContent: 'center' }} onPress={onRightPress}>
+            <Ionicons name={rightIcon} color={palette.muted} size={22} />
+          </TouchableOpacity>
+        ) : null}
+      </View>
     </View>
   );
 }
 
 function ChipList({ label, values, labels = {}, active, onChange, includeAll = true }) {
+  const { palette } = useTheme();
   if (!values.length) return null;
   return (
     <View>
-      {label ? <Text style={styles.label}>{label}</Text> : null}
+      {label ? <Text style={[styles.label, { color: palette.muted }]}>{label}</Text> : null}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
         {includeAll ? (
-          <TouchableOpacity style={[styles.chip, !active && styles.chipActive]} onPress={() => onChange('')}>
-            <Text style={[styles.chipText, !active && styles.chipTextActive]}>Tous</Text>
+          <TouchableOpacity style={[styles.chip, { backgroundColor: palette.panel, borderColor: palette.line }, !active && { backgroundColor: palette.blue, borderColor: palette.blue }]} onPress={() => onChange('')}>
+            <Text style={[styles.chipText, { color: !active ? palette.white : palette.text }]}>Tous</Text>
           </TouchableOpacity>
         ) : null}
         {values.map((value) => {
           const selected = active === value;
           return (
-            <TouchableOpacity style={[styles.chip, selected && styles.chipActive]} onPress={() => onChange(value)} key={value}>
-              <Text style={[styles.chipText, selected && styles.chipTextActive]}>{labels[value] || value}</Text>
+            <TouchableOpacity style={[styles.chip, { backgroundColor: palette.panel, borderColor: palette.line }, selected && { backgroundColor: palette.blue, borderColor: palette.blue }]} onPress={() => onChange(value)} key={value}>
+              <Text style={[styles.chipText, { color: selected ? palette.white : palette.text }]}>{labels[value] || value}</Text>
             </TouchableOpacity>
           );
         })}
@@ -902,53 +984,62 @@ function ChipList({ label, values, labels = {}, active, onChange, includeAll = t
 }
 
 function Notice({ type, message }) {
+  const { palette } = useTheme();
+  const backgroundColor = type === 'error' ? palette.redSoft : type === 'success' ? 'rgba(22, 163, 74, 0.16)' : palette.panel;
+  const borderColor = type === 'error' ? 'rgba(215, 25, 32, 0.55)' : type === 'success' ? 'rgba(22, 163, 74, 0.55)' : palette.line;
+
   return (
-    <View style={[styles.notice, type === 'error' && styles.errorNotice, type === 'success' && styles.successNotice]}>
-      <Text style={styles.noticeText}>{message}</Text>
+    <View style={[styles.notice, { backgroundColor, borderColor }]}>
+      <Text style={[styles.noticeText, { color: palette.text }]}>{message}</Text>
     </View>
   );
 }
 
 function EmptyState({ title, text }) {
+  const { palette } = useTheme();
   return (
-    <View style={styles.empty}>
-      <Ionicons name="file-tray-outline" color={colors.teal} size={34} />
-      <Text style={styles.emptyTitle}>{title}</Text>
-      <Text style={styles.emptyText}>{text}</Text>
+    <View style={[styles.empty, { backgroundColor: palette.panel, borderColor: palette.line }]}>
+      <Ionicons name="file-tray-outline" color={palette.red} size={34} />
+      <Text style={[styles.emptyTitle, { color: palette.text }]}>{title}</Text>
+      <Text style={[styles.emptyText, { color: palette.muted }]}>{text}</Text>
     </View>
   );
 }
 
 function ActionButton({ label, icon, onPress }) {
+  const { palette } = useTheme();
   return (
-    <TouchableOpacity style={styles.ghostButton} onPress={onPress}>
-      <Ionicons name={icon} color={colors.teal} size={20} />
-      <Text style={styles.ghostText}>{label}</Text>
+    <TouchableOpacity style={[styles.ghostButton, { backgroundColor: palette.panel, borderColor: palette.line }]} onPress={onPress}>
+      <Ionicons name={icon} color={palette.blue} size={20} />
+      <Text style={[styles.ghostText, { color: palette.blue }]}>{label}</Text>
     </TouchableOpacity>
   );
 }
 
 function RoundAction({ icon, color, onPress }) {
+  const { palette } = useTheme();
   return (
-    <TouchableOpacity style={styles.smallAction} onPress={onPress}>
+    <TouchableOpacity style={[styles.smallAction, { backgroundColor: palette.panelSoft }]} onPress={onPress}>
       <Ionicons name={icon} color={color} size={22} />
     </TouchableOpacity>
   );
 }
 
 function MiniRow({ title, subtitle }) {
+  const { palette } = useTheme();
   return (
-    <View style={styles.card}>
-      <Text style={styles.cardTitle}>{title}</Text>
-      <Text style={styles.meta}>{subtitle}</Text>
+    <View style={[styles.card, { backgroundColor: palette.panel, borderColor: palette.line }]}>
+      <Text style={[styles.cardTitle, { color: palette.text }]}>{title}</Text>
+      <Text style={[styles.meta, { color: palette.muted }]}>{subtitle}</Text>
     </View>
   );
 }
 
 function FormPanel({ title, children }) {
+  const { palette } = useTheme();
   return (
-    <View style={styles.card}>
-      <Text style={[styles.cardTitle, { marginBottom: 14 }]}>{title}</Text>
+    <View style={[styles.card, { backgroundColor: palette.panel, borderColor: palette.line }]}>
+      <Text style={[styles.cardTitle, { marginBottom: 14, color: palette.text }]}>{title}</Text>
       {children}
     </View>
   );
@@ -967,12 +1058,13 @@ function SubmitRow({ saving, onSubmit, onCancel }) {
 }
 
 function ManageRow({ title, subtitle, onEdit, onDelete }) {
+  const { palette } = useTheme();
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, { backgroundColor: palette.panel, borderColor: palette.line }]}>
       <View style={styles.cardHeader}>
         <View style={{ flex: 1 }}>
-          <Text style={styles.cardTitle}>{title}</Text>
-          <Text style={styles.meta}>{subtitle}</Text>
+          <Text style={[styles.cardTitle, { color: palette.text }]}>{title}</Text>
+          <Text style={[styles.meta, { color: palette.muted }]}>{subtitle}</Text>
         </View>
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <RoundAction icon="pencil-outline" color={colors.gold} onPress={onEdit} />

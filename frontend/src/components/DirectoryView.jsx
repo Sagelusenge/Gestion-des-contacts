@@ -34,7 +34,7 @@ function normalizePhoneForWhatsApp(phone) {
 export function DirectoryView({ token, onUnauthorized }) {
   const [pastors, setPastors] = useState([]);
   const [postes, setPostes] = useState([]);
-  const [grades, setGrades] = useState([]);
+  const [fonctions, setFonctions] = useState([]);
   const [query, setQuery] = useState('');
   const [activeDegree, setActiveDegree] = useState('');
   const [activePoste, setActivePoste] = useState('');
@@ -71,7 +71,7 @@ export function DirectoryView({ token, onUnauthorized }) {
   }
 
   function downloadCsv(rows) {
-    const headers = ['Nom', 'Grade', 'Poste', 'Telephone', 'Email', 'Date affectation'];
+    const headers = ['Nom', 'Fonction', 'Poste', 'Telephone', 'Email', 'Date affectation'];
     const csvRows = rows.map((pastor) => [
       pastor.nom,
       pastor.degre,
@@ -159,14 +159,14 @@ export function DirectoryView({ token, onUnauthorized }) {
   }
 
   useEffect(() => {
-    Promise.all([api.getPostes(token), api.getGrades(token)])
-      .then(([postesPayload, gradesPayload]) => {
+    Promise.all([api.getPostes(token), api.getFonctions(token)])
+      .then(([postesPayload, fonctionsPayload]) => {
         setPostes(postesPayload.data || []);
-        setGrades(gradesPayload.data || []);
+        setFonctions(fonctionsPayload.data || []);
       })
       .catch(() => {
         setPostes([]);
-        setGrades([]);
+        setFonctions([]);
       });
   }, [token]);
 
@@ -205,12 +205,12 @@ export function DirectoryView({ token, onUnauthorized }) {
           </label>
 
           <label>
-            <span>Grade</span>
+            <span>Fonction</span>
             <select value={activeDegree} onChange={(event) => setActiveDegree(event.target.value)}>
-              <option value="">Tous les grades</option>
-              {grades.map((grade) => (
-                <option value={grade.nom} key={grade.id}>
-                  {grade.nom}
+              <option value="">Toutes les fonctions</option>
+              {fonctions.map((fonction) => (
+                <option value={fonction.nom} key={fonction.id}>
+                  {fonction.nom}
                 </option>
               ))}
             </select>

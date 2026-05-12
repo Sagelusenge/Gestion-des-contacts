@@ -5,7 +5,7 @@ const navItems = [
   { id: 'directory', label: 'Annuaire', icon: ContactRound },
   { id: 'addPastor', label: 'Ajouter pasteur', icon: UserPlus },
   { id: 'addPoste', label: 'Ajouter poste', icon: MapPinned },
-  { id: 'addGrade', label: 'Grades', icon: BadgePlus }
+  { id: 'addFonction', label: 'Fonctions', icon: BadgePlus }
 ];
 
 export function Sidebar({ activeView, onViewChange, onLogout, user }) {

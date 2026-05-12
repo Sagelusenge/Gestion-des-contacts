@@ -3,30 +3,30 @@ import { useEffect, useState } from 'react';
 import { api } from '../services/api.js';
 import { printRecord } from '../utils/printRecord.js';
 
-const initialGrade = {
+const initialFonction = {
   nom: '',
   description: ''
 };
 
-export function AddGradeView({ token }) {
-  const [grades, setGrades] = useState([]);
-  const [form, setForm] = useState(initialGrade);
+export function AddFonctionView({ token }) {
+  const [fonctions, setFonctions] = useState([]);
+  const [form, setForm] = useState(initialFonction);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
-  const [editingGradeId, setEditingGradeId] = useState(null);
+  const [editingFonctionId, setEditingFonctionId] = useState(null);
 
-  async function loadGrades() {
+  async function loadFonctions() {
     try {
-      const payload = await api.getGrades(token);
-      setGrades(payload.data || []);
+      const payload = await api.getFonctions(token);
+      setFonctions(payload.data || []);
     } catch (loadError) {
       setError(loadError.message);
     }
   }
 
   useEffect(() => {
-    loadGrades();
+    loadFonctions();
   }, [token]);
 
   function updateField(field, value) {
@@ -34,24 +34,24 @@ export function AddGradeView({ token }) {
   }
 
   function resetForm() {
-    setForm(initialGrade);
-    setEditingGradeId(null);
+    setForm(initialFonction);
+    setEditingFonctionId(null);
   }
 
-  function handleEdit(grade) {
-    setEditingGradeId(grade.id);
+  function handleEdit(fonction) {
+    setEditingFonctionId(fonction.id);
     setForm({
-      nom: grade.nom || '',
-      description: grade.description || ''
+      nom: fonction.nom || '',
+      description: fonction.description || ''
     });
     setMessage('');
     setError('');
   }
 
-  function handlePrint(grade) {
-    printRecord(`Grade - ${grade.nom}`, [
-      { label: 'Nom du grade', value: grade.nom },
-      { label: 'Description', value: grade.description }
+  function handlePrint(fonction) {
+    printRecord(`Fonction - ${fonction.nom}`, [
+      { label: 'Nom de la fonction', value: fonction.nom },
+      { label: 'Description', value: fonction.description }
     ]);
   }
 
@@ -67,17 +67,17 @@ export function AddGradeView({ token }) {
         description: form.description || null
       };
 
-      if (editingGradeId) {
-        await api.updateGrade(token, editingGradeId, payload);
-        setMessage('Grade mis à jour avec succès.');
+      if (editingFonctionId) {
+        await api.updateFonction(token, editingFonctionId, payload);
+        setMessage('Fonction mise a jour avec succes.');
         resetForm();
       } else {
-        await api.createGrade(token, payload);
-        setForm(initialGrade);
-        setMessage('Grade ajouté avec succès.');
+        await api.createFonction(token, payload);
+        setForm(initialFonction);
+        setMessage('Fonction ajoutee avec succes.');
       }
 
-      await loadGrades();
+      await loadFonctions();
     } catch (saveError) {
       setError(saveError.message);
     } finally {
@@ -90,9 +90,9 @@ export function AddGradeView({ token }) {
     setMessage('');
 
     try {
-      await api.deleteGrade(token, id);
-      setMessage('Grade supprimé.');
-      await loadGrades();
+      await api.deleteFonction(token, id);
+      setMessage('Fonction supprimee.');
+      await loadFonctions();
     } catch (deleteError) {
       setError(deleteError.message);
     }
@@ -103,11 +103,11 @@ export function AddGradeView({ token }) {
       <form className="dark-form-panel" onSubmit={handleSubmit}>
         <div className="panel-title">
           <BadgePlus size={22} />
-          <h2>{editingGradeId ? 'Modifier un grade' : 'Ajouter un grade'}</h2>
+          <h2>{editingFonctionId ? 'Modifier une fonction' : 'Ajouter une fonction'}</h2>
         </div>
 
         <label className="field dark-field">
-          <span>Nom du grade</span>
+          <span>Nom de la fonction</span>
           <input value={form.nom} onChange={(event) => updateField('nom', event.target.value)} placeholder="Ex: Pasteur titulaire" required />
         </label>
 
@@ -122,9 +122,9 @@ export function AddGradeView({ token }) {
         <div className="form-actions-row">
           <button className="admin-primary" type="submit" disabled={isSaving}>
             <Plus size={18} />
-            {isSaving ? 'Enregistrement...' : editingGradeId ? 'Mettre à jour' : 'Ajouter le grade'}
+            {isSaving ? 'Enregistrement...' : editingFonctionId ? 'Mettre a jour' : 'Ajouter la fonction'}
           </button>
-          {editingGradeId ? (
+          {editingFonctionId ? (
             <button className="secondary-action" type="button" onClick={resetForm}>
               <X size={18} />
               Annuler
@@ -136,23 +136,23 @@ export function AddGradeView({ token }) {
       <article className="dark-panel">
         <div className="panel-title">
           <BadgePlus size={22} />
-          <h2>Grades enregistrés</h2>
+          <h2>Fonctions enregistrees</h2>
         </div>
         <div className="admin-list">
-          {grades.map((grade) => (
-            <div className="admin-list-row" key={grade.id}>
+          {fonctions.map((fonction) => (
+            <div className="admin-list-row" key={fonction.id}>
               <div>
-                <strong>{grade.nom}</strong>
-                <span>{grade.description || 'Sans description'}</span>
+                <strong>{fonction.nom}</strong>
+                <span>{fonction.description || 'Sans description'}</span>
               </div>
               <div className="row-actions">
-                <button className="row-action update" type="button" onClick={() => handleEdit(grade)} aria-label="Modifier">
+                <button className="row-action update" type="button" onClick={() => handleEdit(fonction)} aria-label="Modifier">
                   <Pencil size={17} />
                 </button>
-                <button className="row-action print" type="button" onClick={() => handlePrint(grade)} aria-label="Imprimer">
+                <button className="row-action print" type="button" onClick={() => handlePrint(fonction)} aria-label="Imprimer">
                   <Printer size={17} />
                 </button>
-                <button className="row-action delete" type="button" onClick={() => handleDelete(grade.id)} aria-label="Supprimer">
+                <button className="row-action delete" type="button" onClick={() => handleDelete(fonction.id)} aria-label="Supprimer">
                   <Trash2 size={17} />
                 </button>
               </div>

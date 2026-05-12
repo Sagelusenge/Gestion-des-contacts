@@ -11,13 +11,13 @@ router.use(authenticate);
 router.get(
   '/',
   asyncHandler(async (_req, res) => {
-    const [grades] = await pool.execute(
+    const [fonctions] = await pool.execute(
       `SELECT id, nom, description, created_at, updated_at
        FROM grades
        ORDER BY nom ASC`
     );
 
-    res.json({ data: grades });
+    res.json({ data: fonctions });
   })
 );
 
@@ -29,7 +29,7 @@ router.post(
     const description = req.body.description ? String(req.body.description).trim() : null;
 
     if (!nom) {
-      throw httpError(400, 'Le nom du grade est requis.');
+      throw httpError(400, 'Le nom de la fonction est requis.');
     }
 
     const [result] = await pool.execute(
@@ -58,11 +58,11 @@ router.put(
     const description = req.body.description ? String(req.body.description).trim() : null;
 
     if (!Number.isInteger(id) || id <= 0) {
-      throw httpError(400, 'Identifiant grade invalide.');
+      throw httpError(400, 'Identifiant fonction invalide.');
     }
 
     if (!nom) {
-      throw httpError(400, 'Le nom du grade est requis.');
+      throw httpError(400, 'Le nom de la fonction est requis.');
     }
 
     const [result] = await pool.execute(
@@ -73,7 +73,7 @@ router.put(
     );
 
     if (result.affectedRows === 0) {
-      throw httpError(404, 'Grade introuvable.');
+      throw httpError(404, 'Fonction introuvable.');
     }
 
     const [rows] = await pool.execute(
@@ -94,13 +94,13 @@ router.delete(
     const id = Number.parseInt(req.params.id, 10);
 
     if (!Number.isInteger(id) || id <= 0) {
-      throw httpError(400, 'Identifiant grade invalide.');
+      throw httpError(400, 'Identifiant fonction invalide.');
     }
 
     const [rows] = await pool.execute('SELECT nom FROM grades WHERE id = :id', { id });
 
     if (!rows[0]) {
-      throw httpError(404, 'Grade introuvable.');
+      throw httpError(404, 'Fonction introuvable.');
     }
 
     const [usedRows] = await pool.execute(
@@ -109,7 +109,7 @@ router.delete(
     );
 
     if (usedRows[0].total > 0) {
-      throw httpError(409, 'Ce grade est utilise par des pasteurs.');
+      throw httpError(409, 'Cette fonction est utilisee par des pasteurs.');
     }
 
     await pool.execute('DELETE FROM grades WHERE id = :id', { id });

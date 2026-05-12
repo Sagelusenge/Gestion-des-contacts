@@ -45,10 +45,10 @@ npm start
 - Connexion admin
 - Dashboard mobile
 - Recherche des pasteurs
-- Filtres par grade et poste
+- Filtres par fonction et poste
 - Appel, WhatsApp, email et copie de contact
-- Diffusion WhatsApp assistee par poste, region ou grade
+- Diffusion WhatsApp assistee par poste, region ou fonction
 - Ajout, modification et suppression des pasteurs
 - Ajout, modification et suppression des postes
-- Ajout, modification et suppression des grades
+- Ajout, modification et suppression des fonctions
 - Creation d'utilisateurs avec email et mot de passe

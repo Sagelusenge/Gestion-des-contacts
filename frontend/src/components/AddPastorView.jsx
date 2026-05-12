@@ -1,5 +1,6 @@
-import { Pencil, Plus, Printer, Trash2, UserPlus, X } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { FileDown, FileUp, Pencil, Plus, Printer, Trash2, UserPlus, X } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import * as XLSX from 'xlsx';
 import { api } from '../services/api.js';
 import { printRecord } from '../utils/printRecord.js';
 
@@ -21,6 +22,7 @@ export function AddPastorView({ token }) {
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [editingPastorId, setEditingPastorId] = useState(null);
+  const importInputRef = useRef(null);
 
   const sortedPostes = useMemo(() => [...postes].sort((a, b) => a.nom.localeCompare(b.nom)), [postes]);
 
@@ -28,7 +30,7 @@ export function AddPastorView({ token }) {
     try {
       const [postesPayload, pastorsPayload, gradesPayload] = await Promise.all([
         api.getPostes(token),
-        api.getPastors(token, { page: 1, limit: 100 }),
+        api.getPastors(token, { page: 1, limit: 5000 }),
         api.getGrades(token)
       ]);
       setPostes(postesPayload.data || []);
@@ -69,12 +71,135 @@ export function AddPastorView({ token }) {
   function handlePrint(pastor) {
     printRecord(`Pasteur - ${pastor.nom}`, [
       { label: 'Nom', value: pastor.nom },
-      { label: 'Grade', value: pastor.degre },
+      { label: 'Fonction', value: pastor.degre },
       { label: 'Poste', value: pastor.poste },
       { label: 'Téléphone', value: pastor.telephone },
       { label: 'Email', value: pastor.email },
       { label: 'Date d’affectation', value: pastor.date_affectation }
     ]);
+  }
+
+  function exportExcelFile() {
+    const headers = ['Nom', 'Fonction', 'Poste', 'Region', 'Telephone', 'Email', 'Date affectation'];
+    const regionByPoste = new Map(postes.map((poste) => [poste.nom, poste.region || '']));
+    const rows = pastors.map((pastor) => ({
+      Nom: pastor.nom,
+      Fonction: pastor.degre,
+      Poste: pastor.poste,
+      Region: regionByPoste.get(pastor.poste) || '',
+      Telephone: pastor.telephone,
+      Email: pastor.email || '',
+      'Date affectation': pastor.date_affectation ? String(pastor.date_affectation).slice(0, 10) : ''
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(rows, { header: headers });
+    worksheet['!cols'] = [
+      { wch: 26 },
+      { wch: 18 },
+      { wch: 22 },
+      { wch: 18 },
+      { wch: 18 },
+      { wch: 28 },
+      { wch: 18 }
+    ];
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Pasteurs');
+    XLSX.writeFile(workbook, `pasteurs-cbca-${new Date().toISOString().slice(0, 10)}.xlsx`);
+  }
+
+  function parseDelimitedFile(text) {
+    const lines = text.split(/\r?\n/).filter((line) => line.trim());
+    const separator = lines[0]?.includes(';') ? ';' : lines[0]?.includes('\t') ? '\t' : ',';
+    const parseLine = (line) => {
+      const values = [];
+      let current = '';
+      let quoted = false;
+
+      for (let index = 0; index < line.length; index += 1) {
+        const char = line[index];
+        const next = line[index + 1];
+
+        if (char === '"' && quoted && next === '"') {
+          current += '"';
+          index += 1;
+        } else if (char === '"') {
+          quoted = !quoted;
+        } else if (char === separator && !quoted) {
+          values.push(current.trim());
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+
+      values.push(current.trim());
+      return values;
+    };
+    const normalizeHeader = (value) => value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const headers = parseLine(lines[0]).map(normalizeHeader);
+
+    return lines.slice(1).map((line) => {
+      const values = parseLine(line);
+      return headers.reduce((row, header, index) => {
+        row[header] = values[index] || '';
+        return row;
+      }, {});
+    });
+  }
+
+  function normalizeExcelDate(value) {
+    if (!value) {
+      return '';
+    }
+
+    if (value instanceof Date) {
+      return value.toISOString().slice(0, 10);
+    }
+
+    return String(value).trim();
+  }
+
+  async function handleImportFile(event) {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    setError('');
+    setMessage('');
+    setIsSaving(true);
+
+    try {
+      const buffer = await file.arrayBuffer();
+      const workbook = XLSX.read(buffer, { type: 'array', cellDates: true });
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rawRows = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
+      const pick = (row, names) => {
+        const key = names.find((name) => row[name] !== undefined && row[name] !== '');
+        return key ? row[key] : '';
+      };
+      const rows = rawRows.map((row) => ({
+        nom: pick(row, ['Nom', 'nom', 'Name', 'name']),
+        fonction: pick(row, ['Fonction', 'fonction', 'Grade', 'grade', 'Degre', 'degre', 'Degré', 'degré']),
+        poste: pick(row, ['Poste', 'poste']),
+        region: pick(row, ['Region', 'region', 'Région', 'région']),
+        telephone: pick(row, ['Telephone', 'telephone', 'Téléphone', 'téléphone', 'Phone', 'phone']),
+        email: pick(row, ['Email', 'email']),
+        date_affectation: normalizeExcelDate(pick(row, ['Date affectation', 'date affectation', 'Affectation', 'affectation', 'Date', 'date']))
+      }));
+      const payload = await api.importPastors(token, rows);
+      const summary = payload.data;
+      setMessage(`${summary.imported} pasteur(s) importes. ${summary.createdFunctions} fonction(s) et ${summary.createdPostes} poste(s) crees.`);
+      if (summary.errors?.length) {
+        setError(summary.errors.slice(0, 3).join(' '));
+      }
+      await loadData();
+    } catch (importError) {
+      setError(importError.message);
+    } finally {
+      setIsSaving(false);
+      event.target.value = '';
+    }
   }
 
   async function handleSubmit(event) {
@@ -129,6 +254,24 @@ export function AddPastorView({ token }) {
           <h2>{editingPastorId ? 'Modifier un pasteur' : 'Ajouter un pasteur'}</h2>
         </div>
 
+        <input
+          ref={importInputRef}
+          type="file"
+          accept=".xlsx,.xls,.csv"
+          onChange={handleImportFile}
+          hidden
+        />
+        <div className="form-actions-row">
+          <button className="secondary-action" type="button" onClick={() => importInputRef.current?.click()} disabled={isSaving}>
+            <FileUp size={18} />
+            Importer Excel
+          </button>
+          <button className="secondary-action" type="button" onClick={exportExcelFile}>
+            <FileDown size={18} />
+            Exporter Excel
+          </button>
+        </div>
+
         <label className="field dark-field">
           <span>Nom complet</span>
           <input value={form.nom} onChange={(event) => updateField('nom', event.target.value)} required />
@@ -136,7 +279,7 @@ export function AddPastorView({ token }) {
 
         <div className="form-split">
           <label className="field dark-field">
-            <span>Degré</span>
+            <span>Fonction</span>
             <select value={form.degre} onChange={(event) => updateField('degre', event.target.value)}>
               {grades.map((grade) => (
                 <option value={grade.nom} key={grade.id}>
@@ -147,7 +290,7 @@ export function AddPastorView({ token }) {
           </label>
           <label className="field dark-field">
             <span>Téléphone</span>
-            <input value={form.telephone} onChange={(event) => updateField('telephone', event.target.value)} placeholder="+243..." required />
+            <input value={form.telephone} onChange={(event) => updateField('telephone', event.target.value)} placeholder="09..." required />
           </label>
         </div>
 

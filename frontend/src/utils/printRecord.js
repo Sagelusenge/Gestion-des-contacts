@@ -275,12 +275,12 @@ export function printPastorsList(pastors, options = {}) {
 
   const filters = [
     options.query ? `Recherche: ${options.query}` : '',
-    options.degre ? `Grade: ${options.degre}` : '',
+    options.degre ? `Fonction: ${options.degre}` : '',
     options.poste ? `Poste: ${options.poste}` : ''
   ].filter(Boolean);
 
   const postesCount = new Set(pastors.map((pastor) => pastor.poste).filter(Boolean)).size;
-  const gradesCount = new Set(pastors.map((pastor) => pastor.degre).filter(Boolean)).size;
+  const fonctionsCount = new Set(pastors.map((pastor) => pastor.degre).filter(Boolean)).size;
 
   openPrintDocument('Liste des pasteurs CBCA', `
     ${reportHeader('Liste des pasteurs CBCA', filters.length ? filters.join(' | ') : 'Tous les pasteurs')}
@@ -295,8 +295,8 @@ export function printPastorsList(pastors, options = {}) {
         <strong>${postesCount}</strong>
       </div>
       <div>
-        <span>Grades representes</span>
-        <strong>${gradesCount}</strong>
+        <span>Fonctions representes</span>
+        <strong>${fonctionsCount}</strong>
       </div>
     </div>
     <table>
@@ -304,7 +304,7 @@ export function printPastorsList(pastors, options = {}) {
         <tr>
           <th>#</th>
           <th>Nom</th>
-          <th>Grade</th>
+          <th>Fonction</th>
           <th>Poste</th>
           <th>Telephone</th>
           <th>Email</th>

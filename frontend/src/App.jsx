@@ -1,7 +1,7 @@
 import { Moon, RefreshCw, Sun } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { AddPastorView } from './components/AddPastorView.jsx';
-import { AddGradeView } from './components/AddGradeView.jsx';
+import { AddFonctionView } from './components/AddGradeView.jsx';
 import { AddPosteView } from './components/AddPosteView.jsx';
 import { DashboardView } from './components/DashboardView.jsx';
 import { DirectoryView } from './components/DirectoryView.jsx';
@@ -28,9 +28,9 @@ const pageMeta = {
     title: 'Ajout des postes',
     subtitle: 'Créer les postes, paroisses, régions et départements'
   },
-  addGrade: {
-    title: 'Gestion des grades',
-    subtitle: 'Créer les grades que l’admin utilisera pour les pasteurs'
+  addFonction: {
+    title: 'Gestion des fonctions',
+    subtitle: 'Créer les fonctions que l’admin utilisera pour les pasteurs'
   }
 };
 
@@ -73,8 +73,8 @@ export default function App() {
       return <AddPosteView token={token} />;
     }
 
-    if (activeView === 'addGrade') {
-      return <AddGradeView token={token} />;
+    if (activeView === 'addFonction') {
+      return <AddFonctionView token={token} />;
     }
 
     return <DirectoryView token={token} onUnauthorized={handleLogout} />;

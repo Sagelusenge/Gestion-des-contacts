@@ -58,3 +58,5 @@ export function blankGrade() {
     description: ''
   };
 }
+
+export const blankFonction = blankGrade;
