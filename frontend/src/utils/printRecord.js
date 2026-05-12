@@ -265,6 +265,7 @@ export function printPastorsList(pastors, options = {}) {
           <td><strong>${escapeHtml(pastor.nom)}</strong></td>
           <td>${escapeHtml(pastor.degre)}</td>
           <td>${escapeHtml(pastor.poste)}</td>
+          <td>${escapeHtml(pastor.entite || '-')}</td>
           <td>${escapeHtml(pastor.telephone)}</td>
           <td>${escapeHtml(pastor.email || '-')}</td>
           <td>${escapeHtml(pastor.date_affectation ? String(pastor.date_affectation).slice(0, 10) : '-')}</td>
@@ -306,13 +307,14 @@ export function printPastorsList(pastors, options = {}) {
           <th>Nom</th>
           <th>Fonction</th>
           <th>Poste</th>
+          <th>Entite</th>
           <th>Telephone</th>
           <th>Email</th>
           <th>Affectation</th>
         </tr>
       </thead>
       <tbody>
-        ${rows || '<tr><td colspan="7" class="muted">Aucun pasteur trouve.</td></tr>'}
+        ${rows || '<tr><td colspan="8" class="muted">Aucun pasteur trouve.</td></tr>'}
       </tbody>
     </table>
     <div class="signature-row">

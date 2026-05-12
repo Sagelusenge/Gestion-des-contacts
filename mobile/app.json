@@ -27,10 +27,8 @@
     "web": {
       "favicon": "./assets/cbca-logo.png"
     },
-    "extra": {
-      "eas": {
-        "projectId": "e947f55e-b972-4d0f-8dcd-41c4b5a09214"
-      }
-    }
+    "plugins": [
+      "expo-sharing"
+    ]
   }
 }

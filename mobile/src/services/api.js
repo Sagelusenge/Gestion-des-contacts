@@ -53,6 +53,7 @@ export const api = {
     return request(`/pastors/search?${query.toString()}`, { token });
   },
   createPastor: (token, data) => request('/pastors', { token, method: 'POST', body: data }),
+  importPastors: (token, rows) => request('/pastors/import', { token, method: 'POST', body: { rows } }),
   updatePastor: (token, id, data) => request(`/pastors/${id}`, { token, method: 'PUT', body: data }),
   deletePastor: (token, id) => request(`/pastors/${id}`, { token, method: 'DELETE' }),
   getPostes: (token) => request('/postes', { token }),

@@ -27,7 +27,9 @@ export function phoneDigits(phone) {
 export function pastorContactText(pastor) {
   return [
     `${pastor.degre || ''} ${pastor.nom || ''}`.trim(),
+    pastor.id_serviteur ? `ID: ${pastor.id_serviteur}` : '',
     pastor.poste,
+    pastor.entite ? `Entite: ${pastor.entite}` : '',
     pastor.telephone ? `Tel: ${pastor.telephone}` : '',
     pastor.email ? `Email: ${pastor.email}` : ''
   ].filter(Boolean).join('\n');
@@ -35,9 +37,11 @@ export function pastorContactText(pastor) {
 
 export function blankPastor(defaultGrade = 'Pasteur') {
   return {
+    id_serviteur: '',
     nom: '',
     degre: defaultGrade,
     poste: '',
+    entite: '',
     telephone: '',
     email: '',
     date_affectation: ''

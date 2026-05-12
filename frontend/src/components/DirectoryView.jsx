@@ -71,11 +71,13 @@ export function DirectoryView({ token, onUnauthorized }) {
   }
 
   function downloadCsv(rows) {
-    const headers = ['Nom', 'Fonction', 'Poste', 'Telephone', 'Email', 'Date affectation'];
+    const headers = ['ID-SO_PA', 'Nom', 'Fonction', 'Poste', 'Entite', 'Telephone', 'Email', 'Date affectation'];
     const csvRows = rows.map((pastor) => [
+      pastor.id_serviteur,
       pastor.nom,
       pastor.degre,
       pastor.poste,
+      pastor.entite,
       pastor.telephone,
       pastor.email,
       pastor.date_affectation

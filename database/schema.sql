@@ -53,9 +53,11 @@ CREATE TABLE IF NOT EXISTS grades (
 
 CREATE TABLE IF NOT EXISTS pastors (
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  id_serviteur VARCHAR(40) NULL,
   nom VARCHAR(100) NOT NULL,
   degre VARCHAR(50) NOT NULL,
   poste VARCHAR(100) NOT NULL,
+  entite VARCHAR(120) NULL,
   telephone VARCHAR(20) NOT NULL,
   email VARCHAR(100) NULL,
   date_affectation DATE NULL,
@@ -63,8 +65,10 @@ CREATE TABLE IF NOT EXISTS pastors (
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   KEY idx_pastors_nom (nom),
+  KEY idx_pastors_id_serviteur (id_serviteur),
   KEY idx_pastors_degre (degre),
   KEY idx_pastors_poste (poste),
+  KEY idx_pastors_entite (entite),
   KEY idx_pastors_degre_poste (degre, poste),
   KEY idx_pastors_date_affectation (date_affectation),
   UNIQUE KEY uq_pastors_telephone (telephone),

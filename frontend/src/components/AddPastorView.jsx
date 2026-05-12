@@ -1,13 +1,15 @@
-import { FileDown, FileUp, Pencil, Plus, Printer, Trash2, UserPlus, X } from 'lucide-react';
+﻿import { FileDown, FileUp, Pencil, Plus, Printer, Trash2, UserPlus, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as XLSX from 'xlsx';
 import { api } from '../services/api.js';
 import { printRecord } from '../utils/printRecord.js';
 
 const initialPastor = {
+  id_serviteur: '',
   nom: '',
   degre: 'Pasteur',
   poste: '',
+  entite: '',
   telephone: '',
   email: '',
   date_affectation: ''
@@ -60,6 +62,8 @@ export function AddPastorView({ token }) {
       nom: pastor.nom || '',
       degre: pastor.degre || grades[0]?.nom || '',
       poste: pastor.poste || '',
+      id_serviteur: pastor.id_serviteur || '',
+      entite: pastor.entite || '',
       telephone: pastor.telephone || '',
       email: pastor.email || '',
       date_affectation: pastor.date_affectation ? String(pastor.date_affectation).slice(0, 10) : ''
@@ -71,21 +75,25 @@ export function AddPastorView({ token }) {
   function handlePrint(pastor) {
     printRecord(`Pasteur - ${pastor.nom}`, [
       { label: 'Nom', value: pastor.nom },
+      { label: 'ID serviteur', value: pastor.id_serviteur },
       { label: 'Fonction', value: pastor.degre },
       { label: 'Poste', value: pastor.poste },
-      { label: 'Téléphone', value: pastor.telephone },
+      { label: 'Entite', value: pastor.entite },
+      { label: 'TÃ©lÃ©phone', value: pastor.telephone },
       { label: 'Email', value: pastor.email },
-      { label: 'Date d’affectation', value: pastor.date_affectation }
+      { label: 'Date dâ€™affectation', value: pastor.date_affectation }
     ]);
   }
 
   function exportExcelFile() {
-    const headers = ['Nom', 'Fonction', 'Poste', 'Region', 'Telephone', 'Email', 'Date affectation'];
+    const headers = ['ID-SO_PA', 'Nom', 'Fonction', 'Poste', 'Entite', 'Region', 'Telephone', 'Email', 'Date affectation'];
     const regionByPoste = new Map(postes.map((poste) => [poste.nom, poste.region || '']));
     const rows = pastors.map((pastor) => ({
+      'ID-SO_PA': pastor.id_serviteur || '',
       Nom: pastor.nom,
       Fonction: pastor.degre,
       Poste: pastor.poste,
+      Entite: pastor.entite || '',
       Region: regionByPoste.get(pastor.poste) || '',
       Telephone: pastor.telephone,
       Email: pastor.email || '',
@@ -93,9 +101,11 @@ export function AddPastorView({ token }) {
     }));
     const worksheet = XLSX.utils.json_to_sheet(rows, { header: headers });
     worksheet['!cols'] = [
+      { wch: 14 },
       { wch: 26 },
       { wch: 18 },
       { wch: 22 },
+      { wch: 24 },
       { wch: 18 },
       { wch: 18 },
       { wch: 28 },
@@ -158,6 +168,23 @@ export function AddPastorView({ token }) {
     return String(value).trim();
   }
 
+  function normalizeHeader(value) {
+    return String(value || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]/g, '');
+  }
+
+  function pickExcelValue(row, names) {
+    const normalizedRow = Object.entries(row).reduce((accumulator, [key, value]) => {
+      accumulator[normalizeHeader(key)] = value;
+      return accumulator;
+    }, {});
+    const key = names.map(normalizeHeader).find((name) => normalizedRow[name] !== undefined && normalizedRow[name] !== '');
+    return key ? normalizedRow[key] : '';
+  }
+
   async function handleImportFile(event) {
     const file = event.target.files?.[0];
 
@@ -174,18 +201,16 @@ export function AddPastorView({ token }) {
       const workbook = XLSX.read(buffer, { type: 'array', cellDates: true });
       const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
       const rawRows = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
-      const pick = (row, names) => {
-        const key = names.find((name) => row[name] !== undefined && row[name] !== '');
-        return key ? row[key] : '';
-      };
       const rows = rawRows.map((row) => ({
-        nom: pick(row, ['Nom', 'nom', 'Name', 'name']),
-        fonction: pick(row, ['Fonction', 'fonction', 'Grade', 'grade', 'Degre', 'degre', 'Degré', 'degré']),
-        poste: pick(row, ['Poste', 'poste']),
-        region: pick(row, ['Region', 'region', 'Région', 'région']),
-        telephone: pick(row, ['Telephone', 'telephone', 'Téléphone', 'téléphone', 'Phone', 'phone']),
-        email: pick(row, ['Email', 'email']),
-        date_affectation: normalizeExcelDate(pick(row, ['Date affectation', 'date affectation', 'Affectation', 'affectation', 'Date', 'date']))
+        id_serviteur: pickExcelValue(row, ['ID-SO_PA', 'id serviteur', 'id']),
+        nom: pickExcelValue(row, ['Nom', 'Noms', 'NOMS -POST NOMS CORRECT', 'Name']),
+        fonction: pickExcelValue(row, ['Fonction', 'Grade', 'Degre', 'Degré']),
+        poste: pickExcelValue(row, ['Poste']),
+        entite: pickExcelValue(row, ['Entite', 'Entité', 'ENTITE']),
+        region: pickExcelValue(row, ['Region', 'Région']),
+        telephone: pickExcelValue(row, ['Telephone', 'Téléphone', 'NUMERO DE TELEPHONE', 'Phone']),
+        email: pickExcelValue(row, ['Email']),
+        date_affectation: normalizeExcelDate(pickExcelValue(row, ['Date affectation', 'Affectation', 'Date']))
       }));
       const payload = await api.importPastors(token, rows);
       const summary = payload.data;
@@ -217,12 +242,12 @@ export function AddPastorView({ token }) {
 
       if (editingPastorId) {
         await api.updatePastor(token, editingPastorId, payload);
-        setMessage('Pasteur mis à jour avec succès.');
+        setMessage('Pasteur mis Ã  jour avec succÃ¨s.');
         resetForm();
       } else {
         await api.createPastor(token, payload);
         setForm({ ...initialPastor, poste: form.poste, degre: form.degre });
-        setMessage('Pasteur ajouté avec succès.');
+        setMessage('Pasteur ajoutÃ© avec succÃ¨s.');
       }
 
       await loadData();
@@ -239,7 +264,7 @@ export function AddPastorView({ token }) {
 
     try {
       await api.deletePastor(token, id);
-      setMessage('Pasteur supprimé.');
+      setMessage('Pasteur supprimÃ©.');
       await loadData();
     } catch (deleteError) {
       setError(deleteError.message);
@@ -279,6 +304,17 @@ export function AddPastorView({ token }) {
 
         <div className="form-split">
           <label className="field dark-field">
+            <span>ID serviteur</span>
+            <input value={form.id_serviteur} onChange={(event) => updateField('id_serviteur', event.target.value)} placeholder="Ex: 000246" />
+          </label>
+          <label className="field dark-field">
+            <span>Entite</span>
+            <input value={form.entite} onChange={(event) => updateField('entite', event.target.value)} placeholder="Ex: Bureau poste Bambo" />
+          </label>
+        </div>
+
+        <div className="form-split">
+          <label className="field dark-field">
             <span>Fonction</span>
             <select value={form.degre} onChange={(event) => updateField('degre', event.target.value)}>
               {grades.map((grade) => (
@@ -289,7 +325,7 @@ export function AddPastorView({ token }) {
             </select>
           </label>
           <label className="field dark-field">
-            <span>Téléphone</span>
+            <span>TÃ©lÃ©phone</span>
             <input value={form.telephone} onChange={(event) => updateField('telephone', event.target.value)} placeholder="09..." required />
           </label>
         </div>
@@ -312,7 +348,7 @@ export function AddPastorView({ token }) {
             <input type="email" value={form.email} onChange={(event) => updateField('email', event.target.value)} />
           </label>
           <label className="field dark-field">
-            <span>Date d’affectation</span>
+            <span>Date dâ€™affectation</span>
             <input type="date" value={form.date_affectation} onChange={(event) => updateField('date_affectation', event.target.value)} />
           </label>
         </div>
@@ -323,7 +359,7 @@ export function AddPastorView({ token }) {
         <div className="form-actions-row">
           <button className="admin-primary" type="submit" disabled={isSaving}>
             <Plus size={18} />
-            {isSaving ? 'Enregistrement...' : editingPastorId ? 'Mettre à jour' : 'Ajouter le pasteur'}
+            {isSaving ? 'Enregistrement...' : editingPastorId ? 'Mettre Ã  jour' : 'Ajouter le pasteur'}
           </button>
           {editingPastorId ? (
             <button className="secondary-action" type="button" onClick={resetForm}>
@@ -337,14 +373,14 @@ export function AddPastorView({ token }) {
       <article className="dark-panel">
         <div className="panel-title">
           <UserPlus size={22} />
-          <h2>Pasteurs enregistrés</h2>
+          <h2>Pasteurs enregistrÃ©s</h2>
         </div>
         <div className="admin-list">
           {pastors.map((pastor) => (
             <div className="admin-list-row" key={pastor.id}>
               <div>
                 <strong>{pastor.nom}</strong>
-                <span>{pastor.degre} · {pastor.poste}</span>
+                <span>{pastor.degre} - {pastor.poste}{pastor.entite ? ` - ${pastor.entite}` : ''}</span>
               </div>
               <div className="row-actions">
                 <button className="row-action update" type="button" onClick={() => handleEdit(pastor)} aria-label="Modifier">

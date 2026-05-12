@@ -1,7 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Clipboard from 'expo-clipboard';
+import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system';
 import * as Linking from 'expo-linking';
+import * as Sharing from 'expo-sharing';
 import { StatusBar } from 'expo-status-bar';
+import * as XLSX from 'xlsx';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -54,6 +58,51 @@ const tabs = [
   { key: 'broadcast', label: 'Diffusion', icon: 'megaphone-outline' },
   { key: 'manage', label: 'Gestion', icon: 'create-outline' }
 ];
+
+const excelHeaders = ['ID-SO_PA', 'Nom', 'Fonction', 'Poste', 'Entite', 'Region', 'Telephone', 'Email', 'Date affectation'];
+
+function normalizeHeader(value) {
+  return String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]/g, '');
+}
+
+function pickExcelValue(row, names) {
+  const normalizedRow = Object.entries(row).reduce((accumulator, [key, value]) => {
+    accumulator[normalizeHeader(key)] = value;
+    return accumulator;
+  }, {});
+  const key = names.map(normalizeHeader).find((name) => normalizedRow[name] !== undefined && normalizedRow[name] !== '');
+  return key ? normalizedRow[key] : '';
+}
+
+function normalizeExcelDate(value) {
+  if (!value) {
+    return '';
+  }
+
+  if (value instanceof Date) {
+    return value.toISOString().slice(0, 10);
+  }
+
+  return String(value).trim();
+}
+
+function mapExcelPastorRows(rawRows) {
+  return rawRows.map((row) => ({
+    id_serviteur: pickExcelValue(row, ['ID-SO_PA', 'id serviteur', 'id']),
+    nom: pickExcelValue(row, ['Nom', 'Noms', 'NOMS -POST NOMS CORRECT', 'Name']),
+    fonction: pickExcelValue(row, ['Fonction', 'Grade', 'Degre', 'Degré']),
+    poste: pickExcelValue(row, ['Poste']),
+    entite: pickExcelValue(row, ['Entite', 'Entité', 'ENTITE']),
+    region: pickExcelValue(row, ['Region', 'Région']),
+    telephone: pickExcelValue(row, ['Telephone', 'Téléphone', 'NUMERO DE TELEPHONE', 'Phone']),
+    email: pickExcelValue(row, ['Email']),
+    date_affectation: normalizeExcelDate(pickExcelValue(row, ['Date affectation', 'Affectation', 'Date']))
+  }));
+}
 
 export default function App() {
   const [session, setSession] = useState(null);
@@ -199,7 +248,7 @@ function DashboardScreen({ token, onNavigate, onLogout }) {
     setLoading(true);
     try {
       const [pastorsPayload, postesPayload, fonctionsPayload] = await Promise.all([
-        api.getPastors(token, { page: 1, limit: 1000 }),
+        api.getPastors(token, { page: 1, limit: 5000 }),
         api.getPostes(token),
         api.getFonctions(token)
       ]);
@@ -360,7 +409,7 @@ function BroadcastScreen({ token }) {
     setLoading(true);
     try {
       const [pastorsPayload, postesPayload, fonctionsPayload] = await Promise.all([
-        api.getPastors(token, { page: 1, limit: 1000 }),
+        api.getPastors(token, { page: 1, limit: 5000 }),
         api.getPostes(token),
         api.getFonctions(token)
       ]);
@@ -586,7 +635,7 @@ function ManageScreen({ token }) {
     setLoading(true);
     try {
       const [pastorsPayload, postesPayload, fonctionsPayload] = await Promise.all([
-        api.getPastors(token, { page: 1, limit: 1000 }),
+        api.getPastors(token, { page: 1, limit: 5000 }),
         api.getPostes(token),
         api.getFonctions(token)
       ]);
@@ -635,6 +684,108 @@ function ManageScreen({ token }) {
       await load();
     } catch (saveError) {
       setError(saveError.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function importPastorsFromExcel() {
+    setMessage('');
+    setError('');
+    setSaving(true);
+
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: [
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'application/vnd.ms-excel',
+          'text/csv',
+          'text/comma-separated-values'
+        ],
+        copyToCacheDirectory: true
+      });
+
+      if (result.canceled) {
+        return;
+      }
+
+      const file = result.assets?.[0];
+      if (!file?.uri) {
+        throw new Error('Fichier introuvable.');
+      }
+
+      const base64 = await FileSystem.readAsStringAsync(file.uri, {
+        encoding: FileSystem.EncodingType.Base64
+      });
+      const workbook = XLSX.read(base64, { type: 'base64', cellDates: true });
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rawRows = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
+      const rows = mapExcelPastorRows(rawRows);
+      const payload = await api.importPastors(token, rows);
+      const summary = payload.data || {};
+
+      setMessage(`${summary.imported || 0} pasteur(s) importes. ${summary.createdFunctions || 0} fonction(s) et ${summary.createdPostes || 0} poste(s) crees.`);
+      if (summary.errors?.length) {
+        setError(summary.errors.slice(0, 3).join(' '));
+      }
+      await load();
+    } catch (importError) {
+      setError(importError.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function exportPastorsToExcel() {
+    setMessage('');
+    setError('');
+    setSaving(true);
+
+    try {
+      const regionByPoste = new Map(postes.map((poste) => [poste.nom, poste.region || '']));
+      const rows = pastors.map((pastor) => ({
+        'ID-SO_PA': pastor.id_serviteur || '',
+        Nom: pastor.nom || '',
+        Fonction: pastor.degre || '',
+        Poste: pastor.poste || '',
+        Entite: pastor.entite || '',
+        Region: regionByPoste.get(pastor.poste) || '',
+        Telephone: pastor.telephone || '',
+        Email: pastor.email || '',
+        'Date affectation': pastor.date_affectation ? String(pastor.date_affectation).slice(0, 10) : ''
+      }));
+      const worksheet = XLSX.utils.json_to_sheet(rows, { header: excelHeaders });
+      worksheet['!cols'] = [
+        { wch: 14 },
+        { wch: 28 },
+        { wch: 20 },
+        { wch: 20 },
+        { wch: 24 },
+        { wch: 18 },
+        { wch: 18 },
+        { wch: 28 },
+        { wch: 18 }
+      ];
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Pasteurs');
+      const base64 = XLSX.write(workbook, { type: 'base64', bookType: 'xlsx' });
+      const uri = `${FileSystem.cacheDirectory}pasteurs-cbca-${new Date().toISOString().slice(0, 10)}.xlsx`;
+      await FileSystem.writeAsStringAsync(uri, base64, {
+        encoding: FileSystem.EncodingType.Base64
+      });
+
+      if (!(await Sharing.isAvailableAsync())) {
+        throw new Error("Le partage de fichier n'est pas disponible sur ce telephone.");
+      }
+
+      await Sharing.shareAsync(uri, {
+        mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        dialogTitle: 'Exporter les pasteurs CBCA',
+        UTI: 'com.microsoft.excel.xlsx'
+      });
+      setMessage('Export Excel prepare.');
+    } catch (exportError) {
+      setError(exportError.message);
     } finally {
       setSaving(false);
     }
@@ -747,9 +898,15 @@ function ManageScreen({ token }) {
       {section === 'pastors' ? (
         <View>
           <FormPanel title={editingId ? 'Modifier pasteur' : 'Ajouter pasteur'}>
+            <View style={styles.actionRow}>
+              <ActionButton label="Importer Excel" icon="cloud-upload-outline" onPress={importPastorsFromExcel} />
+              <ActionButton label="Exporter Excel" icon="download-outline" onPress={exportPastorsToExcel} />
+            </View>
             <Field label="Nom complet" value={pastorForm.nom} onChangeText={(value) => setPastorForm({ ...pastorForm, nom: value })} />
+            <Field label="ID serviteur" value={pastorForm.id_serviteur} onChangeText={(value) => setPastorForm({ ...pastorForm, id_serviteur: value })} placeholder="Ex: 000246" />
             <ChipList label="Fonction" values={fonctions.map((fonction) => fonction.nom)} active={pastorForm.degre} onChange={(value) => setPastorForm({ ...pastorForm, degre: value })} />
             <ChipList label="Poste" values={postes.map((poste) => poste.nom)} active={pastorForm.poste} onChange={(value) => setPastorForm({ ...pastorForm, poste: value })} />
+            <Field label="Entite" value={pastorForm.entite} onChangeText={(value) => setPastorForm({ ...pastorForm, entite: value })} placeholder="Ex: Bureau poste Bambo" />
             <Field label="Telephone" value={pastorForm.telephone} onChangeText={(value) => setPastorForm({ ...pastorForm, telephone: value })} keyboardType="phone-pad" />
             <Field label="Email" value={pastorForm.email} onChangeText={(value) => setPastorForm({ ...pastorForm, email: value })} keyboardType="email-address" autoCapitalize="none" />
             <Field label="Date affectation" value={pastorForm.date_affectation} onChangeText={(value) => setPastorForm({ ...pastorForm, date_affectation: value })} placeholder="YYYY-MM-DD" />
@@ -758,15 +915,17 @@ function ManageScreen({ token }) {
           {pastors.map((pastor) => (
             <ManageRow
               title={pastor.nom}
-              subtitle={`${pastor.degre} - ${pastor.poste}`}
+              subtitle={`${pastor.degre} - ${pastor.poste}${pastor.entite ? ` - ${pastor.entite}` : ''}`}
               key={pastor.id}
               onEdit={() => {
                 setSection('pastors');
                 setEditingId(pastor.id);
                 setPastorForm({
                   nom: pastor.nom || '',
+                  id_serviteur: pastor.id_serviteur || '',
                   degre: pastor.degre || fonctions[0]?.nom || 'Pasteur',
                   poste: pastor.poste || '',
+                  entite: pastor.entite || '',
                   telephone: pastor.telephone || '',
                   email: pastor.email || '',
                   date_affectation: pastor.date_affectation ? String(pastor.date_affectation).slice(0, 10) : ''
@@ -876,6 +1035,8 @@ function PastorCard({ pastor }) {
         <View style={[styles.badge, { backgroundColor: palette.panelSoft }]}><Text style={[styles.badgeText, { color: palette.blue }]}>{pastor.degre}</Text></View>
       </View>
       <Text style={[styles.meta, { color: palette.muted }]}>{pastor.poste}</Text>
+      {pastor.id_serviteur ? <Text style={[styles.meta, { color: palette.muted }]}>ID: {pastor.id_serviteur}</Text> : null}
+      {pastor.entite ? <Text style={[styles.meta, { color: palette.muted }]}>Entite: {pastor.entite}</Text> : null}
       {pastor.telephone ? <Text style={[styles.meta, { color: palette.muted }]}>{pastor.telephone}</Text> : null}
       {pastor.email ? <Text style={[styles.meta, { color: palette.muted }]}>{pastor.email}</Text> : null}
       <View style={styles.actionRow}>

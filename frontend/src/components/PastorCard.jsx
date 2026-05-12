@@ -22,7 +22,9 @@ export function PastorCard({ pastor }) {
   const [copied, setCopied] = useState(false);
   const contactText = [
     `${pastor.degre} ${pastor.nom}`,
+    pastor.id_serviteur ? `ID: ${pastor.id_serviteur}` : '',
     pastor.poste,
+    pastor.entite ? `Entite: ${pastor.entite}` : '',
     pastor.telephone ? `Tel: ${pastor.telephone}` : '',
     pastor.email ? `Email: ${pastor.email}` : ''
   ].filter(Boolean).join('\n');
@@ -51,7 +53,7 @@ export function PastorCard({ pastor }) {
 
         <p className="connect-meta">
           <MapPin size={16} />
-          {pastor.poste}
+          {pastor.poste}{pastor.entite ? ` - ${pastor.entite}` : ''}
         </p>
 
         {pastor.telephone ? (

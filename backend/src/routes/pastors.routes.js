@@ -1,4 +1,4 @@
-import { Router } from 'express';
+﻿import { Router } from 'express';
 import { pool } from '../config/db.js';
 import { authenticate, requireAdmin } from '../middleware/auth.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -10,9 +10,11 @@ const router = Router();
 
 const PASTOR_FIELDS = `
   id,
+  id_serviteur,
   nom,
   degre,
   poste,
+  entite,
   telephone,
   email,
   date_affectation,
@@ -22,11 +24,45 @@ const PASTOR_FIELDS = `
 
 router.use(authenticate);
 
+let schemaReadyPromise;
+
+async function ensurePastorsExtraColumns() {
+  if (!schemaReadyPromise) {
+    schemaReadyPromise = (async () => {
+      const [columns] = await pool.execute(
+        `SELECT COLUMN_NAME
+         FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE()
+           AND TABLE_NAME = 'pastors'
+           AND COLUMN_NAME IN ('id_serviteur', 'entite')`
+      );
+      const existing = new Set(columns.map((column) => column.COLUMN_NAME));
+
+      if (!existing.has('id_serviteur')) {
+        await pool.execute('ALTER TABLE pastors ADD COLUMN id_serviteur VARCHAR(40) NULL AFTER id');
+      }
+
+      if (!existing.has('entite')) {
+        await pool.execute('ALTER TABLE pastors ADD COLUMN entite VARCHAR(120) NULL AFTER poste');
+      }
+    })();
+  }
+
+  return schemaReadyPromise;
+}
+
+router.use(asyncHandler(async (_req, _res, next) => {
+  await ensurePastorsExtraColumns();
+  next();
+}));
+
 async function readPastorPayload(body) {
   const payload = {
+    id_serviteur: body.id_serviteur ? String(body.id_serviteur).trim() : null,
     nom: String(body.nom || '').trim(),
     degre: String(body.degre || '').trim(),
     poste: String(body.poste || '').trim(),
+    entite: body.entite ? String(body.entite).trim() : null,
     telephone: String(body.telephone || '').trim(),
     email: body.email ? String(body.email).trim() : null,
     date_affectation: body.date_affectation ? String(body.date_affectation).trim() : null
@@ -64,7 +100,7 @@ function buildPastorFilters(query) {
   const poste = String(query.poste || '').trim();
 
   if (q) {
-    filters.push('(nom LIKE :qPrefix OR degre LIKE :qPrefix OR poste LIKE :qPrefix OR nom LIKE :qContains OR poste LIKE :qContains)');
+    filters.push('(nom LIKE :qPrefix OR degre LIKE :qPrefix OR poste LIKE :qPrefix OR entite LIKE :qPrefix OR id_serviteur LIKE :qPrefix OR nom LIKE :qContains OR poste LIKE :qContains OR entite LIKE :qContains OR id_serviteur LIKE :qContains)');
     params.qPrefix = `${q}%`;
     params.qContains = `%${q}%`;
   }
@@ -159,8 +195,8 @@ router.post(
     const payload = await readPastorPayload(req.body);
 
     const [result] = await pool.execute(
-      `INSERT INTO pastors (nom, degre, poste, telephone, email, date_affectation)
-       VALUES (:nom, :degre, :poste, :telephone, :email, :date_affectation)`,
+      `INSERT INTO pastors (id_serviteur, nom, degre, poste, entite, telephone, email, date_affectation)
+       VALUES (:id_serviteur, :nom, :degre, :poste, :entite, :telephone, :email, :date_affectation)`,
       payload
     );
 
@@ -199,11 +235,13 @@ router.post(
 
       for (const [index, row] of rows.entries()) {
         const payload = {
-          nom: String(row.nom || row.Nom || row.name || '').trim(),
+          id_serviteur: String(row.id_serviteur || row.ID || row['ID-SO_PA'] || '').trim() || null,
+          nom: String(row.nom || row.Nom || row.Noms || row['NOMS -POST NOMS CORRECT'] || row.name || '').trim(),
           degre: String(row.degre || row.fonction || row.Fonction || row.grade || row.Grade || '').trim(),
           poste: String(row.poste || row.Poste || '').trim(),
+          entite: String(row.entite || row.Entite || row['EntitÃ©'] || row.ENTITE || '').trim() || null,
           region: String(row.region || row.Region || '').trim(),
-          telephone: String(row.telephone || row.Telephone || row.Téléphone || row.phone || '').trim(),
+          telephone: String(row.telephone || row.Telephone || row['Téléphone'] || row['NUMERO DE TELEPHONE'] || row.phone || '').trim(),
           email: row.email || row.Email ? String(row.email || row.Email).trim() : null,
           date_affectation: normalizeImportDate(row.date_affectation || row.Affectation || row['Date affectation'])
         };
@@ -259,19 +297,23 @@ router.post(
         }
 
         await connection.execute(
-          `INSERT INTO pastors (nom, degre, poste, telephone, email, date_affectation)
-           VALUES (:nom, :degre, :poste, :telephone, :email, :date_affectation)
+          `INSERT INTO pastors (id_serviteur, nom, degre, poste, entite, telephone, email, date_affectation)
+           VALUES (:id_serviteur, :nom, :degre, :poste, :entite, :telephone, :email, :date_affectation)
            ON DUPLICATE KEY UPDATE
+             id_serviteur = VALUES(id_serviteur),
              nom = VALUES(nom),
              degre = VALUES(degre),
              poste = VALUES(poste),
+             entite = VALUES(entite),
              telephone = VALUES(telephone),
              email = VALUES(email),
              date_affectation = VALUES(date_affectation)`,
           {
+            id_serviteur: payload.id_serviteur,
             nom: payload.nom,
             degre: payload.degre,
             poste: payload.poste,
+            entite: payload.entite,
             telephone: payload.telephone,
             email: payload.email || null,
             date_affectation: payload.date_affectation || null
@@ -305,9 +347,11 @@ router.put(
 
     const [result] = await pool.execute(
       `UPDATE pastors
-       SET nom = :nom,
+       SET id_serviteur = :id_serviteur,
+           nom = :nom,
            degre = :degre,
            poste = :poste,
+           entite = :entite,
            telephone = :telephone,
            email = :email,
            date_affectation = :date_affectation
