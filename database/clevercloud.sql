@@ -52,20 +52,20 @@ CREATE TABLE IF NOT EXISTS pastors (
   degre VARCHAR(50) NOT NULL,
   poste VARCHAR(100) NOT NULL,
   entite VARCHAR(120) NULL,
-  telephone VARCHAR(20) NOT NULL,
+  telephone VARCHAR(20) NULL,
   email VARCHAR(100) NULL,
   date_affectation DATE NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   KEY idx_pastors_nom (nom),
-  KEY idx_pastors_id_serviteur (id_serviteur),
+  UNIQUE KEY uq_pastors_id_serviteur (id_serviteur),
   KEY idx_pastors_degre (degre),
   KEY idx_pastors_poste (poste),
   KEY idx_pastors_entite (entite),
   KEY idx_pastors_degre_poste (degre, poste),
   KEY idx_pastors_date_affectation (date_affectation),
-  UNIQUE KEY uq_pastors_telephone (telephone),
+  KEY idx_pastors_telephone (telephone),
   FULLTEXT KEY ftx_pastors_search (nom, degre, poste)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

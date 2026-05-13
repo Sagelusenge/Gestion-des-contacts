@@ -79,9 +79,9 @@ export function AddPastorView({ token }) {
       { label: 'Fonction', value: pastor.degre },
       { label: 'Poste', value: pastor.poste },
       { label: 'Entite', value: pastor.entite },
-      { label: 'TÃ©lÃ©phone', value: pastor.telephone },
+      { label: 'Telephone', value: pastor.telephone },
       { label: 'Email', value: pastor.email },
-      { label: 'Date dâ€™affectation', value: pastor.date_affectation }
+      { label: "Date d'affectation", value: pastor.date_affectation }
     ]);
   }
 
@@ -242,12 +242,12 @@ export function AddPastorView({ token }) {
 
       if (editingPastorId) {
         await api.updatePastor(token, editingPastorId, payload);
-        setMessage('Pasteur mis Ã  jour avec succÃ¨s.');
+        setMessage('Pasteur mis a jour avec succes.');
         resetForm();
       } else {
         await api.createPastor(token, payload);
         setForm({ ...initialPastor, poste: form.poste, degre: form.degre });
-        setMessage('Pasteur ajoutÃ© avec succÃ¨s.');
+        setMessage('Pasteur ajoute avec succes.');
       }
 
       await loadData();
@@ -264,7 +264,7 @@ export function AddPastorView({ token }) {
 
     try {
       await api.deletePastor(token, id);
-      setMessage('Pasteur supprimÃ©.');
+      setMessage('Pasteur supprime.');
       await loadData();
     } catch (deleteError) {
       setError(deleteError.message);
@@ -325,7 +325,7 @@ export function AddPastorView({ token }) {
             </select>
           </label>
           <label className="field dark-field">
-            <span>TÃ©lÃ©phone</span>
+            <span>Telephone</span>
             <input value={form.telephone} onChange={(event) => updateField('telephone', event.target.value)} placeholder="09..." required />
           </label>
         </div>
@@ -348,7 +348,7 @@ export function AddPastorView({ token }) {
             <input type="email" value={form.email} onChange={(event) => updateField('email', event.target.value)} />
           </label>
           <label className="field dark-field">
-            <span>Date dâ€™affectation</span>
+            <span>Date d'affectation</span>
             <input type="date" value={form.date_affectation} onChange={(event) => updateField('date_affectation', event.target.value)} />
           </label>
         </div>
@@ -359,7 +359,7 @@ export function AddPastorView({ token }) {
         <div className="form-actions-row">
           <button className="admin-primary" type="submit" disabled={isSaving}>
             <Plus size={18} />
-            {isSaving ? 'Enregistrement...' : editingPastorId ? 'Mettre Ã  jour' : 'Ajouter le pasteur'}
+            {isSaving ? 'Enregistrement...' : editingPastorId ? 'Mettre a jour' : 'Ajouter le pasteur'}
           </button>
           {editingPastorId ? (
             <button className="secondary-action" type="button" onClick={resetForm}>
@@ -373,7 +373,7 @@ export function AddPastorView({ token }) {
       <article className="dark-panel">
         <div className="panel-title">
           <UserPlus size={22} />
-          <h2>Pasteurs enregistrÃ©s</h2>
+          <h2>Pasteurs enregistres</h2>
         </div>
         <div className="admin-list">
           {pastors.map((pastor) => (

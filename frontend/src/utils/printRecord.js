@@ -283,12 +283,12 @@ export function printPastorsList(pastors, options = {}) {
   const postesCount = new Set(pastors.map((pastor) => pastor.poste).filter(Boolean)).size;
   const fonctionsCount = new Set(pastors.map((pastor) => pastor.degre).filter(Boolean)).size;
 
-  openPrintDocument('Liste des pasteurs CBCA', `
-    ${reportHeader('Liste des pasteurs CBCA', filters.length ? filters.join(' | ') : 'Tous les pasteurs')}
-    <h1>Etat de sortie des pasteurs</h1>
+  openPrintDocument('Liste des serviteurs CBCA', `
+    ${reportHeader('Liste des serviteurs CBCA', filters.length ? filters.join(' | ') : 'Tous les serviteurs')}
+    <h1>Etat de sortie des serviteurs</h1>
     <div class="summary">
       <div>
-        <span>Total pasteurs</span>
+        <span>Total serviteurs</span>
         <strong>${pastors.length}</strong>
       </div>
       <div>
@@ -314,7 +314,7 @@ export function printPastorsList(pastors, options = {}) {
         </tr>
       </thead>
       <tbody>
-        ${rows || '<tr><td colspan="8" class="muted">Aucun pasteur trouve.</td></tr>'}
+        ${rows || '<tr><td colspan="8" class="muted">Aucun serviteur trouve.</td></tr>'}
       </tbody>
     </table>
     <div class="signature-row">

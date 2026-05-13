@@ -31,6 +31,13 @@ function normalizePhoneForWhatsApp(phone) {
   return digits;
 }
 
+function buildBroadcastText(pastor, message) {
+  const fonction = pastor.degre || 'Serviteur';
+  const intro = `Bonjour ${fonction} ${pastor.nom}, nous vous saluons au nom du Tout-Puissant.`;
+  const body = message.trim();
+  return body ? `${intro}\n${body}` : intro;
+}
+
 export function DirectoryView({ token, onUnauthorized }) {
   const [pastors, setPastors] = useState([]);
   const [postes, setPostes] = useState([]);
@@ -57,7 +64,7 @@ export function DirectoryView({ token, onUnauthorized }) {
         name: pastor.nom,
         phone,
         url: phone && bulkMessage.trim()
-          ? `https://wa.me/${phone}?text=${encodeURIComponent(bulkMessage.trim())}`
+          ? `https://wa.me/${phone}?text=${encodeURIComponent(buildBroadcastText(pastor, bulkMessage))}`
           : ''
       };
     })
@@ -124,7 +131,7 @@ export function DirectoryView({ token, onUnauthorized }) {
         degre: activeDegree,
         poste: activePoste,
         page: 1,
-        limit: 1000
+        limit: 5000
       });
       setPastors(payload.data || []);
     } catch (loadError) {
@@ -144,7 +151,7 @@ export function DirectoryView({ token, onUnauthorized }) {
     try {
       const payload = await api.getPastors(token, {
         page: 1,
-        limit: 1000
+        limit: 5000
       });
       printPastorsList(payload.data || [], {
         query: debouncedQuery,
@@ -276,7 +283,7 @@ export function DirectoryView({ token, onUnauthorized }) {
                 setBulkMessage(event.target.value);
                 setShowBulkLinks(false);
               }}
-              placeholder="Ex: Bonjour Pasteur, reunion ce samedi a 10h au bureau CBCA..."
+              placeholder="Ex: Reunion ce samedi a 10h au bureau CBCA..."
             />
           </label>
 
@@ -322,12 +329,12 @@ export function DirectoryView({ token, onUnauthorized }) {
               <span>
                 <Search size={32} />
               </span>
-              <p>Aucun pasteur trouvé pour cette recherche.</p>
+              <p>Aucun pasteur trouve pour cette recherche.</p>
               <button
                 type="button"
                 onClick={resetFilters}
               >
-                Réinitialiser les filtres
+                Reinitialiser les filtres
               </button>
             </div>
           ) : null}

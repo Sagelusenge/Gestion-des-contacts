@@ -37,7 +37,7 @@ export function AdminView({ token }) {
     try {
       const [postesPayload, pastorsPayload] = await Promise.all([
         api.getPostes(token),
-        api.getPastors(token, { page: 1, limit: 100 })
+        api.getPastors(token, { page: 1, limit: 5000 })
       ]);
       setPostes(postesPayload.data || []);
       setPastors(pastorsPayload.data || []);
@@ -230,7 +230,7 @@ export function AdminView({ token }) {
             </label>
             <div className="form-split">
               <label className="field">
-                <span>Degré</span>
+                <span>Fonction</span>
                 <select
                   value={pastorForm.degre}
                   onChange={(event) => updatePastorField('degre', event.target.value)}
@@ -243,7 +243,7 @@ export function AdminView({ token }) {
                 </select>
               </label>
               <label className="field">
-                <span>Téléphone</span>
+                <span>Telephone</span>
                 <input
                   value={pastorForm.telephone}
                   onChange={(event) => updatePastorField('telephone', event.target.value)}

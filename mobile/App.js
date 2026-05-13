@@ -104,6 +104,18 @@ function mapExcelPastorRows(rawRows) {
   }));
 }
 
+function buildContactWhatsAppMessage(pastor) {
+  const fonction = pastor.degre || 'Serviteur';
+  return `Bonjour ${fonction} ${pastor.nom}, nous vous saluons au nom du Tout-Puissant. Nous vous contactons via l'annuaire CBCA pour une communication concernant votre fonction et votre poste.`;
+}
+
+function buildBroadcastWhatsAppMessage(pastor, message) {
+  const fonction = pastor.degre || 'Serviteur';
+  const intro = `Bonjour ${fonction} ${pastor.nom}, nous vous saluons au nom du Tout-Puissant.`;
+  const body = message.trim();
+  return body ? `${intro}\n${body}` : intro;
+}
+
 export default function App() {
   const [session, setSession] = useState(null);
   const [booting, setBooting] = useState(true);
@@ -343,7 +355,7 @@ function DirectoryScreen({ token, onLogout }) {
         degre: activeFonction,
         poste: activePoste,
         page: 1,
-        limit: 1000
+        limit: 5000
       });
       setPastors(payload.data || []);
     } catch (loadError) {
@@ -476,7 +488,7 @@ function BroadcastScreen({ token }) {
   const activeRecipient = currentIndex >= 0 ? recipients[currentIndex] : null;
 
   function whatsappUrl(recipient) {
-    return `https://wa.me/${recipient.whatsappPhone}?text=${encodeURIComponent(message.trim())}`;
+    return `https://wa.me/${recipient.whatsappPhone}?text=${encodeURIComponent(buildBroadcastWhatsAppMessage(recipient, message))}`;
   }
 
   async function copyMessage() {
@@ -553,16 +565,16 @@ function BroadcastScreen({ token }) {
             setCurrentIndex(-1);
           }}
           multiline
-          placeholder="Ex: Bonjour Pasteur, reunion ce samedi a 10h au bureau CBCA..."
+          placeholder="Ex: Reunion ce samedi a 10h au bureau CBCA..."
         />
         <Notice
-          message="WhatsApp demande de valider chaque envoi. L'application prepare le message et ouvre chaque pasteur automatiquement, puis vous appuyez sur Envoyer dans WhatsApp."
+          message="WhatsApp demande de valider chaque envoi. L'application prepare le message et ouvre chaque destinataire automatiquement, puis vous appuyez sur Envoyer dans WhatsApp."
         />
         <View style={styles.cardHeader}>
           <View style={{ flex: 1 }}>
             <Text style={[styles.cardTitle, { color: palette.text }]}>{recipients.length} destinataire{recipients.length > 1 ? 's' : ''}</Text>
             <Text style={[styles.meta, { color: palette.muted }]}>
-              {selectedValue ? `${filterType}: ${selectedValue}` : 'Tous les pasteurs avec numero WhatsApp'}
+              {selectedValue ? `${filterType}: ${selectedValue}` : 'Tous les serviteurs avec numero WhatsApp'}
             </Text>
           </View>
         </View>
@@ -1020,7 +1032,7 @@ function PastorCard({ pastor }) {
   const { palette } = useTheme();
   const digits = phoneDigits(pastor.telephone);
   const whatsapp = digits
-    ? `https://wa.me/${digits}?text=${encodeURIComponent(`Bonjour Pasteur ${pastor.nom}, je vous contacte via l'annuaire CBCA...`)}`
+    ? `https://wa.me/${digits}?text=${encodeURIComponent(buildContactWhatsAppMessage(pastor))}`
     : '';
 
   async function copy() {

@@ -45,6 +45,11 @@ async function ensurePastorsExtraColumns() {
       if (!existing.has('entite')) {
         await pool.execute('ALTER TABLE pastors ADD COLUMN entite VARCHAR(120) NULL AFTER poste');
       }
+
+      await pool.execute('ALTER TABLE pastors MODIFY telephone VARCHAR(20) NULL');
+      await pool.execute('CREATE UNIQUE INDEX uq_pastors_id_serviteur ON pastors (id_serviteur)').catch(() => {});
+      await pool.execute('DROP INDEX uq_pastors_telephone ON pastors').catch(() => {});
+      await pool.execute('CREATE INDEX idx_pastors_telephone ON pastors (telephone)').catch(() => {});
     })();
   }
 
@@ -239,16 +244,16 @@ router.post(
           nom: String(row.nom || row.Nom || row.Noms || row['NOMS -POST NOMS CORRECT'] || row.name || '').trim(),
           degre: String(row.degre || row.fonction || row.Fonction || row.grade || row.Grade || '').trim(),
           poste: String(row.poste || row.Poste || '').trim(),
-          entite: String(row.entite || row.Entite || row['EntitÃ©'] || row.ENTITE || '').trim() || null,
+          entite: String(row.entite || row.Entite || row.ENTITE || '').trim() || null,
           region: String(row.region || row.Region || '').trim(),
-          telephone: String(row.telephone || row.Telephone || row['Téléphone'] || row['NUMERO DE TELEPHONE'] || row.phone || '').trim(),
+          telephone: String(row.telephone || row.Telephone || row['Téléphone'] || row['NUMERO DE TELEPHONE'] || row.phone || '').trim() || null,
           email: row.email || row.Email ? String(row.email || row.Email).trim() : null,
           date_affectation: normalizeImportDate(row.date_affectation || row.Affectation || row['Date affectation'])
         };
 
-        if (!payload.nom || !payload.degre || !payload.poste || !payload.telephone) {
+        if (!payload.nom || !payload.degre || !payload.poste) {
           summary.skipped += 1;
-          summary.errors.push(`Ligne ${index + 2}: nom, fonction, poste et telephone sont requis.`);
+          summary.errors.push(`Ligne ${index + 2}: nom, fonction et poste sont requis.`);
           continue;
         }
 

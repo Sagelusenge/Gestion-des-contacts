@@ -12,7 +12,7 @@ export function DashboardView({ token, onNavigate }) {
     async function loadDashboard() {
       try {
         const [pastorsPayload, postesPayload, fonctionsPayload] = await Promise.all([
-          api.getPastors(token, { page: 1, limit: 100 }),
+          api.getPastors(token, { page: 1, limit: 5000 }),
           api.getPostes(token),
           api.getFonctions(token)
         ]);
@@ -98,7 +98,7 @@ export function DashboardView({ token, onNavigate }) {
           <div className="data-table">
             <div className="table-head">
               <span>Nom</span>
-              <span>Degré</span>
+              <span>Fonction</span>
               <span>Poste</span>
             </div>
             {recentPastors.map((pastor) => (
