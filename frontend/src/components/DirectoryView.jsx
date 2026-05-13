@@ -38,6 +38,13 @@ function buildBroadcastText(pastor, message) {
   return body ? `${intro}\n${body}` : intro;
 }
 
+function normalizeSearch(value) {
+  return String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
 export function DirectoryView({ token, onUnauthorized }) {
   const [pastors, setPastors] = useState([]);
   const [postes, setPostes] = useState([]);
@@ -45,16 +52,28 @@ export function DirectoryView({ token, onUnauthorized }) {
   const [query, setQuery] = useState('');
   const [activeDegree, setActiveDegree] = useState('');
   const [activePoste, setActivePoste] = useState('');
+  const [posteSearch, setPosteSearch] = useState('');
+  const [fonctionSearch, setFonctionSearch] = useState('');
   const [bulkMessage, setBulkMessage] = useState('');
   const [showBulkLinks, setShowBulkLinks] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const debouncedQuery = useDebounce(query, 300);
 
-  const posteOptions = useMemo(() => {
+  const allPosteOptions = useMemo(() => {
     const values = postes.flatMap((poste) => [poste.region, poste.nom]).filter(Boolean);
     return [...new Set(values)].sort((a, b) => a.localeCompare(b));
   }, [postes]);
+  const posteOptions = useMemo(() => {
+    const search = normalizeSearch(posteSearch);
+    return allPosteOptions.filter((poste) => !search || poste === activePoste || normalizeSearch(poste).includes(search));
+  }, [activePoste, allPosteOptions, posteSearch]);
+  const fonctionOptions = useMemo(() => {
+    const search = normalizeSearch(fonctionSearch);
+    return fonctions
+      .filter((fonction) => !search || fonction.nom === activeDegree || normalizeSearch(fonction.nom).includes(search))
+      .sort((a, b) => a.nom.localeCompare(b.nom));
+  }, [activeDegree, fonctions, fonctionSearch]);
   const hasActiveFilters = Boolean(query || activeDegree || activePoste);
   const whatsappTargets = useMemo(() => pastors
     .map((pastor) => {
@@ -203,6 +222,12 @@ export function DirectoryView({ token, onUnauthorized }) {
         <div className="simple-filter-bar">
           <label>
             <span>Poste</span>
+            <input
+              className="select-search-input"
+              value={posteSearch}
+              onChange={(event) => setPosteSearch(event.target.value)}
+              placeholder="Rechercher poste/region..."
+            />
             <select value={activePoste} onChange={(event) => setActivePoste(event.target.value)}>
               <option value="">Tous les postes</option>
               {posteOptions.map((poste) => (
@@ -215,9 +240,15 @@ export function DirectoryView({ token, onUnauthorized }) {
 
           <label>
             <span>Fonction</span>
+            <input
+              className="select-search-input"
+              value={fonctionSearch}
+              onChange={(event) => setFonctionSearch(event.target.value)}
+              placeholder="Rechercher fonction..."
+            />
             <select value={activeDegree} onChange={(event) => setActiveDegree(event.target.value)}>
               <option value="">Toutes les fonctions</option>
-              {fonctions.map((fonction) => (
+              {fonctionOptions.map((fonction) => (
                 <option value={fonction.nom} key={fonction.id}>
                   {fonction.nom}
                 </option>

@@ -3481,3 +3481,14 @@ body {
   display: none !important;
   pointer-events: none;
 }
+
+.management-search {
+  margin-bottom: 14px;
+}
+
+.select-search-input {
+  min-height: 38px;
+  margin-bottom: 8px;
+  border-radius: 12px;
+  font-size: 0.86rem;
+}

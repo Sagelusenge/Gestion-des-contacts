@@ -69,6 +69,13 @@ function normalizeHeader(value) {
     .replace(/[^a-z0-9]/g, '');
 }
 
+function normalizeSearch(value) {
+  return String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
 function pickExcelValue(row, names) {
   const normalizedRow = Object.entries(row).reduce((accumulator, [key, value]) => {
     accumulator[normalizeHeader(key)] = value;
@@ -392,8 +399,8 @@ function DirectoryScreen({ token, onLogout }) {
       <Header title="Annuaire" subtitle={`${pastors.length} contact${pastors.length > 1 ? 's' : ''} affiche${pastors.length > 1 ? 's' : ''}`} />
       <Field label="Recherche" value={query} onChangeText={setQuery} placeholder="Nom, fonction, poste..." />
 
-      <ChipList label="Fonctions" values={fonctions.map((fonction) => fonction.nom)} active={activeFonction} onChange={setActiveFonction} />
-      <ChipList label="Postes" values={posteOptions} active={activePoste} onChange={setActivePoste} />
+      <ChipList label="Fonctions" values={fonctions.map((fonction) => fonction.nom)} active={activeFonction} onChange={setActiveFonction} searchable searchPlaceholder="Rechercher une fonction..." />
+      <ChipList label="Postes" values={posteOptions} active={activePoste} onChange={setActivePoste} searchable searchPlaceholder="Rechercher un poste..." />
 
       {error ? <Notice type="error" message={error} /> : null}
       {loading && pastors.length === 0 ? <ActivityIndicator color={palette.blue} /> : null}
@@ -550,6 +557,8 @@ function BroadcastScreen({ token }) {
           label={filterType === 'poste' ? 'Postes' : filterType === 'region' ? 'Regions' : 'Fonctions'}
           values={filterValues}
           active={selectedValue}
+          searchable
+          searchPlaceholder={filterType === 'poste' ? 'Rechercher un poste...' : filterType === 'region' ? 'Rechercher une region...' : 'Rechercher une fonction...'}
           onChange={(value) => {
             setSelectedValue(value);
             setShowRecipients(false);
@@ -640,7 +649,43 @@ function ManageScreen({ token }) {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [pastorSearch, setPastorSearch] = useState('');
+  const [posteSearch, setPosteSearch] = useState('');
+  const [fonctionSearch, setFonctionSearch] = useState('');
   const { palette } = useTheme();
+
+  const visiblePastors = useMemo(() => {
+    const search = normalizeSearch(pastorSearch);
+    return pastors.filter((pastor) => {
+      if (!search) {
+        return true;
+      }
+
+      return [pastor.nom, pastor.degre, pastor.poste, pastor.entite, pastor.telephone].some((value) => normalizeSearch(value).includes(search));
+    });
+  }, [pastors, pastorSearch]);
+
+  const visiblePostes = useMemo(() => {
+    const search = normalizeSearch(posteSearch);
+    return postes.filter((poste) => {
+      if (!search) {
+        return true;
+      }
+
+      return [poste.nom, poste.region, poste.description].some((value) => normalizeSearch(value).includes(search));
+    });
+  }, [postes, posteSearch]);
+
+  const visibleFonctions = useMemo(() => {
+    const search = normalizeSearch(fonctionSearch);
+    return fonctions.filter((fonction) => {
+      if (!search) {
+        return true;
+      }
+
+      return [fonction.nom, fonction.description].some((value) => normalizeSearch(value).includes(search));
+    });
+  }, [fonctions, fonctionSearch]);
 
   async function load() {
     setError('');
@@ -916,15 +961,16 @@ function ManageScreen({ token }) {
             </View>
             <Field label="Nom complet" value={pastorForm.nom} onChangeText={(value) => setPastorForm({ ...pastorForm, nom: value })} />
             <Field label="ID serviteur" value={pastorForm.id_serviteur} onChangeText={(value) => setPastorForm({ ...pastorForm, id_serviteur: value })} placeholder="Ex: 000246" />
-            <ChipList label="Fonction" values={fonctions.map((fonction) => fonction.nom)} active={pastorForm.degre} onChange={(value) => setPastorForm({ ...pastorForm, degre: value })} />
-            <ChipList label="Poste" values={postes.map((poste) => poste.nom)} active={pastorForm.poste} onChange={(value) => setPastorForm({ ...pastorForm, poste: value })} />
+            <ChipList label="Fonction" values={fonctions.map((fonction) => fonction.nom)} active={pastorForm.degre} onChange={(value) => setPastorForm({ ...pastorForm, degre: value })} searchable searchPlaceholder="Rechercher une fonction..." />
+            <ChipList label="Poste" values={postes.map((poste) => poste.nom)} active={pastorForm.poste} onChange={(value) => setPastorForm({ ...pastorForm, poste: value })} searchable searchPlaceholder="Rechercher un poste..." />
             <Field label="Entite" value={pastorForm.entite} onChangeText={(value) => setPastorForm({ ...pastorForm, entite: value })} placeholder="Ex: Bureau poste Bambo" />
             <Field label="Telephone" value={pastorForm.telephone} onChangeText={(value) => setPastorForm({ ...pastorForm, telephone: value })} keyboardType="phone-pad" />
             <Field label="Email" value={pastorForm.email} onChangeText={(value) => setPastorForm({ ...pastorForm, email: value })} keyboardType="email-address" autoCapitalize="none" />
             <Field label="Date affectation" value={pastorForm.date_affectation} onChangeText={(value) => setPastorForm({ ...pastorForm, date_affectation: value })} placeholder="YYYY-MM-DD" />
             <SubmitRow saving={saving} onSubmit={savePastor} onCancel={editingId ? resetForms : null} />
           </FormPanel>
-          {pastors.map((pastor) => (
+          <Field label="Rechercher dans les serviteurs" value={pastorSearch} onChangeText={setPastorSearch} placeholder="Nom, fonction, poste..." />
+          {visiblePastors.map((pastor) => (
             <ManageRow
               title={pastor.nom}
               subtitle={`${pastor.degre} - ${pastor.poste}${pastor.entite ? ` - ${pastor.entite}` : ''}`}
@@ -957,7 +1003,8 @@ function ManageScreen({ token }) {
             <Field label="Description" value={posteForm.description} onChangeText={(value) => setPosteForm({ ...posteForm, description: value })} multiline />
             <SubmitRow saving={saving} onSubmit={savePoste} onCancel={editingId ? resetForms : null} />
           </FormPanel>
-          {postes.map((poste) => (
+          <Field label="Rechercher dans les postes" value={posteSearch} onChangeText={setPosteSearch} placeholder="Poste, region..." />
+          {visiblePostes.map((poste) => (
             <ManageRow
               title={poste.nom}
               subtitle={poste.region || 'Sans region'}
@@ -980,7 +1027,8 @@ function ManageScreen({ token }) {
             <Field label="Description" value={fonctionForm.description} onChangeText={(value) => setFonctionForm({ ...fonctionForm, description: value })} multiline />
             <SubmitRow saving={saving} onSubmit={saveFonction} onCancel={editingId ? resetForms : null} />
           </FormPanel>
-          {fonctions.map((fonction) => (
+          <Field label="Rechercher dans les fonctions" value={fonctionSearch} onChangeText={setFonctionSearch} placeholder="Fonction..." />
+          {visibleFonctions.map((fonction) => (
             <ManageRow
               title={fonction.nom}
               subtitle={fonction.description || 'Sans description'}
@@ -1131,19 +1179,36 @@ function Field({ label, multiline, style, rightIcon, onRightPress, ...props }) {
   );
 }
 
-function ChipList({ label, values, labels = {}, active, onChange, includeAll = true }) {
+function ChipList({ label, values, labels = {}, active, onChange, includeAll = true, searchable = false, searchPlaceholder = 'Rechercher...' }) {
   const { palette } = useTheme();
+  const [search, setSearch] = useState('');
+  const visibleValues = useMemo(() => {
+    const needle = normalizeSearch(search);
+    return values.filter((value) => !needle || active === value || normalizeSearch(labels[value] || value).includes(needle));
+  }, [active, labels, search, values]);
   if (!values.length) return null;
   return (
     <View>
       {label ? <Text style={[styles.label, { color: palette.muted }]}>{label}</Text> : null}
+      {searchable ? (
+        <View style={[styles.chipSearch, { backgroundColor: palette.panelSoft, borderColor: palette.line }]}>
+          <Ionicons name="search-outline" color={palette.muted} size={18} />
+          <TextInput
+            value={search}
+            onChangeText={setSearch}
+            placeholder={searchPlaceholder}
+            placeholderTextColor={palette.muted}
+            style={[styles.chipSearchInput, { color: palette.text }]}
+          />
+        </View>
+      ) : null}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
         {includeAll ? (
           <TouchableOpacity style={[styles.chip, { backgroundColor: palette.panel, borderColor: palette.line }, !active && { backgroundColor: palette.blue, borderColor: palette.blue }]} onPress={() => onChange('')}>
             <Text style={[styles.chipText, { color: !active ? palette.white : palette.text }]}>Tous</Text>
           </TouchableOpacity>
         ) : null}
-        {values.map((value) => {
+        {visibleValues.map((value) => {
           const selected = active === value;
           return (
             <TouchableOpacity style={[styles.chip, { backgroundColor: palette.panel, borderColor: palette.line }, selected && { backgroundColor: palette.blue, borderColor: palette.blue }]} onPress={() => onChange(value)} key={value}>

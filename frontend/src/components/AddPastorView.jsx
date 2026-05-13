@@ -15,6 +15,13 @@ const initialPastor = {
   date_affectation: ''
 };
 
+function normalizeSearch(value) {
+  return String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
 export function AddPastorView({ token }) {
   const [postes, setPostes] = useState([]);
   const [grades, setGrades] = useState([]);
@@ -24,9 +31,42 @@ export function AddPastorView({ token }) {
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [editingPastorId, setEditingPastorId] = useState(null);
+  const [posteSearch, setPosteSearch] = useState('');
+  const [gradeSearch, setGradeSearch] = useState('');
   const importInputRef = useRef(null);
 
-  const sortedPostes = useMemo(() => [...postes].sort((a, b) => a.nom.localeCompare(b.nom)), [postes]);
+  const sortedPostes = useMemo(() => {
+    const search = normalizeSearch(posteSearch);
+    return [...postes]
+      .filter((poste) => {
+        if (poste.nom === form.poste) {
+          return true;
+        }
+
+        if (!search) {
+          return true;
+        }
+
+        return [poste.nom, poste.region].some((value) => normalizeSearch(value).includes(search));
+      })
+      .sort((a, b) => a.nom.localeCompare(b.nom));
+  }, [form.poste, postes, posteSearch]);
+  const sortedGrades = useMemo(() => {
+    const search = normalizeSearch(gradeSearch);
+    return [...grades]
+      .filter((grade) => {
+        if (grade.nom === form.degre) {
+          return true;
+        }
+
+        if (!search) {
+          return true;
+        }
+
+        return [grade.nom, grade.description].some((value) => normalizeSearch(value).includes(search));
+      })
+      .sort((a, b) => a.nom.localeCompare(b.nom));
+  }, [form.degre, grades, gradeSearch]);
 
   async function loadData() {
     try {
@@ -316,8 +356,14 @@ export function AddPastorView({ token }) {
         <div className="form-split">
           <label className="field dark-field">
             <span>Fonction</span>
+            <input
+              className="select-search-input"
+              value={gradeSearch}
+              onChange={(event) => setGradeSearch(event.target.value)}
+              placeholder="Rechercher une fonction..."
+            />
             <select value={form.degre} onChange={(event) => updateField('degre', event.target.value)}>
-              {grades.map((grade) => (
+              {sortedGrades.map((grade) => (
                 <option value={grade.nom} key={grade.id}>
                   {grade.nom}
                 </option>
@@ -332,6 +378,12 @@ export function AddPastorView({ token }) {
 
         <label className="field dark-field">
           <span>Poste</span>
+          <input
+            className="select-search-input"
+            value={posteSearch}
+            onChange={(event) => setPosteSearch(event.target.value)}
+            placeholder="Rechercher un poste ou une region..."
+          />
           <select value={form.poste} onChange={(event) => updateField('poste', event.target.value)} required>
             <option value="">Choisir un poste</option>
             {sortedPostes.map((poste) => (

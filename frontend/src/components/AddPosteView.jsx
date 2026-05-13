@@ -1,4 +1,4 @@
-import { MapPinned, Pencil, Plus, Printer, Trash2, X } from 'lucide-react';
+import { MapPinned, Pencil, Plus, Printer, Search, Trash2, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../services/api.js';
 import { printRecord } from '../utils/printRecord.js';
@@ -9,6 +9,13 @@ const initialPoste = {
   description: ''
 };
 
+function normalizeSearch(value) {
+  return String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
 export function AddPosteView({ token }) {
   const [postes, setPostes] = useState([]);
   const [form, setForm] = useState(initialPoste);
@@ -16,8 +23,20 @@ export function AddPosteView({ token }) {
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [editingPosteId, setEditingPosteId] = useState(null);
+  const [posteSearch, setPosteSearch] = useState('');
 
-  const sortedPostes = useMemo(() => [...postes].sort((a, b) => a.nom.localeCompare(b.nom)), [postes]);
+  const sortedPostes = useMemo(() => {
+    const search = normalizeSearch(posteSearch);
+    return [...postes]
+      .filter((poste) => {
+        if (!search) {
+          return true;
+        }
+
+        return [poste.nom, poste.region, poste.description].some((value) => normalizeSearch(value).includes(search));
+      })
+      .sort((a, b) => a.nom.localeCompare(b.nom));
+  }, [postes, posteSearch]);
 
   async function loadPostes() {
     try {
@@ -147,6 +166,14 @@ export function AddPosteView({ token }) {
           <MapPinned size={22} />
           <h2>Postes existants</h2>
         </div>
+        <label className="connect-search management-search">
+          <Search size={18} />
+          <input
+            value={posteSearch}
+            onChange={(event) => setPosteSearch(event.target.value)}
+            placeholder="Rechercher un poste ou une region..."
+          />
+        </label>
         <div className="admin-list">
           {sortedPostes.map((poste) => (
             <div className="admin-list-row" key={poste.id}>
@@ -167,6 +194,7 @@ export function AddPosteView({ token }) {
               </div>
             </div>
           ))}
+          {sortedPostes.length === 0 ? <p className="notice">Aucun poste trouve.</p> : null}
         </div>
       </article>
     </section>

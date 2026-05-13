@@ -1,5 +1,5 @@
-import { BadgePlus, Pencil, Plus, Printer, Trash2, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { BadgePlus, Pencil, Plus, Printer, Search, Trash2, X } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { api } from '../services/api.js';
 import { printRecord } from '../utils/printRecord.js';
 
@@ -8,6 +8,13 @@ const initialFonction = {
   description: ''
 };
 
+function normalizeSearch(value) {
+  return String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
 export function AddFonctionView({ token }) {
   const [fonctions, setFonctions] = useState([]);
   const [form, setForm] = useState(initialFonction);
@@ -15,6 +22,20 @@ export function AddFonctionView({ token }) {
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [editingFonctionId, setEditingFonctionId] = useState(null);
+  const [fonctionSearch, setFonctionSearch] = useState('');
+
+  const visibleFonctions = useMemo(() => {
+    const search = normalizeSearch(fonctionSearch);
+    return [...fonctions]
+      .filter((fonction) => {
+        if (!search) {
+          return true;
+        }
+
+        return [fonction.nom, fonction.description].some((value) => normalizeSearch(value).includes(search));
+      })
+      .sort((a, b) => a.nom.localeCompare(b.nom));
+  }, [fonctions, fonctionSearch]);
 
   async function loadFonctions() {
     try {
@@ -138,8 +159,16 @@ export function AddFonctionView({ token }) {
           <BadgePlus size={22} />
           <h2>Fonctions enregistrees</h2>
         </div>
+        <label className="connect-search management-search">
+          <Search size={18} />
+          <input
+            value={fonctionSearch}
+            onChange={(event) => setFonctionSearch(event.target.value)}
+            placeholder="Rechercher une fonction..."
+          />
+        </label>
         <div className="admin-list">
-          {fonctions.map((fonction) => (
+          {visibleFonctions.map((fonction) => (
             <div className="admin-list-row" key={fonction.id}>
               <div>
                 <strong>{fonction.nom}</strong>
@@ -158,6 +187,7 @@ export function AddFonctionView({ token }) {
               </div>
             </div>
           ))}
+          {visibleFonctions.length === 0 ? <p className="notice">Aucune fonction trouvee.</p> : null}
         </div>
       </article>
     </section>

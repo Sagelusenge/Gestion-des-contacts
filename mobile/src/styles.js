@@ -226,6 +226,24 @@ export const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 14
   },
+  chipSearch: {
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    marginBottom: 9,
+    backgroundColor: colors.panelSoft
+  },
+  chipSearchInput: {
+    flex: 1,
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: '800'
+  },
   chip: {
     borderWidth: 1,
     borderColor: colors.line,
