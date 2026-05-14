@@ -60,6 +60,8 @@ const tabs = [
 ];
 
 const excelHeaders = ['ID-SO_PA', 'Nom', 'Fonction', 'Poste', 'Entite', 'Region', 'Telephone', 'Email', 'Date affectation'];
+const LIST_INITIAL_SIZE = 60;
+const LIST_INCREMENT = 60;
 
 function normalizeHeader(value) {
   return String(value || '')
@@ -340,6 +342,7 @@ function DirectoryScreen({ token, onLogout }) {
   const [fonctions, setFonctions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [visibleCount, setVisibleCount] = useState(LIST_INITIAL_SIZE);
   const { palette } = useTheme();
 
   async function loadReferences() {
@@ -385,10 +388,16 @@ function DirectoryScreen({ token, onLogout }) {
     return () => clearTimeout(timer);
   }, [query, activeFonction, activePoste]);
 
+  useEffect(() => {
+    setVisibleCount(LIST_INITIAL_SIZE);
+  }, [query, activeFonction, activePoste]);
+
   const posteOptions = useMemo(() => {
     const values = postes.flatMap((poste) => [poste.nom, poste.region]).filter(Boolean);
     return [...new Set(values)].sort((a, b) => a.localeCompare(b));
   }, [postes]);
+  const visiblePastors = useMemo(() => pastors.slice(0, visibleCount), [pastors, visibleCount]);
+  const remainingPastors = pastors.length - visiblePastors.length;
 
   return (
     <ScrollView
@@ -405,7 +414,14 @@ function DirectoryScreen({ token, onLogout }) {
       {error ? <Notice type="error" message={error} /> : null}
       {loading && pastors.length === 0 ? <ActivityIndicator color={palette.blue} /> : null}
       {!loading && pastors.length === 0 ? <EmptyState title="Aucun resultat" text="Essayez une autre recherche ou reinitialisez les filtres." /> : null}
-      {pastors.map((pastor) => <PastorCard pastor={pastor} key={pastor.id} />)}
+      {visiblePastors.map((pastor) => <PastorCard pastor={pastor} key={pastor.id} />)}
+      {remainingPastors > 0 ? (
+        <ActionButton
+          label={`Afficher ${Math.min(LIST_INCREMENT, remainingPastors)} de plus`}
+          icon="chevron-down-outline"
+          onPress={() => setVisibleCount((current) => current + LIST_INCREMENT)}
+        />
+      ) : null}
     </ScrollView>
   );
 }
@@ -419,6 +435,7 @@ function BroadcastScreen({ token }) {
   const [message, setMessage] = useState('');
   const [showRecipients, setShowRecipients] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(-1);
+  const [recipientsVisibleCount, setRecipientsVisibleCount] = useState(LIST_INITIAL_SIZE);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const { palette } = useTheme();
@@ -493,6 +510,8 @@ function BroadcastScreen({ token }) {
 
   const canSend = Boolean(message.trim() && recipients.length);
   const activeRecipient = currentIndex >= 0 ? recipients[currentIndex] : null;
+  const visibleRecipients = useMemo(() => recipients.slice(0, recipientsVisibleCount), [recipients, recipientsVisibleCount]);
+  const remainingRecipients = recipients.length - visibleRecipients.length;
 
   function whatsappUrl(recipient) {
     return `https://wa.me/${recipient.whatsappPhone}?text=${encodeURIComponent(buildBroadcastWhatsAppMessage(recipient, message))}`;
@@ -551,6 +570,7 @@ function BroadcastScreen({ token }) {
             setSelectedValue('');
             setShowRecipients(false);
             setCurrentIndex(-1);
+            setRecipientsVisibleCount(LIST_INITIAL_SIZE);
           }}
         />
         <ChipList
@@ -563,6 +583,7 @@ function BroadcastScreen({ token }) {
             setSelectedValue(value);
             setShowRecipients(false);
             setCurrentIndex(-1);
+            setRecipientsVisibleCount(LIST_INITIAL_SIZE);
           }}
         />
         <Field
@@ -572,6 +593,7 @@ function BroadcastScreen({ token }) {
             setMessage(value);
             setShowRecipients(false);
             setCurrentIndex(-1);
+            setRecipientsVisibleCount(LIST_INITIAL_SIZE);
           }}
           multiline
           placeholder="Ex: Reunion ce samedi a 10h au bureau CBCA..."
@@ -618,7 +640,7 @@ function BroadcastScreen({ token }) {
         <EmptyState title="Aucun destinataire" text="Choisissez une autre categorie ou verifiez les numeros de telephone." />
       ) : null}
 
-      {showRecipients ? recipients.map((recipient, index) => (
+      {showRecipients ? visibleRecipients.map((recipient, index) => (
         <View style={[styles.card, { backgroundColor: palette.panel, borderColor: palette.line }]} key={recipient.id}>
           <View style={styles.cardHeader}>
             <View style={{ flex: 1 }}>
@@ -630,6 +652,13 @@ function BroadcastScreen({ token }) {
           </View>
         </View>
       )) : null}
+      {showRecipients && remainingRecipients > 0 ? (
+        <ActionButton
+          label={`Afficher ${Math.min(LIST_INCREMENT, remainingRecipients)} destinataires de plus`}
+          icon="chevron-down-outline"
+          onPress={() => setRecipientsVisibleCount((current) => current + LIST_INCREMENT)}
+        />
+      ) : null}
     </ScrollView>
   );
 }
@@ -652,6 +681,7 @@ function ManageScreen({ token }) {
   const [pastorSearch, setPastorSearch] = useState('');
   const [posteSearch, setPosteSearch] = useState('');
   const [fonctionSearch, setFonctionSearch] = useState('');
+  const [manageVisibleCount, setManageVisibleCount] = useState(LIST_INITIAL_SIZE);
   const { palette } = useTheme();
 
   const visiblePastors = useMemo(() => {
@@ -686,6 +716,13 @@ function ManageScreen({ token }) {
       return [fonction.nom, fonction.description].some((value) => normalizeSearch(value).includes(search));
     });
   }, [fonctions, fonctionSearch]);
+  const shownPastors = useMemo(() => visiblePastors.slice(0, manageVisibleCount), [manageVisibleCount, visiblePastors]);
+  const shownPostes = useMemo(() => visiblePostes.slice(0, manageVisibleCount), [manageVisibleCount, visiblePostes]);
+  const shownFonctions = useMemo(() => visibleFonctions.slice(0, manageVisibleCount), [manageVisibleCount, visibleFonctions]);
+
+  useEffect(() => {
+    setManageVisibleCount(LIST_INITIAL_SIZE);
+  }, [section, pastorSearch, posteSearch, fonctionSearch]);
 
   async function load() {
     setError('');
@@ -970,7 +1007,7 @@ function ManageScreen({ token }) {
             <SubmitRow saving={saving} onSubmit={savePastor} onCancel={editingId ? resetForms : null} />
           </FormPanel>
           <Field label="Rechercher dans les serviteurs" value={pastorSearch} onChangeText={setPastorSearch} placeholder="Nom, fonction, poste..." />
-          {visiblePastors.map((pastor) => (
+          {shownPastors.map((pastor) => (
             <ManageRow
               title={pastor.nom}
               subtitle={`${pastor.degre} - ${pastor.poste}${pastor.entite ? ` - ${pastor.entite}` : ''}`}
@@ -992,6 +1029,13 @@ function ManageScreen({ token }) {
               onDelete={() => confirmRemove('pastor', pastor.id)}
             />
           ))}
+          {visiblePastors.length > shownPastors.length ? (
+            <ActionButton
+              label={`Afficher ${Math.min(LIST_INCREMENT, visiblePastors.length - shownPastors.length)} de plus`}
+              icon="chevron-down-outline"
+              onPress={() => setManageVisibleCount((current) => current + LIST_INCREMENT)}
+            />
+          ) : null}
         </View>
       ) : null}
 
@@ -1004,7 +1048,7 @@ function ManageScreen({ token }) {
             <SubmitRow saving={saving} onSubmit={savePoste} onCancel={editingId ? resetForms : null} />
           </FormPanel>
           <Field label="Rechercher dans les postes" value={posteSearch} onChangeText={setPosteSearch} placeholder="Poste, region..." />
-          {visiblePostes.map((poste) => (
+          {shownPostes.map((poste) => (
             <ManageRow
               title={poste.nom}
               subtitle={poste.region || 'Sans region'}
@@ -1017,6 +1061,13 @@ function ManageScreen({ token }) {
               onDelete={() => confirmRemove('poste', poste.id)}
             />
           ))}
+          {visiblePostes.length > shownPostes.length ? (
+            <ActionButton
+              label={`Afficher ${Math.min(LIST_INCREMENT, visiblePostes.length - shownPostes.length)} de plus`}
+              icon="chevron-down-outline"
+              onPress={() => setManageVisibleCount((current) => current + LIST_INCREMENT)}
+            />
+          ) : null}
         </View>
       ) : null}
 
@@ -1028,7 +1079,7 @@ function ManageScreen({ token }) {
             <SubmitRow saving={saving} onSubmit={saveFonction} onCancel={editingId ? resetForms : null} />
           </FormPanel>
           <Field label="Rechercher dans les fonctions" value={fonctionSearch} onChangeText={setFonctionSearch} placeholder="Fonction..." />
-          {visibleFonctions.map((fonction) => (
+          {shownFonctions.map((fonction) => (
             <ManageRow
               title={fonction.nom}
               subtitle={fonction.description || 'Sans description'}
@@ -1041,6 +1092,13 @@ function ManageScreen({ token }) {
               onDelete={() => confirmRemove('fonction', fonction.id)}
             />
           ))}
+          {visibleFonctions.length > shownFonctions.length ? (
+            <ActionButton
+              label={`Afficher ${Math.min(LIST_INCREMENT, visibleFonctions.length - shownFonctions.length)} de plus`}
+              icon="chevron-down-outline"
+              onPress={() => setManageVisibleCount((current) => current + LIST_INCREMENT)}
+            />
+          ) : null}
         </View>
       ) : null}
 
