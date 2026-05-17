@@ -8,6 +8,7 @@ import authRoutes from './routes/auth.routes.js';
 import broadcastRoutes from './routes/broadcasts.routes.js';
 import gradeRoutes from './routes/grades.routes.js';
 import pastorRoutes from './routes/pastors.routes.js';
+import paymentRoutes from './routes/payments.routes.js';
 import posteRoutes from './routes/postes.routes.js';
 
 export const app = express();
@@ -25,6 +26,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/broadcasts', broadcastRoutes);
 app.use('/api/grades', gradeRoutes);
 app.use('/api/pastors', pastorRoutes);
+app.use('/api/payments', paymentRoutes);
 app.use('/api/postes', posteRoutes);
 
 app.use(notFound);

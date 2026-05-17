@@ -6,6 +6,7 @@ import { AddPosteView } from './components/AddPosteView.jsx';
 import { DashboardView } from './components/DashboardView.jsx';
 import { DirectoryView } from './components/DirectoryView.jsx';
 import { LoginView } from './components/LoginView.jsx';
+import { PaymentsView } from './components/PaymentsView.jsx';
 import { Sidebar } from './components/Sidebar.jsx';
 import { APP_DOWNLOAD_URL } from './config/appLinks.js';
 
@@ -32,6 +33,10 @@ const pageMeta = {
   addFonction: {
     title: 'Gestion des fonctions',
     subtitle: 'Créer les fonctions que l’admin utilisera pour les pasteurs'
+  },
+  payments: {
+    title: 'Paiements',
+    subtitle: 'Preuves Mobile Money envoyees depuis l app'
   }
 };
 
@@ -76,6 +81,10 @@ export default function App() {
 
     if (activeView === 'addFonction') {
       return <AddFonctionView token={token} />;
+    }
+
+    if (activeView === 'payments') {
+      return <PaymentsView token={token} />;
     }
 
     return <DirectoryView token={token} onUnauthorized={handleLogout} />;

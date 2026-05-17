@@ -55,6 +55,12 @@ export const api = {
   updatePastor: (token, id, data) => request(`/pastors/${id}`, { token, method: 'PUT', body: data }),
   deletePastor: (token, id) => request(`/pastors/${id}`, { token, method: 'DELETE' }),
   sendWhatsappBroadcast: (token, data) => request('/broadcasts/whatsapp', { token, method: 'POST', body: data }),
+  getPayments: (token, params = {}) => {
+    const query = new URLSearchParams(params);
+    return request(`/payments?${query.toString()}`, { token });
+  },
+  createPayment: (token, data) => request('/payments', { token, method: 'POST', body: data }),
+  updatePaymentStatus: (token, id, status) => request(`/payments/${id}/status`, { token, method: 'PATCH', body: { status } }),
   getPostes: (token) => request('/postes', { token }),
   createPoste: (token, data) => request('/postes', { token, method: 'POST', body: data }),
   updatePoste: (token, id, data) => request(`/postes/${id}`, { token, method: 'PUT', body: data }),

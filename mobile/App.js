@@ -218,7 +218,7 @@ export default function App() {
         <BroadcastScreen token={session.token} />
       ) : null}
       {activeTab === 'payment' ? (
-        <PaymentScreen />
+        <PaymentScreen token={session.token} />
       ) : null}
       {activeTab === 'manage' ? (
         <ManageScreen token={session.token} />
@@ -731,7 +731,7 @@ function BroadcastScreen({ token }) {
   );
 }
 
-function PaymentScreen() {
+function PaymentScreen({ token }) {
   const [selectedProvider, setSelectedProvider] = useState(paymentProviders[0].key);
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState('CDF');
@@ -741,6 +741,7 @@ function PaymentScreen() {
   const [history, setHistory] = useState([]);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
   const { palette } = useTheme();
 
   useEffect(() => {
@@ -772,32 +773,66 @@ function PaymentScreen() {
 
     setMessage('');
     setError('');
+    setSaving(true);
 
-    if (!selectedProvider) {
-      setError('Choisissez un mode de paiement.');
-      return;
+    try {
+      if (!selectedProvider) {
+        throw new Error('Choisissez un mode de paiement.');
+      }
+
+      if (!normalizedTransId) {
+        throw new Error('Ajoutez le TransID recu apres la transaction.');
+      }
+
+      const payload = {
+        provider: selectedProvider,
+        amount: amount.trim(),
+        currency,
+        payerPhone: payerPhone.trim(),
+        transId: normalizedTransId,
+        note: note.trim()
+      };
+      const response = await api.createPayment(token, payload);
+      const savedPayment = response.data || {};
+      const record = {
+        id: String(savedPayment.id || Date.now()),
+        providerKey: savedPayment.provider || selectedProvider,
+        amount: savedPayment.amount ?? amount.trim(),
+        currency: savedPayment.currency || currency,
+        payerPhone: savedPayment.payer_phone || payerPhone.trim(),
+        transId: savedPayment.trans_id || normalizedTransId,
+        note: savedPayment.note || note.trim(),
+        status: savedPayment.status || 'pending',
+        syncStatus: 'sent',
+        createdAt: savedPayment.created_at || new Date().toISOString()
+      };
+
+      await persistHistory([record, ...history].slice(0, 50));
+      setTransId('');
+      setNote('');
+      setMessage("Preuve envoyee automatiquement a l'admin.");
+    } catch (saveError) {
+      const record = {
+        id: `${Date.now()}`,
+        providerKey: selectedProvider,
+        amount: amount.trim(),
+        currency,
+        payerPhone: payerPhone.trim(),
+        transId: normalizedTransId,
+        note: note.trim(),
+        status: 'pending',
+        syncStatus: 'local',
+        createdAt: new Date().toISOString()
+      };
+
+      if (normalizedTransId) {
+        await persistHistory([record, ...history].slice(0, 50));
+      }
+
+      setError(`${saveError.message} La preuve reste sur ce telephone et devra etre renvoyee.`);
+    } finally {
+      setSaving(false);
     }
-
-    if (!normalizedTransId) {
-      setError('Ajoutez le TransID recu apres la transaction.');
-      return;
-    }
-
-    const record = {
-      id: `${Date.now()}`,
-      providerKey: selectedProvider,
-      amount: amount.trim(),
-      currency,
-      payerPhone: payerPhone.trim(),
-      transId: normalizedTransId,
-      note: note.trim(),
-      createdAt: new Date().toISOString()
-    };
-
-    await persistHistory([record, ...history].slice(0, 50));
-    setTransId('');
-    setNote('');
-    setMessage('Preuve de paiement enregistree sur ce telephone.');
   }
 
   async function copyProof(record) {
@@ -814,6 +849,38 @@ function PaymentScreen() {
     await Clipboard.setStringAsync(text);
     Alert.alert('Preuve copiee', 'Les details du paiement sont dans le presse-papiers.');
   }
+
+  async function retryProof(record) {
+    setMessage('');
+    setError('');
+
+    try {
+      const response = await api.createPayment(token, {
+        provider: record.providerKey,
+        amount: record.amount,
+        currency: record.currency,
+        payerPhone: record.payerPhone,
+        transId: record.transId,
+        note: record.note
+      });
+      const savedPayment = response.data || {};
+      const nextHistory = history.map((item) => item.id === record.id
+        ? {
+            ...item,
+            id: String(savedPayment.id || item.id),
+            status: savedPayment.status || 'pending',
+            syncStatus: 'sent',
+            createdAt: savedPayment.created_at || item.createdAt
+          }
+        : item);
+
+      await persistHistory(nextHistory);
+      setMessage("Preuve envoyee a l'admin.");
+    } catch (retryError) {
+      setError(retryError.message);
+    }
+  }
+
 
   async function clearHistory() {
     Alert.alert('Effacer les preuves', 'Voulez-vous supprimer les preuves enregistrees sur ce telephone ?', [
@@ -870,9 +937,9 @@ function PaymentScreen() {
         <Field label="Note" value={note} onChangeText={setNote} multiline placeholder="Ex: contribution, cotisation..." />
         {message ? <Notice type="success" message={message} /> : null}
         {error ? <Notice type="error" message={error} /> : null}
-        <TouchableOpacity style={styles.primaryButton} onPress={saveProof}>
-          <Ionicons name="checkmark-circle-outline" color={colors.white} size={21} />
-          <Text style={styles.primaryButtonText}>Enregistrer le TransID</Text>
+        <TouchableOpacity style={styles.primaryButton} onPress={saveProof} disabled={saving}>
+          {saving ? <ActivityIndicator color={colors.white} /> : <Ionicons name="checkmark-circle-outline" color={colors.white} size={21} />}
+          <Text style={styles.primaryButtonText}>{saving ? 'Envoi...' : 'Envoyer le TransID'}</Text>
         </TouchableOpacity>
       </FormPanel>
 
@@ -898,7 +965,13 @@ function PaymentScreen() {
           {record.amount ? <Text style={[styles.paymentAmount, { color: palette.text }]}>{record.amount} {record.currency}</Text> : null}
           {record.payerPhone ? <Text style={[styles.meta, { color: palette.muted }]}>Numero: {record.payerPhone}</Text> : null}
           <Text style={[styles.meta, { color: palette.muted }]}>TransID: {record.transId}</Text>
+          <Text style={[styles.meta, { color: palette.muted }]}>Synchro: {record.syncStatus === 'sent' ? 'envoyee admin' : 'locale'}</Text>
           {record.note ? <Text style={[styles.meta, { color: palette.muted }]}>Note: {record.note}</Text> : null}
+          {record.syncStatus !== 'sent' ? (
+            <View style={styles.actionRow}>
+              <ActionButton label="Renvoyer admin" icon="cloud-upload-outline" onPress={() => retryProof(record)} />
+            </View>
+          ) : null}
         </View>
       ))}
     </ScrollView>

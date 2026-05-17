@@ -48,7 +48,7 @@ npm start
 - Filtres par fonction et poste
 - Appel, WhatsApp, email et copie de contact
 - Diffusion WhatsApp assistee par poste, region ou fonction
-- Paiement Mobile Money assiste avec ouverture USSD et saisie du TransID
+- Paiement Mobile Money assiste avec ouverture USSD, saisie du TransID et envoi automatique a l'admin
 - Ajout, modification et suppression des pasteurs
 - Ajout, modification et suppression des postes
 - Ajout, modification et suppression des fonctions

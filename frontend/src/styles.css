@@ -2343,6 +2343,155 @@ body {
   }
 }
 
+/* Payment proof admin */
+.payments-page,
+.payment-list {
+  display: grid;
+  gap: 14px;
+}
+
+.payments-toolbar {
+  align-items: center;
+  justify-content: space-between;
+}
+
+.payments-toolbar select {
+  min-height: 48px;
+  min-width: min(260px, 100%);
+  border: 1px solid var(--cbca-line);
+  border-radius: 12px;
+  background: var(--cbca-white);
+  color: var(--cbca-text);
+  padding: 0 12px;
+  font-weight: 850;
+}
+
+.payment-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: start;
+}
+
+.payment-card-main {
+  min-width: 0;
+  display: grid;
+  gap: 7px;
+}
+
+.payment-card-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.payment-card h2 {
+  color: var(--cbca-text);
+  font-size: 1.2rem;
+  overflow-wrap: anywhere;
+}
+
+.payment-card p,
+.payment-card small {
+  color: var(--cbca-muted);
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.payment-status {
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0 10px;
+  font-size: 0.76rem;
+  font-weight: 950;
+}
+
+.payment-status.pending {
+  background: #fff7dc;
+  color: #7a5b07;
+}
+
+.payment-status.confirmed {
+  background: #e5f8eb;
+  color: #126b39;
+}
+
+.payment-status.rejected {
+  background: var(--cbca-red-soft);
+  color: var(--cbca-red);
+}
+
+.payment-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.payment-action {
+  min-height: 40px;
+  border: 0;
+  border-radius: 10px;
+  padding: 0 12px;
+  font-weight: 900;
+}
+
+.payment-action.confirm {
+  background: #e5f8eb;
+  color: #126b39;
+}
+
+.payment-action.reject {
+  background: var(--cbca-red-soft);
+  color: var(--cbca-red);
+}
+
+.payment-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.empty-panel {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 8px;
+}
+
+:root[data-theme='dark'] .payments-toolbar select {
+  border-color: var(--cbca-line);
+  background: #0b1627;
+  color: var(--cbca-text);
+}
+
+:root[data-theme='dark'] .payment-status.pending {
+  background: rgba(245, 191, 59, 0.16);
+  color: #ffe29a;
+}
+
+:root[data-theme='dark'] .payment-status.confirmed,
+:root[data-theme='dark'] .payment-action.confirm {
+  background: rgba(34, 197, 94, 0.16);
+  color: #b7f7c9;
+}
+
+@media (max-width: 640px) {
+  .payment-card {
+    grid-template-columns: 1fr;
+  }
+
+  .payment-card-actions {
+    justify-content: flex-start;
+  }
+
+  .payment-action {
+    flex: 1 1 120px;
+  }
+}
+
 /* Responsive hardening */
 html,
 body,
