@@ -131,7 +131,7 @@ export default function App() {
           <div className="workspace-actions">
             <a className="workspace-tool download-app-link" href={APP_DOWNLOAD_URL} target="_blank" rel="noreferrer">
               <Download size={20} />
-              <span>Telecharger l'app</span>
+              <span>APK Android</span>
             </a>
             <button className="workspace-tool icon-only-tool" type="button" onClick={toggleTheme}>
               {isDark ? <Sun size={20} /> : <Moon size={20} />}

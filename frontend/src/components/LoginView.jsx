@@ -34,7 +34,15 @@ export function LoginView({ onLogin, theme, onThemeToggle }) {
       </button>
 
       <section className="login-panel" aria-labelledby="login-title">
-        <img className="brand-mark cbca-logo" src="/cbca-logo.png" alt="Logo CBCA" />
+        <img
+          className="brand-mark cbca-logo"
+          src="/cbca-logo.png"
+          alt="Logo CBCA"
+          onError={(event) => {
+            event.currentTarget.onerror = null;
+            event.currentTarget.src = '/cbca-logo.jpg';
+          }}
+        />
         <p className="eyebrow">Annuaire CBCA</p>
         <h1 id="login-title">Connexion</h1>
 
@@ -82,7 +90,7 @@ export function LoginView({ onLogin, theme, onThemeToggle }) {
 
           <a className="login-download-link" href={APP_DOWNLOAD_URL} target="_blank" rel="noreferrer">
             <Download size={18} />
-            Telecharger l'app
+            Telecharger APK Android
           </a>
         </form>
       </section>
