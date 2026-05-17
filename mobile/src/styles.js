@@ -29,7 +29,7 @@ export const styles = StyleSheet.create({
   },
   content: {
     padding: 18,
-    paddingBottom: 112
+    paddingBottom: 104
   },
   centerScreen: {
     flex: 1,
@@ -361,32 +361,32 @@ export const styles = StyleSheet.create({
   },
   bottomNav: {
     position: 'absolute',
-    left: 10,
-    right: 10,
-    bottom: 16,
+    left: 8,
+    right: 8,
+    bottom: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
     borderWidth: 1,
     borderColor: colors.line,
-    borderRadius: 24,
-    padding: 8,
+    borderRadius: 20,
+    padding: 6,
     backgroundColor: colors.navy
   },
   navItem: {
     flex: 1,
-    minHeight: 54,
+    minHeight: 48,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 17
+    borderRadius: 15
   },
   navItemActive: {
     backgroundColor: colors.white
   },
   navText: {
     color: colors.muted,
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '800',
-    marginTop: 3
+    marginTop: 2
   },
   navTextActive: {
     color: colors.blue

@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import { env } from './config/env.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
+import appreciationRoutes from './routes/appreciations.routes.js';
 import authRoutes from './routes/auth.routes.js';
 import broadcastRoutes from './routes/broadcasts.routes.js';
 import gradeRoutes from './routes/grades.routes.js';
@@ -23,6 +24,7 @@ app.get('/api/health', (_req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/appreciations', appreciationRoutes);
 app.use('/api/broadcasts', broadcastRoutes);
 app.use('/api/grades', gradeRoutes);
 app.use('/api/pastors', pastorRoutes);

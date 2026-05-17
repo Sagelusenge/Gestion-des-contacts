@@ -34,6 +34,13 @@ async function request(path, { token, method = 'GET', body } = {}) {
 
 export const api = {
   login: (credentials) => request('/auth/login', { method: 'POST', body: credentials }),
+  getPublicAppreciations: () => request('/appreciations/public'),
+  getAppreciations: (token, params = {}) => {
+    const query = new URLSearchParams(params);
+    return request(`/appreciations?${query.toString()}`, { token });
+  },
+  createAppreciation: (token, data) => request('/appreciations', { token, method: 'POST', body: data }),
+  updateAppreciationStatus: (token, id, status) => request(`/appreciations/${id}/status`, { token, method: 'PATCH', body: { status } }),
   getGrades: (token) => request('/grades', { token }),
   createGrade: (token, data) => request('/grades', { token, method: 'POST', body: data }),
   updateGrade: (token, id, data) => request(`/grades/${id}`, { token, method: 'PUT', body: data }),

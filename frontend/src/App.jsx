@@ -1,5 +1,6 @@
 import { Download, Moon, RefreshCw, Sun } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { AppreciationsView } from './components/AppreciationsView.jsx';
 import { AddPastorView } from './components/AddPastorView.jsx';
 import { AddFonctionView } from './components/AddGradeView.jsx';
 import { AddPosteView } from './components/AddPosteView.jsx';
@@ -37,6 +38,10 @@ const pageMeta = {
   payments: {
     title: 'Paiements',
     subtitle: 'Preuves Mobile Money envoyees depuis l app'
+  },
+  appreciations: {
+    title: 'Appreciations',
+    subtitle: 'Avis clients a approuver pour le site'
   }
 };
 
@@ -85,6 +90,10 @@ export default function App() {
 
     if (activeView === 'payments') {
       return <PaymentsView token={token} />;
+    }
+
+    if (activeView === 'appreciations') {
+      return <AppreciationsView token={token} />;
     }
 
     return <DirectoryView token={token} onUnauthorized={handleLogout} />;

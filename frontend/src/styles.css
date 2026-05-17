@@ -2492,6 +2492,208 @@ body {
   }
 }
 
+/* Appreciation workflow */
+.appreciations-page,
+.appreciation-list {
+  display: grid;
+  gap: 14px;
+}
+
+.appreciations-toolbar {
+  align-items: center;
+  justify-content: space-between;
+}
+
+.appreciations-toolbar select {
+  min-height: 48px;
+  min-width: min(260px, 100%);
+  border: 1px solid var(--cbca-line);
+  border-radius: 12px;
+  background: var(--cbca-white);
+  color: var(--cbca-text);
+  padding: 0 12px;
+  font-weight: 850;
+}
+
+.appreciation-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: start;
+}
+
+.appreciation-card-main {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.appreciation-card-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.appreciation-card p,
+.appreciation-card small {
+  color: var(--cbca-muted);
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.appreciation-status,
+.appreciation-rating {
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 0 10px;
+  font-size: 0.76rem;
+  font-weight: 950;
+}
+
+.appreciation-status.pending {
+  background: #fff7dc;
+  color: #7a5b07;
+}
+
+.appreciation-status.approved {
+  background: #e5f8eb;
+  color: #126b39;
+}
+
+.appreciation-status.rejected {
+  background: var(--cbca-red-soft);
+  color: var(--cbca-red);
+}
+
+.appreciation-rating {
+  background: #eef4ff;
+  color: var(--cbca-blue);
+}
+
+.appreciation-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.public-appreciations {
+  width: min(920px, calc(100vw - 28px));
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.public-appreciation-card {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--cbca-line);
+  border-radius: 12px;
+  padding: 14px;
+  background: var(--cbca-white);
+  color: var(--cbca-text);
+  box-shadow: 0 12px 26px rgba(18, 63, 140, 0.08);
+}
+
+.public-appreciation-card div {
+  display: grid;
+  gap: 2px;
+}
+
+.public-appreciation-card strong,
+.public-appreciation-card p {
+  overflow-wrap: anywhere;
+}
+
+.public-appreciation-card span,
+.public-appreciation-card p {
+  color: var(--cbca-muted);
+  font-weight: 780;
+}
+
+.public-appreciation-card p {
+  font-size: 0.88rem;
+}
+
+.public-appreciation-card small {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--cbca-blue);
+  font-weight: 950;
+}
+
+/* Compact navigation polish */
+.side-nav {
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.side-links {
+  align-content: start;
+}
+
+.side-link {
+  min-height: 42px;
+  gap: 10px;
+  padding-inline: 12px;
+}
+
+@media (min-width: 861px) {
+  .side-nav {
+    width: 248px;
+    padding: 20px 14px;
+  }
+
+  .admin-shell {
+    grid-template-columns: 248px minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .public-appreciations {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .appreciation-card {
+    grid-template-columns: 1fr;
+  }
+
+  .appreciation-card-actions {
+    justify-content: flex-start;
+  }
+
+  .public-appreciations {
+    grid-template-columns: 1fr;
+  }
+}
+
+:root[data-theme='dark'] .appreciations-toolbar select,
+:root[data-theme='dark'] .public-appreciation-card {
+  border-color: var(--cbca-line);
+  background: var(--cbca-white);
+  color: var(--cbca-text);
+}
+
+:root[data-theme='dark'] .appreciation-status.pending {
+  background: rgba(245, 191, 59, 0.16);
+  color: #ffe29a;
+}
+
+:root[data-theme='dark'] .appreciation-status.approved,
+:root[data-theme='dark'] .appreciation-rating {
+  background: rgba(34, 197, 94, 0.16);
+  color: #b7f7c9;
+}
+
 /* Responsive hardening */
 html,
 body,

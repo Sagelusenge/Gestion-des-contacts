@@ -34,6 +34,7 @@ async function request(path, { token, method = 'GET', body } = {}) {
 
 export const api = {
   login: (credentials) => request('/auth/login', { method: 'POST', body: credentials }),
+  createAppreciation: (token, data) => request('/appreciations', { token, method: 'POST', body: data }),
   getUsers: (token) => request('/auth/users', { token }),
   createUser: (token, data) => request('/auth/users', { token, method: 'POST', body: data }),
   getGrades: (token) => request('/grades', { token }),

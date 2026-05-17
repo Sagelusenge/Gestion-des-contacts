@@ -220,6 +220,9 @@ export default function App() {
       {activeTab === 'payment' ? (
         <PaymentScreen token={session.token} />
       ) : null}
+      {activeTab === 'feedback' ? (
+        <FeedbackScreen token={session.token} user={session.user} />
+      ) : null}
       {activeTab === 'manage' ? (
         <ManageScreen token={session.token} />
       ) : null}
@@ -349,6 +352,7 @@ function DashboardScreen({ token, onNavigate, onLogout }) {
           <ActionButton label="Annuaire" icon="search-outline" onPress={() => onNavigate('directory')} />
           <ActionButton label="Diffusion" icon="megaphone-outline" onPress={() => onNavigate('broadcast')} />
           <ActionButton label="Paiement" icon="card-outline" onPress={() => onNavigate('payment')} />
+          <ActionButton label="Appreciation" icon="chatbubble-ellipses-outline" onPress={() => onNavigate('feedback')} />
           <ActionButton label="Gestion" icon="create-outline" onPress={() => onNavigate('manage')} />
         </View>
       </View>
@@ -974,6 +978,60 @@ function PaymentScreen({ token }) {
           ) : null}
         </View>
       ))}
+    </ScrollView>
+  );
+}
+
+function FeedbackScreen({ token, user }) {
+  const [nom, setNom] = useState(user?.username || '');
+  const [quartier, setQuartier] = useState('');
+  const [note, setNote] = useState('5');
+  const [message, setMessage] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [success, setSuccess] = useState('');
+  const [error, setError] = useState('');
+  const { palette } = useTheme();
+
+  async function submitFeedback() {
+    setSuccess('');
+    setError('');
+    setSaving(true);
+
+    try {
+      await api.createAppreciation(token, {
+        nom,
+        quartier,
+        note,
+        message
+      });
+      setMessage('');
+      setSuccess("Merci. Votre appreciation est envoyee et attend l'approbation de l'admin.");
+    } catch (feedbackError) {
+      setError(feedbackError.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <ScrollView
+      style={[styles.screen, { backgroundColor: palette.ink }]}
+      contentContainerStyle={styles.content}
+      keyboardShouldPersistTaps="handled"
+    >
+      <Header title="Appreciation" subtitle="Envoyer un avis a l'administration" />
+      <FormPanel title="Votre message">
+        <Field label="Nom" value={nom} onChangeText={setNom} placeholder="Votre nom" />
+        <Field label="Quartier / Poste" value={quartier} onChangeText={setQuartier} placeholder="Ex: Goma, Katindo..." />
+        <ChipList values={['1', '2', '3', '4', '5']} labels={{ 1: '1/5', 2: '2/5', 3: '3/5', 4: '4/5', 5: '5/5' }} active={note} onChange={setNote} includeAll={false} />
+        <Field label="Appreciation" value={message} onChangeText={setMessage} multiline placeholder="Votre avis..." />
+        {success ? <Notice type="success" message={success} /> : null}
+        {error ? <Notice type="error" message={error} /> : null}
+        <TouchableOpacity style={styles.primaryButton} onPress={submitFeedback} disabled={saving}>
+          {saving ? <ActivityIndicator color={colors.white} /> : <Ionicons name="send-outline" color={colors.white} size={21} />}
+          <Text style={styles.primaryButtonText}>{saving ? 'Envoi...' : 'Envoyer appreciation'}</Text>
+        </TouchableOpacity>
+      </FormPanel>
     </ScrollView>
   );
 }
