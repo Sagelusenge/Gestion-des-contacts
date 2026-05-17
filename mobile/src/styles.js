@@ -213,6 +213,41 @@ export const styles = StyleSheet.create({
     gap: 9,
     marginTop: 14
   },
+  providerGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginTop: 14
+  },
+  providerCard: {
+    width: '47%',
+    minHeight: 128,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: 18,
+    padding: 14,
+    backgroundColor: colors.panelSoft
+  },
+  providerIcon: {
+    width: 42,
+    height: 42,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 14,
+    backgroundColor: colors.blue,
+    marginBottom: 12
+  },
+  providerName: {
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: '900'
+  },
+  providerCode: {
+    color: colors.muted,
+    fontSize: 13,
+    fontWeight: '800',
+    marginTop: 4
+  },
   smallAction: {
     width: 44,
     height: 44,
@@ -308,10 +343,26 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 4
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10
+  },
+  linkText: {
+    fontSize: 13,
+    fontWeight: '900'
+  },
+  paymentAmount: {
+    color: colors.text,
+    fontSize: 24,
+    fontWeight: '900',
+    marginTop: 10
+  },
   bottomNav: {
     position: 'absolute',
-    left: 14,
-    right: 14,
+    left: 10,
+    right: 10,
     bottom: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -323,17 +374,17 @@ export const styles = StyleSheet.create({
   },
   navItem: {
     flex: 1,
-    minHeight: 56,
+    minHeight: 54,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 18
+    borderRadius: 17
   },
   navItemActive: {
     backgroundColor: colors.white
   },
   navText: {
     color: colors.muted,
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '800',
     marginTop: 3
   },
