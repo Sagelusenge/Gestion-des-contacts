@@ -3492,3 +3492,166 @@ body {
   border-radius: 12px;
   font-size: 0.86rem;
 }
+
+/* App download link and small-phone polish */
+.workspace-tool.download-app-link,
+.login-download-link {
+  text-decoration: none;
+}
+
+.login-download-link {
+  min-height: 46px;
+  border: 1px solid var(--cbca-line);
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #eef4ff;
+  color: var(--cbca-blue);
+  font-weight: 950;
+}
+
+.login-download-link:hover {
+  transform: translateY(-1px);
+}
+
+:root[data-theme='dark'] .login-download-link {
+  border-color: var(--cbca-line);
+  background: rgba(143, 181, 255, 0.14);
+  color: #dbe7ff;
+}
+
+@media (max-width: 520px) {
+  .workspace-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 44px));
+    justify-content: start;
+  }
+
+  .workspace-actions .workspace-tool {
+    width: 44px;
+    min-width: 0;
+    padding: 0;
+  }
+
+  .workspace-actions .workspace-tool span {
+    display: none;
+  }
+}
+
+@media (max-width: 390px) {
+  body {
+    min-width: 0;
+  }
+
+  .login-screen {
+    padding: 64px 10px 16px;
+  }
+
+  .login-panel {
+    width: calc(100vw - 20px);
+    max-width: calc(100vw - 20px);
+    padding: 18px 14px;
+  }
+
+  .brand-mark.cbca-logo {
+    width: 66px;
+    height: 66px;
+    border-radius: 16px;
+  }
+
+  .login-panel h1,
+  .workspace-header h1 {
+    font-size: 1.34rem;
+  }
+
+  .input-shell,
+  .search-group,
+  .connect-search,
+  .simple-filter-bar select,
+  .bulk-message-field textarea {
+    max-width: 100%;
+  }
+
+  .side-nav {
+    padding: 9px;
+  }
+
+  .side-brand img {
+    width: 36px;
+    height: 36px;
+  }
+
+  .side-brand strong {
+    font-size: 0.78rem;
+  }
+
+  .side-brand span {
+    font-size: 0.68rem;
+  }
+
+  .side-links {
+    gap: 5px;
+  }
+
+  .side-link {
+    min-height: 34px;
+    padding: 0 6px;
+    font-size: 0.62rem;
+  }
+
+  .workspace-content {
+    padding: 10px;
+  }
+
+  .metric-card,
+  .dark-panel,
+  .dark-form-panel,
+  .bulk-whatsapp-panel,
+  .connect-card {
+    border-radius: 12px;
+  }
+
+  .connect-card {
+    grid-template-columns: 42px minmax(0, 1fr);
+    padding: 10px;
+  }
+
+  .connect-avatar {
+    width: 42px;
+    height: 42px;
+  }
+
+  .directory-actions,
+  .bulk-whatsapp-actions,
+  .form-actions-row {
+    gap: 8px;
+  }
+}
+
+@media (max-width: 340px) {
+  .side-links {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .workspace-actions {
+    grid-template-columns: repeat(3, 40px);
+  }
+
+  .workspace-actions .workspace-tool {
+    width: 40px;
+    min-height: 40px;
+  }
+
+  .login-panel {
+    padding: 16px 12px;
+  }
+
+  .field,
+  .login-download-link,
+  .primary-button {
+    font-size: 0.86rem;
+  }
+}

@@ -1,4 +1,4 @@
-import { Moon, RefreshCw, Sun } from 'lucide-react';
+import { Download, Moon, RefreshCw, Sun } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { AddPastorView } from './components/AddPastorView.jsx';
 import { AddFonctionView } from './components/AddGradeView.jsx';
@@ -7,6 +7,7 @@ import { DashboardView } from './components/DashboardView.jsx';
 import { DirectoryView } from './components/DirectoryView.jsx';
 import { LoginView } from './components/LoginView.jsx';
 import { Sidebar } from './components/Sidebar.jsx';
+import { APP_DOWNLOAD_URL } from './config/appLinks.js';
 
 const SESSION_KEY = 'cbca_session';
 const THEME_KEY = 'cbca_theme';
@@ -119,6 +120,10 @@ export default function App() {
             <p>{activeMeta.subtitle}</p>
           </div>
           <div className="workspace-actions">
+            <a className="workspace-tool download-app-link" href={APP_DOWNLOAD_URL} target="_blank" rel="noreferrer">
+              <Download size={20} />
+              <span>Telecharger l'app</span>
+            </a>
             <button className="workspace-tool icon-only-tool" type="button" onClick={toggleTheme}>
               {isDark ? <Sun size={20} /> : <Moon size={20} />}
               <span>{isDark ? 'Mode clair' : 'Mode sombre'}</span>

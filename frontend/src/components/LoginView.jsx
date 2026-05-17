@@ -1,5 +1,6 @@
-import { Eye, EyeOff, LockKeyhole, Moon, Sun, UserRound } from 'lucide-react';
+import { Download, Eye, EyeOff, LockKeyhole, Moon, Sun, UserRound } from 'lucide-react';
 import { useState } from 'react';
+import { APP_DOWNLOAD_URL } from '../config/appLinks.js';
 import { api } from '../services/api.js';
 
 export function LoginView({ onLogin, theme, onThemeToggle }) {
@@ -78,6 +79,11 @@ export function LoginView({ onLogin, theme, onThemeToggle }) {
           <button className="primary-button" type="submit" disabled={isLoading}>
             {isLoading ? 'Connexion...' : 'Se connecter'}
           </button>
+
+          <a className="login-download-link" href={APP_DOWNLOAD_URL} target="_blank" rel="noreferrer">
+            <Download size={18} />
+            Telecharger l'app
+          </a>
         </form>
       </section>
     </main>
