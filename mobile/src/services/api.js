@@ -56,6 +56,7 @@ export const api = {
   importPastors: (token, rows) => request('/pastors/import', { token, method: 'POST', body: { rows } }),
   updatePastor: (token, id, data) => request(`/pastors/${id}`, { token, method: 'PUT', body: data }),
   deletePastor: (token, id) => request(`/pastors/${id}`, { token, method: 'DELETE' }),
+  sendWhatsappBroadcast: (token, data) => request('/broadcasts/whatsapp', { token, method: 'POST', body: data }),
   getPostes: (token) => request('/postes', { token }),
   createPoste: (token, data) => request('/postes', { token, method: 'POST', body: data }),
   updatePoste: (token, id, data) => request(`/postes/${id}`, { token, method: 'PUT', body: data }),

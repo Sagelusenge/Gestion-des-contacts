@@ -436,6 +436,8 @@ function BroadcastScreen({ token }) {
   const [showRecipients, setShowRecipients] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(-1);
   const [recipientsVisibleCount, setRecipientsVisibleCount] = useState(LIST_INITIAL_SIZE);
+  const [apiSending, setApiSending] = useState(false);
+  const [apiSummary, setApiSummary] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const { palette } = useTheme();
@@ -549,6 +551,34 @@ function BroadcastScreen({ token }) {
     openRecipientAt(currentIndex + 1);
   }
 
+  async function sendWithApi() {
+    if (!canSend || apiSending) {
+      return;
+    }
+
+    setError('');
+    setApiSummary('');
+    setApiSending(true);
+
+    try {
+      const payload = await api.sendWhatsappBroadcast(token, {
+        message,
+        ids: recipients.map((recipient) => recipient.id)
+      });
+      const summary = payload.data || {};
+      const text = `${summary.sent || 0} envoye(s), ${summary.failed || 0} echec(s), ${summary.skipped || 0} ignore(s).`;
+      setApiSummary(text);
+      Alert.alert('Diffusion terminee', text);
+      if (summary.errors?.length) {
+        setError(summary.errors.map((item) => `${item.nom}: ${item.error}`).join(' '));
+      }
+    } catch (sendError) {
+      setError(sendError.message);
+    } finally {
+      setApiSending(false);
+    }
+  }
+
   return (
     <ScrollView
       style={[styles.screen, { backgroundColor: palette.ink }]}
@@ -571,6 +601,7 @@ function BroadcastScreen({ token }) {
             setShowRecipients(false);
             setCurrentIndex(-1);
             setRecipientsVisibleCount(LIST_INITIAL_SIZE);
+            setApiSummary('');
           }}
         />
         <ChipList
@@ -584,6 +615,7 @@ function BroadcastScreen({ token }) {
             setShowRecipients(false);
             setCurrentIndex(-1);
             setRecipientsVisibleCount(LIST_INITIAL_SIZE);
+            setApiSummary('');
           }}
         />
         <Field
@@ -594,6 +626,7 @@ function BroadcastScreen({ token }) {
             setShowRecipients(false);
             setCurrentIndex(-1);
             setRecipientsVisibleCount(LIST_INITIAL_SIZE);
+            setApiSummary('');
           }}
           multiline
           placeholder="Ex: Reunion ce samedi a 10h au bureau CBCA..."
@@ -614,6 +647,10 @@ function BroadcastScreen({ token }) {
             <Ionicons name="logo-whatsapp" color={colors.white} size={20} />
             <Text style={styles.primaryButtonText}>Demarrer</Text>
           </TouchableOpacity>
+          <TouchableOpacity style={styles.primaryButton} onPress={sendWithApi} disabled={!canSend || apiSending}>
+            {apiSending ? <ActivityIndicator color={colors.white} /> : <Ionicons name="send-outline" color={colors.white} size={20} />}
+            <Text style={styles.primaryButtonText}>{apiSending ? 'Envoi...' : 'Envoyer via API'}</Text>
+          </TouchableOpacity>
           {activeRecipient ? (
             <ActionButton
               label={currentIndex + 1 >= recipients.length ? 'Termine' : 'Suivant'}
@@ -633,6 +670,7 @@ function BroadcastScreen({ token }) {
             Progression: {currentIndex + 1}/{recipients.length} - {activeRecipient.nom}
           </Text>
         ) : null}
+        {apiSummary ? <Notice type="success" message={apiSummary} /> : null}
       </FormPanel>
 
       {loading && recipients.length === 0 ? <ActivityIndicator color={palette.blue} /> : null}

@@ -18,5 +18,12 @@ export const env = {
     secret: process.env.JWT_SECRET || 'change_this_secret_before_production',
     expiresIn: process.env.JWT_EXPIRES_IN || '8h'
   },
-  corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173'
+  corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  whatsapp: {
+    accessToken: process.env.WHATSAPP_ACCESS_TOKEN || '',
+    phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID || '',
+    graphVersion: process.env.WHATSAPP_GRAPH_VERSION || 'v23.0',
+    batchSize: Number(process.env.WHATSAPP_BROADCAST_BATCH_SIZE || 10),
+    batchDelayMs: Number(process.env.WHATSAPP_BROADCAST_BATCH_DELAY_MS || 150)
+  }
 };

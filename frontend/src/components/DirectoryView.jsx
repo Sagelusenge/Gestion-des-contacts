@@ -56,6 +56,8 @@ export function DirectoryView({ token, onUnauthorized }) {
   const [fonctionSearch, setFonctionSearch] = useState('');
   const [bulkMessage, setBulkMessage] = useState('');
   const [showBulkLinks, setShowBulkLinks] = useState(false);
+  const [isApiSending, setIsApiSending] = useState(false);
+  const [apiBroadcastSummary, setApiBroadcastSummary] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const debouncedQuery = useDebounce(query, 300);
@@ -138,6 +140,32 @@ export function DirectoryView({ token, onUnauthorized }) {
 
     setShowBulkLinks(true);
     window.open(whatsappTargets[0].url, '_blank', 'noopener,noreferrer');
+  }
+
+  async function sendBulkMessageWithApi() {
+    if (!canPrepareBulkMessage) {
+      return;
+    }
+
+    setError('');
+    setApiBroadcastSummary('');
+    setIsApiSending(true);
+
+    try {
+      const payload = await api.sendWhatsappBroadcast(token, {
+        message: bulkMessage,
+        ids: whatsappTargets.map((target) => target.id)
+      });
+      const summary = payload.data || {};
+      setApiBroadcastSummary(`${summary.sent || 0} envoye(s), ${summary.failed || 0} echec(s), ${summary.skipped || 0} ignore(s).`);
+      if (summary.errors?.length) {
+        setError(summary.errors.map((item) => `${item.nom}: ${item.error}`).join(' '));
+      }
+    } catch (sendError) {
+      setError(sendError.message);
+    } finally {
+      setIsApiSending(false);
+    }
   }
 
   async function loadPastors() {
@@ -313,6 +341,7 @@ export function DirectoryView({ token, onUnauthorized }) {
               onChange={(event) => {
                 setBulkMessage(event.target.value);
                 setShowBulkLinks(false);
+                setApiBroadcastSummary('');
               }}
               placeholder="Ex: Reunion ce samedi a 10h au bureau CBCA..."
             />
@@ -329,6 +358,15 @@ export function DirectoryView({ token, onUnauthorized }) {
               Ouvrir le 1er WhatsApp
             </button>
             <button
+              className="admin-primary"
+              type="button"
+              onClick={sendBulkMessageWithApi}
+              disabled={!canPrepareBulkMessage || isApiSending}
+            >
+              <Send size={18} />
+              {isApiSending ? 'Envoi en cours...' : 'Envoyer a tous via API'}
+            </button>
+            <button
               className="print-all-button quiet-action"
               type="button"
               onClick={() => setShowBulkLinks((current) => !current)}
@@ -338,6 +376,8 @@ export function DirectoryView({ token, onUnauthorized }) {
               {showBulkLinks ? 'Masquer la liste' : 'Voir les destinataires'}
             </button>
           </div>
+
+          {apiBroadcastSummary ? <p className="notice success">{apiBroadcastSummary}</p> : null}
 
           {showBulkLinks ? (
             <div className="bulk-link-list">

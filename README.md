@@ -43,6 +43,19 @@ Routes principales :
 - `DELETE /api/pastors/:id` admin uniquement
 - `GET /api/postes`
 - `POST /api/postes` admin uniquement
+- `POST /api/broadcasts/whatsapp` admin uniquement, envoi WhatsApp via Meta Cloud API
+
+Pour activer l'envoi automatique WhatsApp sur Render, ajoute ces variables au backend :
+
+```text
+WHATSAPP_ACCESS_TOKEN=...
+WHATSAPP_PHONE_NUMBER_ID=...
+WHATSAPP_GRAPH_VERSION=v23.0
+WHATSAPP_BROADCAST_BATCH_SIZE=10
+WHATSAPP_BROADCAST_BATCH_DELAY_MS=150
+```
+
+Sans ces variables, le bouton de diffusion API reste visible mais l'API renvoie un message de configuration manquante.
 
 ## Frontend React
 
