@@ -51,7 +51,7 @@ router.post(
     initializeWhatsAppWeb();
 
     if (!getWhatsAppWebStatus().isReady) {
-      throw httpError(503, "WhatsApp Web n'est pas connecte. Scannez le QR code dans l'application puis relancez l'envoi.");
+      throw httpError(503, "WhatsApp Web n'est pas encore connecte. Ouvrez le panneau WhatsApp dans l'application; si un QR code apparait, scannez-le une seule fois avec votre telephone.");
     }
 
     const placeholders = ids.map((_, index) => `:id${index}`).join(', ');

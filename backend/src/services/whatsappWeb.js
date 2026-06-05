@@ -7,7 +7,9 @@ import { env } from '../config/env.js';
 const { Client, LocalAuth } = whatsappWeb;
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const authRoot = path.resolve(__dirname, '../../.wwebjs_auth');
+const authRoot = env.whatsapp.webAuthPath
+  ? path.resolve(env.whatsapp.webAuthPath)
+  : path.resolve(__dirname, '../../.wwebjs_auth');
 
 let client = null;
 let initializing = false;
