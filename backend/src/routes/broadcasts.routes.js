@@ -20,7 +20,7 @@ router.use(requireAdmin);
 router.get(
   '/whatsapp/status',
   asyncHandler(async (_req, res) => {
-    initializeWhatsAppWeb();
+    await initializeWhatsAppWeb();
     res.json({ data: getWhatsAppWebStatus() });
   })
 );
@@ -57,7 +57,7 @@ router.post(
       throw httpError(400, 'Aucun destinataire selectionne.');
     }
 
-    initializeWhatsAppWeb();
+    await initializeWhatsAppWeb();
 
     if (!getWhatsAppWebStatus().isReady) {
       throw httpError(503, "WhatsApp Web n'est pas encore connecte. Ouvrez le panneau WhatsApp dans l'application; si un QR code apparait, scannez-le une seule fois avec votre telephone.");

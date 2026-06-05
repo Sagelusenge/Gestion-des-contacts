@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import puppeteer from 'puppeteer';
 import QRCode from 'qrcode';
 import whatsappWeb from 'whatsapp-web.js';
 import { env } from '../config/env.js';
@@ -22,6 +23,18 @@ let failureMessage = '';
 let clientInfo = null;
 let startupTimer = null;
 let statusStartedAt = new Date().toISOString();
+
+async function getBrowserExecutablePath() {
+  if (env.whatsapp.browserExecutablePath) {
+    return env.whatsapp.browserExecutablePath;
+  }
+
+  try {
+    return await puppeteer.executablePath();
+  } catch {
+    return '';
+  }
+}
 
 function clearStartupTimer() {
   if (startupTimer) {
@@ -91,7 +104,7 @@ export function getWhatsAppWebStatus() {
   };
 }
 
-export function initializeWhatsAppWeb() {
+export async function initializeWhatsAppWeb() {
   if (client || initializing) {
     return;
   }
@@ -100,6 +113,7 @@ export function initializeWhatsAppWeb() {
   failureMessage = '';
   setStatus('loading');
   clearStartupTimer();
+  const browserExecutablePath = await getBrowserExecutablePath();
 
   client = new Client({
     authStrategy: new LocalAuth({
@@ -108,7 +122,7 @@ export function initializeWhatsAppWeb() {
     }),
     puppeteer: {
       headless: true,
-      ...(env.whatsapp.browserExecutablePath ? { executablePath: env.whatsapp.browserExecutablePath } : {}),
+      ...(browserExecutablePath ? { executablePath: browserExecutablePath } : {}),
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
@@ -209,7 +223,7 @@ export async function restartWhatsAppWeb() {
     await currentClient.destroy().catch(() => {});
   }
 
-  initializeWhatsAppWeb();
+  await initializeWhatsAppWeb();
   return getWhatsAppWebStatus();
 }
 
@@ -228,7 +242,7 @@ async function sendTextMessage({ to, body }) {
 }
 
 export async function sendBroadcastMessages(recipients) {
-  initializeWhatsAppWeb();
+  await initializeWhatsAppWeb();
 
   if (status !== 'ready') {
     throw new Error("WhatsApp Web n'est pas encore pret. Scannez le QR code et attendez le statut connecte.");
