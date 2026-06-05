@@ -45,6 +45,16 @@ function normalizeSearch(value) {
     .replace(/[\u0300-\u036f]/g, '');
 }
 
+const whatsappStatusLabels = {
+  disconnected: 'Deconnecte',
+  loading: 'Preparation de WhatsApp Web',
+  qr: 'QR code pret a scanner',
+  authenticated: 'Telephone authentifie',
+  ready: 'Telephone connecte',
+  auth_failure: 'Authentification refusee',
+  failed: 'Demarrage impossible'
+};
+
 export function DirectoryView({ token, onUnauthorized }) {
   const [pastors, setPastors] = useState([]);
   const [postes, setPostes] = useState([]);
@@ -189,6 +199,20 @@ export function DirectoryView({ token, onUnauthorized }) {
       if (!silent) {
         setIsWhatsappStatusLoading(false);
       }
+    }
+  }
+
+  async function restartWhatsappSession() {
+    setError('');
+    setIsWhatsappStatusLoading(true);
+
+    try {
+      const payload = await api.restartWhatsappSession(token);
+      setWhatsappStatus(payload.data || null);
+    } catch (restartError) {
+      setError(restartError.message);
+    } finally {
+      setIsWhatsappStatusLoading(false);
     }
   }
 
@@ -377,24 +401,53 @@ export function DirectoryView({ token, onUnauthorized }) {
               <p>
                 {isWhatsappReady
                   ? `Session gardee dans lapp${whatsappStatus?.clientInfo?.pushname ? ` pour ${whatsappStatus.clientInfo.pushname}` : ''}.`
-                  : 'Scannez le QR code avec WhatsApp sur votre telephone.'}
+                  : whatsappStatus?.status === 'qr'
+                    ? 'Scannez le grand QR code affiche ci-dessous avec WhatsApp sur votre telephone.'
+                    : 'Attendez le grand QR code ci-dessous, puis scannez-le avec WhatsApp sur votre telephone.'}
               </p>
+              <small className="whatsapp-session-status">
+                Statut: {whatsappStatusLabels[whatsappStatus?.status] || whatsappStatus?.status || 'en attente'}
+              </small>
+              {whatsappStatus?.failureMessage ? (
+                <small className="whatsapp-session-error">{whatsappStatus.failureMessage}</small>
+              ) : null}
             </div>
-            <button
-              className="print-all-button quiet-action"
-              type="button"
-              onClick={() => loadWhatsappStatus()}
-              disabled={isWhatsappStatusLoading}
-            >
-              <RefreshCw size={18} />
-              {isWhatsappStatusLoading ? 'Verification...' : 'Verifier'}
-            </button>
+            <div className="whatsapp-session-actions">
+              <button
+                className="print-all-button quiet-action"
+                type="button"
+                onClick={() => loadWhatsappStatus()}
+                disabled={isWhatsappStatusLoading}
+              >
+                <RefreshCw size={18} />
+                {isWhatsappStatusLoading ? 'Verification...' : 'Verifier'}
+              </button>
+              {!isWhatsappReady ? (
+                <button
+                  className="print-all-button quiet-action"
+                  type="button"
+                  onClick={restartWhatsappSession}
+                  disabled={isWhatsappStatusLoading}
+                >
+                  <RefreshCw size={18} />
+                  Relancer QR
+                </button>
+              ) : null}
+            </div>
           </div>
 
           {!isWhatsappReady && whatsappStatus?.qrDataUrl ? (
             <div className="whatsapp-qr-panel">
               <img src={whatsappStatus.qrDataUrl} alt="QR code WhatsApp Web" />
             </div>
+          ) : null}
+
+          {!isWhatsappReady && whatsappStatus && !whatsappStatus.qrDataUrl ? (
+            <p className="notice">
+              {whatsappStatus.status === 'loading'
+                ? 'WhatsApp Web demarre. Le QR code peut prendre quelques secondes.'
+                : 'Aucun QR code disponible pour le moment. Cliquez sur Relancer QR ou verifiez les logs du backend.'}
+            </p>
           ) : null}
 
           <label className="bulk-message-field">

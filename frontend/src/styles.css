@@ -3110,6 +3110,25 @@ body {
   overflow-wrap: anywhere;
 }
 
+.whatsapp-session-status,
+.whatsapp-session-error {
+  color: var(--cbca-muted);
+  font-size: 0.78rem;
+  font-weight: 850;
+  overflow-wrap: anywhere;
+}
+
+.whatsapp-session-error {
+  color: var(--cbca-red);
+}
+
+.whatsapp-session-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .whatsapp-session svg {
   flex: 0 0 auto;
 }
@@ -3210,7 +3229,8 @@ body {
 
   .bulk-whatsapp-actions .admin-primary,
   .bulk-whatsapp-actions .print-all-button,
-  .whatsapp-session .print-all-button {
+  .whatsapp-session .print-all-button,
+  .whatsapp-session-actions {
     width: 100%;
   }
 

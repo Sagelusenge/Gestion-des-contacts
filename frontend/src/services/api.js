@@ -55,6 +55,7 @@ export const api = {
   updatePastor: (token, id, data) => request(`/pastors/${id}`, { token, method: 'PUT', body: data }),
   deletePastor: (token, id) => request(`/pastors/${id}`, { token, method: 'DELETE' }),
   getWhatsappStatus: (token) => request('/broadcasts/whatsapp/status', { token }),
+  restartWhatsappSession: (token) => request('/broadcasts/whatsapp/restart', { token, method: 'POST' }),
   sendWhatsappBroadcast: (token, data) => request('/broadcasts/whatsapp', { token, method: 'POST', body: data }),
   getPostes: (token) => request('/postes', { token }),
   createPoste: (token, data) => request('/postes', { token, method: 'POST', body: data }),

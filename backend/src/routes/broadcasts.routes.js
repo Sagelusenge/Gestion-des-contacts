@@ -8,6 +8,7 @@ import {
   buildBroadcastMessage,
   getWhatsAppWebStatus,
   initializeWhatsAppWeb,
+  restartWhatsAppWeb,
   sendBroadcastMessages
 } from '../services/whatsappWeb.js';
 
@@ -21,6 +22,14 @@ router.get(
   asyncHandler(async (_req, res) => {
     initializeWhatsAppWeb();
     res.json({ data: getWhatsAppWebStatus() });
+  })
+);
+
+router.post(
+  '/whatsapp/restart',
+  asyncHandler(async (_req, res) => {
+    const status = await restartWhatsAppWeb();
+    res.json({ data: status });
   })
 );
 

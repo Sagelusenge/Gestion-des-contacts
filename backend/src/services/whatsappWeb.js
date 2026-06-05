@@ -141,6 +141,23 @@ export function initializeWhatsAppWeb() {
     });
 }
 
+export async function restartWhatsAppWeb() {
+  const currentClient = client;
+  client = null;
+  initializing = false;
+  readyAt = null;
+  clientInfo = null;
+  failureMessage = '';
+  setStatus('loading');
+
+  if (currentClient) {
+    await currentClient.destroy().catch(() => {});
+  }
+
+  initializeWhatsAppWeb();
+  return getWhatsAppWebStatus();
+}
+
 async function sendTextMessage({ to, body }) {
   if (!client || status !== 'ready') {
     throw new Error("WhatsApp Web n'est pas connecte. Scannez le QR code avant l'envoi.");
