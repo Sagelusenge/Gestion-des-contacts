@@ -1,5 +1,5 @@
-import { Download, Eye, EyeOff, LockKeyhole, Moon, Star, Sun, UserRound } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Download, Eye, EyeOff, LockKeyhole, Moon, Sun, UserRound } from 'lucide-react';
+import { useState } from 'react';
 import { APP_DOWNLOAD_URL } from '../config/appLinks.js';
 import { api } from '../services/api.js';
 
@@ -9,14 +9,7 @@ export function LoginView({ onLogin, theme, onThemeToggle }) {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [appreciations, setAppreciations] = useState([]);
   const isDark = theme === 'dark';
-
-  useEffect(() => {
-    api.getPublicAppreciations()
-      .then((payload) => setAppreciations(payload.data || []))
-      .catch(() => setAppreciations([]));
-  }, []);
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -102,23 +95,6 @@ export function LoginView({ onLogin, theme, onThemeToggle }) {
         </form>
       </section>
 
-      {appreciations.length ? (
-        <section className="public-appreciations" aria-label="Appreciations approuvees">
-          {appreciations.map((appreciation) => (
-            <article className="public-appreciation-card" key={appreciation.id}>
-              <div>
-                <strong>{appreciation.nom}</strong>
-                <span>{appreciation.quartier || 'Client CBCA'}</span>
-              </div>
-              <p>{appreciation.message}</p>
-              <small>
-                <Star size={14} />
-                {appreciation.note}/5
-              </small>
-            </article>
-          ))}
-        </section>
-      ) : null}
     </main>
   );
 }

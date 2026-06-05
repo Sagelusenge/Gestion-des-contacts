@@ -28,7 +28,6 @@ import { colors, styles } from './src/styles.js';
 
 const SESSION_KEY = 'cbca_mobile_session';
 const THEME_KEY = 'cbca_mobile_theme';
-const PAYMENT_HISTORY_KEY = 'cbca_mobile_payment_history';
 
 const darkColors = {
   ...colors,
@@ -57,15 +56,9 @@ const tabs = [
   { key: 'dashboard', label: 'Accueil', icon: 'grid-outline' },
   { key: 'directory', label: 'Annuaire', icon: 'search-outline' },
   { key: 'broadcast', label: 'Diffusion', icon: 'megaphone-outline' },
-  { key: 'payment', label: 'Paiement', icon: 'card-outline' },
   { key: 'manage', label: 'Gestion', icon: 'create-outline' }
 ];
 
-const paymentProviders = [
-  { key: 'airtel', label: 'Airtel Money', ussd: '*501#', icon: 'phone-portrait-outline', accent: colors.red },
-  { key: 'orange', label: 'Orange Money', ussd: '*144#', icon: 'wallet-outline', accent: '#f97316' },
-  { key: 'mpesa', label: 'M-Pesa', ussd: '*1122#', icon: 'card-outline', accent: colors.green }
-];
 
 const excelHeaders = ['ID-SO_PA', 'Nom', 'Fonction', 'Poste', 'Entite', 'Region', 'Telephone', 'Email', 'Date affectation'];
 const LIST_INITIAL_SIZE = 60;
@@ -133,24 +126,6 @@ function buildBroadcastWhatsAppMessage(pastor, message) {
   return body ? `${intro}\n${body}` : intro;
 }
 
-function paymentProviderLabel(key) {
-  return paymentProviders.find((provider) => provider.key === key)?.label || 'Mobile Money';
-}
-
-function formatPaymentDate(value) {
-  if (!value) {
-    return '';
-  }
-
-  return new Date(value).toLocaleString('fr-CD', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-}
-
 export default function App() {
   const [session, setSession] = useState(null);
   const [booting, setBooting] = useState(true);
@@ -216,12 +191,6 @@ export default function App() {
       ) : null}
       {activeTab === 'broadcast' ? (
         <BroadcastScreen token={session.token} />
-      ) : null}
-      {activeTab === 'payment' ? (
-        <PaymentScreen token={session.token} />
-      ) : null}
-      {activeTab === 'feedback' ? (
-        <FeedbackScreen token={session.token} user={session.user} />
       ) : null}
       {activeTab === 'manage' ? (
         <ManageScreen token={session.token} />
@@ -351,8 +320,6 @@ function DashboardScreen({ token, onNavigate, onLogout }) {
         <View style={styles.actionRow}>
           <ActionButton label="Annuaire" icon="search-outline" onPress={() => onNavigate('directory')} />
           <ActionButton label="Diffusion" icon="megaphone-outline" onPress={() => onNavigate('broadcast')} />
-          <ActionButton label="Paiement" icon="card-outline" onPress={() => onNavigate('payment')} />
-          <ActionButton label="Appreciation" icon="chatbubble-ellipses-outline" onPress={() => onNavigate('feedback')} />
           <ActionButton label="Gestion" icon="create-outline" onPress={() => onNavigate('manage')} />
         </View>
       </View>
@@ -731,307 +698,6 @@ function BroadcastScreen({ token }) {
           onPress={() => setRecipientsVisibleCount((current) => current + LIST_INCREMENT)}
         />
       ) : null}
-    </ScrollView>
-  );
-}
-
-function PaymentScreen({ token }) {
-  const [selectedProvider, setSelectedProvider] = useState(paymentProviders[0].key);
-  const [amount, setAmount] = useState('');
-  const [currency, setCurrency] = useState('CDF');
-  const [payerPhone, setPayerPhone] = useState('');
-  const [transId, setTransId] = useState('');
-  const [note, setNote] = useState('');
-  const [history, setHistory] = useState([]);
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
-  const [saving, setSaving] = useState(false);
-  const { palette } = useTheme();
-
-  useEffect(() => {
-    AsyncStorage.getItem(PAYMENT_HISTORY_KEY)
-      .then((value) => {
-        if (value) {
-          setHistory(JSON.parse(value));
-        }
-      })
-      .catch(() => setHistory([]));
-  }, []);
-
-  async function persistHistory(nextHistory) {
-    setHistory(nextHistory);
-    await AsyncStorage.setItem(PAYMENT_HISTORY_KEY, JSON.stringify(nextHistory));
-  }
-
-  async function openUssd(provider) {
-    setSelectedProvider(provider.key);
-    setMessage(`Menu ${provider.ussd} ouvert. Revenez ici apres le paiement pour saisir le TransID.`);
-    setError('');
-
-    const url = `tel:${encodeURIComponent(provider.ussd)}`;
-    await Linking.openURL(url).catch(() => setError("Le menu USSD n'a pas pu etre ouvert."));
-  }
-
-  async function saveProof() {
-    const normalizedTransId = transId.trim();
-
-    setMessage('');
-    setError('');
-    setSaving(true);
-
-    try {
-      if (!selectedProvider) {
-        throw new Error('Choisissez un mode de paiement.');
-      }
-
-      if (!normalizedTransId) {
-        throw new Error('Ajoutez le TransID recu apres la transaction.');
-      }
-
-      const payload = {
-        provider: selectedProvider,
-        amount: amount.trim(),
-        currency,
-        payerPhone: payerPhone.trim(),
-        transId: normalizedTransId,
-        note: note.trim()
-      };
-      const response = await api.createPayment(token, payload);
-      const savedPayment = response.data || {};
-      const record = {
-        id: String(savedPayment.id || Date.now()),
-        providerKey: savedPayment.provider || selectedProvider,
-        amount: savedPayment.amount ?? amount.trim(),
-        currency: savedPayment.currency || currency,
-        payerPhone: savedPayment.payer_phone || payerPhone.trim(),
-        transId: savedPayment.trans_id || normalizedTransId,
-        note: savedPayment.note || note.trim(),
-        status: savedPayment.status || 'pending',
-        syncStatus: 'sent',
-        createdAt: savedPayment.created_at || new Date().toISOString()
-      };
-
-      await persistHistory([record, ...history].slice(0, 50));
-      setTransId('');
-      setNote('');
-      setMessage("Preuve envoyee automatiquement a l'admin.");
-    } catch (saveError) {
-      const record = {
-        id: `${Date.now()}`,
-        providerKey: selectedProvider,
-        amount: amount.trim(),
-        currency,
-        payerPhone: payerPhone.trim(),
-        transId: normalizedTransId,
-        note: note.trim(),
-        status: 'pending',
-        syncStatus: 'local',
-        createdAt: new Date().toISOString()
-      };
-
-      if (normalizedTransId) {
-        await persistHistory([record, ...history].slice(0, 50));
-      }
-
-      setError(`${saveError.message} La preuve reste sur ce telephone et devra etre renvoyee.`);
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function copyProof(record) {
-    const text = [
-      'Paiement CBCA',
-      `Mode: ${paymentProviderLabel(record.providerKey)}`,
-      record.amount ? `Montant: ${record.amount} ${record.currency}` : '',
-      record.payerPhone ? `Numero: ${record.payerPhone}` : '',
-      `TransID: ${record.transId}`,
-      record.note ? `Note: ${record.note}` : '',
-      `Date: ${formatPaymentDate(record.createdAt)}`
-    ].filter(Boolean).join('\n');
-
-    await Clipboard.setStringAsync(text);
-    Alert.alert('Preuve copiee', 'Les details du paiement sont dans le presse-papiers.');
-  }
-
-  async function retryProof(record) {
-    setMessage('');
-    setError('');
-
-    try {
-      const response = await api.createPayment(token, {
-        provider: record.providerKey,
-        amount: record.amount,
-        currency: record.currency,
-        payerPhone: record.payerPhone,
-        transId: record.transId,
-        note: record.note
-      });
-      const savedPayment = response.data || {};
-      const nextHistory = history.map((item) => item.id === record.id
-        ? {
-            ...item,
-            id: String(savedPayment.id || item.id),
-            status: savedPayment.status || 'pending',
-            syncStatus: 'sent',
-            createdAt: savedPayment.created_at || item.createdAt
-          }
-        : item);
-
-      await persistHistory(nextHistory);
-      setMessage("Preuve envoyee a l'admin.");
-    } catch (retryError) {
-      setError(retryError.message);
-    }
-  }
-
-
-  async function clearHistory() {
-    Alert.alert('Effacer les preuves', 'Voulez-vous supprimer les preuves enregistrees sur ce telephone ?', [
-      { text: 'Annuler', style: 'cancel' },
-      {
-        text: 'Effacer',
-        style: 'destructive',
-        onPress: () => persistHistory([])
-      }
-    ]);
-  }
-
-  return (
-    <ScrollView
-      style={[styles.screen, { backgroundColor: palette.ink }]}
-      contentContainerStyle={styles.content}
-      keyboardShouldPersistTaps="handled"
-    >
-      <Header title="Paiement" subtitle="Mobile Money et confirmation par TransID" />
-
-      <View style={[styles.card, { backgroundColor: palette.panel, borderColor: palette.line }]}>
-        <Text style={[styles.cardTitle, { color: palette.text }]}>Choisir le reseau</Text>
-        <Text style={[styles.meta, { color: palette.muted }]}>Ouvrez le menu USSD, terminez la transaction, puis revenez confirmer ici.</Text>
-        <View style={styles.providerGrid}>
-          {paymentProviders.map((provider) => {
-            const active = selectedProvider === provider.key;
-
-            return (
-              <TouchableOpacity
-                style={[
-                  styles.providerCard,
-                  { backgroundColor: palette.panelSoft, borderColor: active ? provider.accent : palette.line },
-                  active && { borderWidth: 2 }
-                ]}
-                onPress={() => openUssd(provider)}
-                key={provider.key}
-              >
-                <View style={[styles.providerIcon, { backgroundColor: provider.accent }]}>
-                  <Ionicons name={provider.icon} color={colors.white} size={22} />
-                </View>
-                <Text style={[styles.providerName, { color: palette.text }]}>{provider.label}</Text>
-                <Text style={[styles.providerCode, { color: palette.muted }]}>{provider.ussd}</Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      </View>
-
-      <FormPanel title="Confirmation du paiement">
-        <ChipList values={['CDF', 'USD']} active={currency} onChange={setCurrency} includeAll={false} />
-        <Field label="Montant" value={amount} onChangeText={setAmount} keyboardType="numeric" placeholder="Ex: 5000" />
-        <Field label="Numero utilise" value={payerPhone} onChangeText={setPayerPhone} keyboardType="phone-pad" placeholder="Ex: +243..." />
-        <Field label="TransID" value={transId} onChangeText={setTransId} autoCapitalize="characters" placeholder="Code de transaction" />
-        <Field label="Note" value={note} onChangeText={setNote} multiline placeholder="Ex: contribution, cotisation..." />
-        {message ? <Notice type="success" message={message} /> : null}
-        {error ? <Notice type="error" message={error} /> : null}
-        <TouchableOpacity style={styles.primaryButton} onPress={saveProof} disabled={saving}>
-          {saving ? <ActivityIndicator color={colors.white} /> : <Ionicons name="checkmark-circle-outline" color={colors.white} size={21} />}
-          <Text style={styles.primaryButtonText}>{saving ? 'Envoi...' : 'Envoyer le TransID'}</Text>
-        </TouchableOpacity>
-      </FormPanel>
-
-      <View style={styles.sectionHeader}>
-        <Text style={[styles.pageSubtitle, { color: palette.muted }]}>Dernieres preuves</Text>
-        {history.length ? (
-          <TouchableOpacity onPress={clearHistory}>
-            <Text style={[styles.linkText, { color: palette.red }]}>Effacer</Text>
-          </TouchableOpacity>
-        ) : null}
-      </View>
-
-      {!history.length ? <EmptyState title="Aucune preuve" text="Les paiements confirmes apparaitront ici." /> : null}
-      {history.map((record) => (
-        <View style={[styles.card, { backgroundColor: palette.panel, borderColor: palette.line }]} key={record.id}>
-          <View style={styles.cardHeader}>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.cardTitle, { color: palette.text }]}>{paymentProviderLabel(record.providerKey)}</Text>
-              <Text style={[styles.meta, { color: palette.muted }]}>{formatPaymentDate(record.createdAt)}</Text>
-            </View>
-            <RoundAction icon="copy-outline" color={colors.teal} onPress={() => copyProof(record)} />
-          </View>
-          {record.amount ? <Text style={[styles.paymentAmount, { color: palette.text }]}>{record.amount} {record.currency}</Text> : null}
-          {record.payerPhone ? <Text style={[styles.meta, { color: palette.muted }]}>Numero: {record.payerPhone}</Text> : null}
-          <Text style={[styles.meta, { color: palette.muted }]}>TransID: {record.transId}</Text>
-          <Text style={[styles.meta, { color: palette.muted }]}>Synchro: {record.syncStatus === 'sent' ? 'envoyee admin' : 'locale'}</Text>
-          {record.note ? <Text style={[styles.meta, { color: palette.muted }]}>Note: {record.note}</Text> : null}
-          {record.syncStatus !== 'sent' ? (
-            <View style={styles.actionRow}>
-              <ActionButton label="Renvoyer admin" icon="cloud-upload-outline" onPress={() => retryProof(record)} />
-            </View>
-          ) : null}
-        </View>
-      ))}
-    </ScrollView>
-  );
-}
-
-function FeedbackScreen({ token, user }) {
-  const [nom, setNom] = useState(user?.username || '');
-  const [quartier, setQuartier] = useState('');
-  const [note, setNote] = useState('5');
-  const [message, setMessage] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [success, setSuccess] = useState('');
-  const [error, setError] = useState('');
-  const { palette } = useTheme();
-
-  async function submitFeedback() {
-    setSuccess('');
-    setError('');
-    setSaving(true);
-
-    try {
-      await api.createAppreciation(token, {
-        nom,
-        quartier,
-        note,
-        message
-      });
-      setMessage('');
-      setSuccess("Merci. Votre appreciation est envoyee et attend l'approbation de l'admin.");
-    } catch (feedbackError) {
-      setError(feedbackError.message);
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  return (
-    <ScrollView
-      style={[styles.screen, { backgroundColor: palette.ink }]}
-      contentContainerStyle={styles.content}
-      keyboardShouldPersistTaps="handled"
-    >
-      <Header title="Appreciation" subtitle="Envoyer un avis a l'administration" />
-      <FormPanel title="Votre message">
-        <Field label="Nom" value={nom} onChangeText={setNom} placeholder="Votre nom" />
-        <Field label="Quartier / Poste" value={quartier} onChangeText={setQuartier} placeholder="Ex: Goma, Katindo..." />
-        <ChipList values={['1', '2', '3', '4', '5']} labels={{ 1: '1/5', 2: '2/5', 3: '3/5', 4: '4/5', 5: '5/5' }} active={note} onChange={setNote} includeAll={false} />
-        <Field label="Appreciation" value={message} onChangeText={setMessage} multiline placeholder="Votre avis..." />
-        {success ? <Notice type="success" message={success} /> : null}
-        {error ? <Notice type="error" message={error} /> : null}
-        <TouchableOpacity style={styles.primaryButton} onPress={submitFeedback} disabled={saving}>
-          {saving ? <ActivityIndicator color={colors.white} /> : <Ionicons name="send-outline" color={colors.white} size={21} />}
-          <Text style={styles.primaryButtonText}>{saving ? 'Envoi...' : 'Envoyer appreciation'}</Text>
-        </TouchableOpacity>
-      </FormPanel>
     </ScrollView>
   );
 }
@@ -1743,3 +1409,4 @@ function ManageRow({ title, subtitle, onEdit, onDelete }) {
     </View>
   );
 }
+

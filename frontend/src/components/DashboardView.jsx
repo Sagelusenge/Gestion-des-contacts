@@ -1,4 +1,4 @@
-import { BadgePlus, CalendarDays, ContactRound, CreditCard, MapPinned, MessageSquareText, Search, UserPlus } from 'lucide-react';
+import { BadgePlus, CalendarDays, ContactRound, MapPinned, Search, UserPlus } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../services/api.js';
 
@@ -86,14 +86,6 @@ export function DashboardView({ token, onNavigate }) {
         <button type="button" onClick={() => onNavigate('addFonction')}>
           <BadgePlus size={18} />
           Gerer les fonctions
-        </button>
-        <button type="button" onClick={() => onNavigate('payments')}>
-          <CreditCard size={18} />
-          Voir paiements
-        </button>
-        <button type="button" onClick={() => onNavigate('appreciations')}>
-          <MessageSquareText size={18} />
-          Appreciations
         </button>
       </section>
 

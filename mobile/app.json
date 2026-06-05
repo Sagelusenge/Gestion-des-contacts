@@ -1,8 +1,9 @@
 {
   "expo": {
     "name": "Annuaire CBCA",
+    "owner": "sagelusenge",
     "slug": "annuaire-cbca",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/cbca-logo.png",
     "userInterfaceStyle": "light",
@@ -22,13 +23,19 @@
         "foregroundImage": "./assets/cbca-logo.png",
         "backgroundColor": "#071411"
       },
-      "package": "com.cbca.annuaire"
+      "package": "com.cbca.annuaire",
+      "versionCode": 2
     },
     "web": {
       "favicon": "./assets/cbca-logo.png"
     },
     "plugins": [
       "expo-sharing"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "c7faa82c-852a-4df7-938d-6ad1d7ed5e43"
+      }
+    }
   }
 }

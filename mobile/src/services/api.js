@@ -34,7 +34,6 @@ async function request(path, { token, method = 'GET', body } = {}) {
 
 export const api = {
   login: (credentials) => request('/auth/login', { method: 'POST', body: credentials }),
-  createAppreciation: (token, data) => request('/appreciations', { token, method: 'POST', body: data }),
   getUsers: (token) => request('/auth/users', { token }),
   createUser: (token, data) => request('/auth/users', { token, method: 'POST', body: data }),
   getGrades: (token) => request('/grades', { token }),
@@ -58,9 +57,6 @@ export const api = {
   updatePastor: (token, id, data) => request(`/pastors/${id}`, { token, method: 'PUT', body: data }),
   deletePastor: (token, id) => request(`/pastors/${id}`, { token, method: 'DELETE' }),
   sendWhatsappBroadcast: (token, data) => request('/broadcasts/whatsapp', { token, method: 'POST', body: data }),
-  createPayment: (token, data) => request('/payments', { token, method: 'POST', body: data }),
-  getPayments: (token) => request('/payments', { token }),
-  updatePaymentStatus: (token, id, status) => request(`/payments/${id}/status`, { token, method: 'PATCH', body: { status } }),
   getPostes: (token) => request('/postes', { token }),
   createPoste: (token, data) => request('/postes', { token, method: 'POST', body: data }),
   updatePoste: (token, id, data) => request(`/postes/${id}`, { token, method: 'PUT', body: data }),

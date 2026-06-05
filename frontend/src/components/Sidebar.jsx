@@ -1,10 +1,8 @@
-import { BadgePlus, ContactRound, CreditCard, LayoutDashboard, LogOut, MapPinned, MessageSquareText, UserPlus } from 'lucide-react';
+import { BadgePlus, ContactRound, LayoutDashboard, LogOut, MapPinned, UserPlus } from 'lucide-react';
 
 const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'directory', label: 'Annuaire', icon: ContactRound },
-  { id: 'payments', label: 'Paiements', icon: CreditCard },
-  { id: 'appreciations', label: 'Appreciations', icon: MessageSquareText },
   { id: 'addPastor', label: 'Ajouter pasteur', icon: UserPlus },
   { id: 'addPoste', label: 'Ajouter poste', icon: MapPinned },
   { id: 'addFonction', label: 'Fonctions', icon: BadgePlus }
