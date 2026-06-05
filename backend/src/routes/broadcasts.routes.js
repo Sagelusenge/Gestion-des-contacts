@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { env } from '../config/env.js';
 import { pool } from '../config/db.js';
 import { authenticate, requireAdmin } from '../middleware/auth.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -20,7 +21,6 @@ router.use(requireAdmin);
 router.get(
   '/whatsapp/status',
   asyncHandler(async (_req, res) => {
-    await initializeWhatsAppWeb();
     res.json({ data: getWhatsAppWebStatus() });
   })
 );
@@ -55,6 +55,10 @@ router.post(
 
     if (!ids.length) {
       throw httpError(400, 'Aucun destinataire selectionne.');
+    }
+
+    if (ids.length > env.whatsapp.maxRecipientsPerBroadcast) {
+      throw httpError(400, `Trop de destinataires pour Render 512 MB. Selectionnez au maximum ${env.whatsapp.maxRecipientsPerBroadcast} destinataires par envoi.`);
     }
 
     await initializeWhatsAppWeb();

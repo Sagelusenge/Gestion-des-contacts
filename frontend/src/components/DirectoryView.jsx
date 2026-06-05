@@ -403,7 +403,7 @@ export function DirectoryView({ token, onUnauthorized }) {
                   ? `Session gardee dans lapp${whatsappStatus?.clientInfo?.pushname ? ` pour ${whatsappStatus.clientInfo.pushname}` : ''}.`
                   : whatsappStatus?.status === 'qr'
                     ? 'Scannez le grand QR code affiche ci-dessous avec WhatsApp sur votre telephone.'
-                    : 'Attendez le grand QR code ci-dessous, puis scannez-le avec WhatsApp sur votre telephone.'}
+                    : 'Cliquez sur Relancer QR pour demarrer WhatsApp Web, puis scannez le grand QR code.'}
               </p>
               <small className="whatsapp-session-status">
                 Statut: {whatsappStatusLabels[whatsappStatus?.status] || whatsappStatus?.status || 'en attente'}
@@ -446,7 +446,7 @@ export function DirectoryView({ token, onUnauthorized }) {
             <p className="notice">
               {whatsappStatus.status === 'loading'
                 ? 'WhatsApp Web demarre. Attendez jusqua 60 secondes puis cliquez sur Verifier; si le serveur bloque Chrome, une erreur apparaitra ici.'
-                : 'Aucun QR code disponible pour le moment. Cliquez sur Relancer QR ou verifiez les logs du backend.'}
+                : 'Aucun QR code actif pour le moment. Cliquez sur Relancer QR seulement quand vous voulez connecter le telephone.'}
             </p>
           ) : null}
 

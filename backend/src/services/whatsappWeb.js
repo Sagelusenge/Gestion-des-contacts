@@ -22,6 +22,7 @@ let readyAt = null;
 let failureMessage = '';
 let clientInfo = null;
 let startupTimer = null;
+let idleTimer = null;
 let statusStartedAt = new Date().toISOString();
 
 async function getBrowserExecutablePath() {
@@ -41,6 +42,26 @@ function clearStartupTimer() {
     clearTimeout(startupTimer);
     startupTimer = null;
   }
+}
+
+function clearIdleTimer() {
+  if (idleTimer) {
+    clearTimeout(idleTimer);
+    idleTimer = null;
+  }
+}
+
+function scheduleIdleShutdown() {
+  clearIdleTimer();
+  idleTimer = setTimeout(() => {
+    const idleClient = client;
+    client = null;
+    initializing = false;
+    readyAt = null;
+    clientInfo = null;
+    setStatus('disconnected');
+    idleClient?.destroy().catch(() => {});
+  }, Math.max(10000, env.whatsapp.idleShutdownMs));
 }
 
 function sleep(ms) {
@@ -113,6 +134,7 @@ export async function initializeWhatsAppWeb() {
   failureMessage = '';
   setStatus('loading');
   clearStartupTimer();
+  clearIdleTimer();
   const browserExecutablePath = await getBrowserExecutablePath();
 
   client = new Client({
@@ -212,6 +234,7 @@ export async function initializeWhatsAppWeb() {
 export async function restartWhatsAppWeb() {
   const currentClient = client;
   clearStartupTimer();
+  clearIdleTimer();
   client = null;
   initializing = false;
   readyAt = null;
@@ -287,5 +310,6 @@ export async function sendBroadcastMessages(recipients) {
     }
   }
 
+  scheduleIdleShutdown();
   return results;
 }

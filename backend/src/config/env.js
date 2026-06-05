@@ -26,6 +26,8 @@ export const env = {
     webAuthPath: process.env.WHATSAPP_WEB_AUTH_PATH || '',
     browserExecutablePath: process.env.WHATSAPP_BROWSER_EXECUTABLE_PATH || '',
     startupTimeoutMs: Number(process.env.WHATSAPP_WEB_STARTUP_TIMEOUT_MS || 60000),
+    idleShutdownMs: Number(process.env.WHATSAPP_WEB_IDLE_SHUTDOWN_MS || 30000),
+    maxRecipientsPerBroadcast: Number(process.env.WHATSAPP_MAX_RECIPIENTS_PER_BROADCAST || 50),
     batchSize: Number(process.env.WHATSAPP_BROADCAST_BATCH_SIZE || 1),
     batchDelayMs: Number(process.env.WHATSAPP_BROADCAST_BATCH_DELAY_MS || 8000)
   }
