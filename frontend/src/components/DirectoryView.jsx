@@ -445,7 +445,7 @@ export function DirectoryView({ token, onUnauthorized }) {
           {!isWhatsappReady && whatsappStatus && !whatsappStatus.qrDataUrl ? (
             <p className="notice">
               {whatsappStatus.status === 'loading'
-                ? 'WhatsApp Web demarre. Le QR code peut prendre quelques secondes.'
+                ? 'WhatsApp Web demarre. Attendez jusqua 60 secondes puis cliquez sur Verifier; si le serveur bloque Chrome, une erreur apparaitra ici.'
                 : 'Aucun QR code disponible pour le moment. Cliquez sur Relancer QR ou verifiez les logs du backend.'}
             </p>
           ) : null}

@@ -21,6 +21,7 @@ let readyAt = null;
 let failureMessage = '';
 let clientInfo = null;
 let startupTimer = null;
+let statusStartedAt = new Date().toISOString();
 
 function clearStartupTimer() {
   if (startupTimer) {
@@ -37,11 +38,33 @@ function sleep(ms) {
 
 function setStatus(nextStatus) {
   status = nextStatus;
+  statusStartedAt = new Date().toISOString();
   if (nextStatus !== 'qr') {
     qrCode = '';
     qrDataUrl = '';
     qrUpdatedAt = null;
   }
+}
+
+function markStartupTimeoutIfNeeded() {
+  if (status !== 'loading' && status !== 'authenticated') {
+    return;
+  }
+
+  const timeoutMs = Math.max(15000, env.whatsapp.startupTimeoutMs);
+  const elapsedMs = Date.now() - new Date(statusStartedAt).getTime();
+
+  if (elapsedMs < timeoutMs) {
+    return;
+  }
+
+  const staleClient = client;
+  clearStartupTimer();
+  client = null;
+  initializing = false;
+  setStatus('failed');
+  failureMessage = "WhatsApp Web n'a pas donne de QR code apres 60 secondes. Le serveur ne lance probablement pas Chromium/Chrome. Configurez Chrome sur Render ou utilisez une machine serveur avec navigateur disponible.";
+  staleClient?.destroy().catch(() => {});
 }
 
 export function buildBroadcastMessage(pastor, message) {
@@ -52,6 +75,8 @@ export function buildBroadcastMessage(pastor, message) {
 }
 
 export function getWhatsAppWebStatus() {
+  markStartupTimeoutIfNeeded();
+
   return {
     status,
     isReady: status === 'ready',
@@ -59,6 +84,7 @@ export function getWhatsAppWebStatus() {
     qrDataUrl,
     qrUpdatedAt,
     readyAt,
+    statusStartedAt,
     failureMessage,
     clientInfo,
     authPath: authRoot
@@ -99,7 +125,7 @@ export function initializeWhatsAppWeb() {
       client = null;
       initializing = false;
       setStatus('failed');
-      failureMessage = "WhatsApp Web n'a pas donne de QR code. Le serveur ne peut peut-etre pas lancer Chromium/Chrome; verifiez les logs Render et la configuration du navigateur.";
+      failureMessage = "WhatsApp Web n'a pas donne de QR code apres 60 secondes. Le serveur ne lance probablement pas Chromium/Chrome. Configurez Chrome sur Render ou utilisez une machine serveur avec navigateur disponible.";
       staleClient?.destroy().catch(() => {});
     }
   }, Math.max(15000, env.whatsapp.startupTimeoutMs));
