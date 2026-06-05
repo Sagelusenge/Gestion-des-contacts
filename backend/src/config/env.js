@@ -24,6 +24,8 @@ export const env = {
     phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID || '',
     graphVersion: process.env.WHATSAPP_GRAPH_VERSION || 'v23.0',
     webAuthPath: process.env.WHATSAPP_WEB_AUTH_PATH || '',
+    browserExecutablePath: process.env.WHATSAPP_BROWSER_EXECUTABLE_PATH || '',
+    startupTimeoutMs: Number(process.env.WHATSAPP_WEB_STARTUP_TIMEOUT_MS || 60000),
     batchSize: Number(process.env.WHATSAPP_BROADCAST_BATCH_SIZE || 1),
     batchDelayMs: Number(process.env.WHATSAPP_BROADCAST_BATCH_DELAY_MS || 8000)
   }

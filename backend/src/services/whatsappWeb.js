@@ -20,6 +20,14 @@ let qrUpdatedAt = null;
 let readyAt = null;
 let failureMessage = '';
 let clientInfo = null;
+let startupTimer = null;
+
+function clearStartupTimer() {
+  if (startupTimer) {
+    clearTimeout(startupTimer);
+    startupTimer = null;
+  }
+}
 
 function sleep(ms) {
   return new Promise((resolve) => {
@@ -65,6 +73,7 @@ export function initializeWhatsAppWeb() {
   initializing = true;
   failureMessage = '';
   setStatus('loading');
+  clearStartupTimer();
 
   client = new Client({
     authStrategy: new LocalAuth({
@@ -73,15 +82,30 @@ export function initializeWhatsAppWeb() {
     }),
     puppeteer: {
       headless: true,
+      ...(env.whatsapp.browserExecutablePath ? { executablePath: env.whatsapp.browserExecutablePath } : {}),
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage'
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--no-first-run'
       ]
     }
   });
 
+  startupTimer = setTimeout(() => {
+    if (status === 'loading' || status === 'authenticated') {
+      const staleClient = client;
+      client = null;
+      initializing = false;
+      setStatus('failed');
+      failureMessage = "WhatsApp Web n'a pas donne de QR code. Le serveur ne peut peut-etre pas lancer Chromium/Chrome; verifiez les logs Render et la configuration du navigateur.";
+      staleClient?.destroy().catch(() => {});
+    }
+  }, Math.max(15000, env.whatsapp.startupTimeoutMs));
+
   client.on('qr', async (qr) => {
+    clearStartupTimer();
     qrCode = qr;
     qrUpdatedAt = new Date().toISOString();
     status = 'qr';
@@ -104,6 +128,7 @@ export function initializeWhatsAppWeb() {
   });
 
   client.on('ready', () => {
+    clearStartupTimer();
     setStatus('ready');
     readyAt = new Date().toISOString();
     failureMessage = '';
@@ -116,11 +141,13 @@ export function initializeWhatsAppWeb() {
   });
 
   client.on('auth_failure', (message) => {
+    clearStartupTimer();
     setStatus('auth_failure');
     failureMessage = message || 'Echec authentification WhatsApp.';
   });
 
   client.on('disconnected', (reason) => {
+    clearStartupTimer();
     setStatus('disconnected');
     failureMessage = reason || '';
     readyAt = null;
@@ -132,6 +159,7 @@ export function initializeWhatsAppWeb() {
 
   client.initialize()
     .catch((error) => {
+      clearStartupTimer();
       setStatus('failed');
       failureMessage = error.message;
       client = null;
@@ -143,6 +171,7 @@ export function initializeWhatsAppWeb() {
 
 export async function restartWhatsAppWeb() {
   const currentClient = client;
+  clearStartupTimer();
   client = null;
   initializing = false;
   readyAt = null;

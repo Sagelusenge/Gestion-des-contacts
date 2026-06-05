@@ -3789,3 +3789,53 @@ body {
   }
 }
 
+
+/* Compact workspace header override */
+.workspace-header {
+  min-height: 72px;
+  padding: 12px 26px;
+  gap: 14px;
+}
+
+.workspace-header h1 {
+  font-size: 1.52rem;
+  line-height: 1.12;
+}
+
+.workspace-header p {
+  font-size: 0.82rem;
+  margin-top: 2px;
+}
+
+.workspace-actions {
+  gap: 10px;
+}
+
+.workspace-tool {
+  min-height: 40px;
+  border-radius: 12px;
+  padding: 0 14px;
+  font-size: 0.9rem;
+}
+
+.workspace-tool svg {
+  width: 18px;
+  height: 18px;
+}
+
+@media (max-width: 860px) {
+  .workspace-header {
+    padding: 12px 14px;
+  }
+}
+
+@media (max-width: 640px) {
+  .workspace-header {
+    min-height: auto;
+    gap: 10px;
+  }
+
+  .workspace-header h1 {
+    font-size: 1.26rem;
+  }
+}
