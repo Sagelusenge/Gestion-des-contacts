@@ -1,4 +1,4 @@
-import { Download, MessageCircle, Printer, RefreshCw, RotateCcw, Search, Send } from 'lucide-react';
+import { CheckCircle2, Download, MessageCircle, Printer, QrCode, RefreshCw, RotateCcw, Search, Send } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useDebounce } from '../hooks/useDebounce.js';
 import { api } from '../services/api.js';
@@ -58,6 +58,8 @@ export function DirectoryView({ token, onUnauthorized }) {
   const [showBulkLinks, setShowBulkLinks] = useState(false);
   const [isApiSending, setIsApiSending] = useState(false);
   const [apiBroadcastSummary, setApiBroadcastSummary] = useState('');
+  const [whatsappStatus, setWhatsappStatus] = useState(null);
+  const [isWhatsappStatusLoading, setIsWhatsappStatusLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const debouncedQuery = useDebounce(query, 300);
@@ -91,6 +93,7 @@ export function DirectoryView({ token, onUnauthorized }) {
     })
     .filter((target) => target.phone), [pastors, bulkMessage]);
   const canPrepareBulkMessage = Boolean(bulkMessage.trim() && whatsappTargets.length);
+  const isWhatsappReady = Boolean(whatsappStatus?.isReady);
 
   function resetFilters() {
     setQuery('');
@@ -143,7 +146,7 @@ export function DirectoryView({ token, onUnauthorized }) {
   }
 
   async function sendBulkMessageWithApi() {
-    if (!canPrepareBulkMessage) {
+    if (!canPrepareBulkMessage || !isWhatsappReady) {
       return;
     }
 
@@ -161,10 +164,31 @@ export function DirectoryView({ token, onUnauthorized }) {
       if (summary.errors?.length) {
         setError(summary.errors.map((item) => `${item.nom}: ${item.error}`).join(' '));
       }
+      await loadWhatsappStatus();
     } catch (sendError) {
       setError(sendError.message);
+      await loadWhatsappStatus();
     } finally {
       setIsApiSending(false);
+    }
+  }
+
+  async function loadWhatsappStatus({ silent = false } = {}) {
+    if (!silent) {
+      setIsWhatsappStatusLoading(true);
+    }
+
+    try {
+      const payload = await api.getWhatsappStatus(token);
+      setWhatsappStatus(payload.data || null);
+    } catch (statusError) {
+      if (!silent) {
+        setError(statusError.message);
+      }
+    } finally {
+      if (!silent) {
+        setIsWhatsappStatusLoading(false);
+      }
     }
   }
 
@@ -229,6 +253,17 @@ export function DirectoryView({ token, onUnauthorized }) {
   useEffect(() => {
     loadPastors();
   }, [debouncedQuery, activeDegree, activePoste]);
+
+  useEffect(() => {
+    loadWhatsappStatus();
+    const timer = window.setInterval(() => {
+      loadWhatsappStatus({ silent: true });
+    }, 5000);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, [token]);
 
   return (
     <main className="app-main connect-main">
@@ -333,6 +368,35 @@ export function DirectoryView({ token, onUnauthorized }) {
             <MessageCircle size={24} />
           </div>
 
+          <div className={isWhatsappReady ? 'whatsapp-session ready' : 'whatsapp-session'}>
+            <div className="whatsapp-session-copy">
+              <span>
+                {isWhatsappReady ? <CheckCircle2 size={18} /> : <QrCode size={18} />}
+                {isWhatsappReady ? 'Telephone connecte' : 'Connexion WhatsApp Web'}
+              </span>
+              <p>
+                {isWhatsappReady
+                  ? `Session gardee dans lapp${whatsappStatus?.clientInfo?.pushname ? ` pour ${whatsappStatus.clientInfo.pushname}` : ''}.`
+                  : 'Scannez le QR code avec WhatsApp sur votre telephone.'}
+              </p>
+            </div>
+            <button
+              className="print-all-button quiet-action"
+              type="button"
+              onClick={() => loadWhatsappStatus()}
+              disabled={isWhatsappStatusLoading}
+            >
+              <RefreshCw size={18} />
+              {isWhatsappStatusLoading ? 'Verification...' : 'Verifier'}
+            </button>
+          </div>
+
+          {!isWhatsappReady && whatsappStatus?.qrDataUrl ? (
+            <div className="whatsapp-qr-panel">
+              <img src={whatsappStatus.qrDataUrl} alt="QR code WhatsApp Web" />
+            </div>
+          ) : null}
+
           <label className="bulk-message-field">
             <span>Message a envoyer</span>
             <textarea
@@ -361,7 +425,7 @@ export function DirectoryView({ token, onUnauthorized }) {
               className="admin-primary"
               type="button"
               onClick={sendBulkMessageWithApi}
-              disabled={!canPrepareBulkMessage || isApiSending}
+              disabled={!canPrepareBulkMessage || !isWhatsappReady || isApiSending}
             >
               <Send size={18} />
               {isApiSending ? 'Envoi en cours...' : 'Envoyer a tous via API'}

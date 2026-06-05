@@ -6,14 +6,23 @@ import { httpError } from '../utils/httpError.js';
 import { normalizePhoneForWhatsApp } from '../utils/communicationLinks.js';
 import {
   buildBroadcastMessage,
-  isWhatsAppCloudConfigured,
+  getWhatsAppWebStatus,
+  initializeWhatsAppWeb,
   sendBroadcastMessages
-} from '../services/whatsappCloud.js';
+} from '../services/whatsappWeb.js';
 
 const router = Router();
 
 router.use(authenticate);
 router.use(requireAdmin);
+
+router.get(
+  '/whatsapp/status',
+  asyncHandler(async (_req, res) => {
+    initializeWhatsAppWeb();
+    res.json({ data: getWhatsAppWebStatus() });
+  })
+);
 
 function normalizeIds(ids) {
   if (!Array.isArray(ids)) {
@@ -39,8 +48,10 @@ router.post(
       throw httpError(400, 'Aucun destinataire selectionne.');
     }
 
-    if (!isWhatsAppCloudConfigured()) {
-      throw httpError(503, "WhatsApp Cloud API n'est pas configuree. Ajoutez WHATSAPP_ACCESS_TOKEN et WHATSAPP_PHONE_NUMBER_ID dans Render.");
+    initializeWhatsAppWeb();
+
+    if (!getWhatsAppWebStatus().isReady) {
+      throw httpError(503, "WhatsApp Web n'est pas connecte. Scannez le QR code dans l'application puis relancez l'envoi.");
     }
 
     const placeholders = ids.map((_, index) => `:id${index}`).join(', ');

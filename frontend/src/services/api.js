@@ -61,6 +61,7 @@ export const api = {
   importPastors: (token, rows) => request('/pastors/import', { token, method: 'POST', body: { rows } }),
   updatePastor: (token, id, data) => request(`/pastors/${id}`, { token, method: 'PUT', body: data }),
   deletePastor: (token, id) => request(`/pastors/${id}`, { token, method: 'DELETE' }),
+  getWhatsappStatus: (token) => request('/broadcasts/whatsapp/status', { token }),
   sendWhatsappBroadcast: (token, data) => request('/broadcasts/whatsapp', { token, method: 'POST', body: data }),
   getPayments: (token, params = {}) => {
     const query = new URLSearchParams(params);

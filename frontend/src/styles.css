@@ -3391,6 +3391,63 @@ body {
   margin-top: 0;
 }
 
+.whatsapp-session {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid rgba(22, 163, 74, 0.24);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: rgba(240, 253, 244, 0.78);
+}
+
+.whatsapp-session.ready {
+  background: rgba(236, 253, 245, 0.96);
+}
+
+.whatsapp-session-copy {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.whatsapp-session-copy span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #166534;
+  font-size: 0.9rem;
+  font-weight: 950;
+}
+
+.whatsapp-session-copy p {
+  color: var(--cbca-muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.whatsapp-session svg {
+  flex: 0 0 auto;
+}
+
+.whatsapp-qr-panel {
+  display: flex;
+  justify-content: center;
+  border: 1px dashed rgba(22, 163, 74, 0.36);
+  border-radius: 12px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.whatsapp-qr-panel img {
+  width: min(280px, 100%);
+  aspect-ratio: 1;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
 .bulk-link-list {
   display: grid;
   gap: 8px;
@@ -3440,6 +3497,24 @@ body {
   color: var(--cbca-text);
 }
 
+:root[data-theme='dark'] .whatsapp-session {
+  border-color: rgba(74, 222, 128, 0.24);
+  background: rgba(20, 83, 45, 0.22);
+}
+
+:root[data-theme='dark'] .whatsapp-session.ready {
+  background: rgba(20, 83, 45, 0.32);
+}
+
+:root[data-theme='dark'] .whatsapp-session-copy span {
+  color: #86efac;
+}
+
+:root[data-theme='dark'] .whatsapp-qr-panel {
+  border-color: rgba(74, 222, 128, 0.28);
+  background: rgba(11, 22, 39, 0.6);
+}
+
 :root[data-theme='dark'] .bulk-link-list a {
   border-color: var(--cbca-line);
   background: rgba(11, 22, 39, 0.72);
@@ -3452,8 +3527,13 @@ body {
   }
 
   .bulk-whatsapp-actions .admin-primary,
-  .bulk-whatsapp-actions .print-all-button {
+  .bulk-whatsapp-actions .print-all-button,
+  .whatsapp-session .print-all-button {
     width: 100%;
+  }
+
+  .whatsapp-session {
+    grid-template-columns: 1fr;
   }
 }
 

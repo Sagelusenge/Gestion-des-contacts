@@ -4,6 +4,7 @@ build/
 .env
 .env.*
 !.env.example
+backend/.wwebjs_auth/
 *.log
 coverage/
 .expo/
