@@ -79,6 +79,7 @@ router.post(
   asyncHandler(async (req, res) => {
     const username = String(req.body.username || '').trim().toLowerCase();
     const password = String(req.body.password || '');
+    const role = String(req.body.role || 'viewer').trim().toLowerCase();
 
     if (!username || !password) {
       throw httpError(400, 'Email et mot de passe requis.');
@@ -92,13 +93,17 @@ router.post(
       throw httpError(400, 'Le mot de passe doit avoir au moins 6 caracteres.');
     }
 
+    if (role !== 'admin' && role !== 'viewer') {
+      throw httpError(400, 'Role invalide. Les roles valides sont admin ou viewer.');
+    }
+
     const passwordHash = await bcrypt.hash(password, 10);
 
     try {
       const [result] = await pool.execute(
         `INSERT INTO users (username, password_hash, role)
-         VALUES (:username, :passwordHash, 'admin')`,
-        { username, passwordHash }
+         VALUES (:username, :passwordHash, :role)`,
+        { username, passwordHash, role }
       );
 
       const [rows] = await pool.execute(
@@ -116,6 +121,77 @@ router.post(
 
       throw error;
     }
+  })
+);
+
+router.patch(
+  '/users/:id/role',
+  authenticate,
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const id = parseInt(req.params.id, 10);
+    const role = String(req.body.role || '').trim().toLowerCase();
+
+    if (isNaN(id)) {
+      throw httpError(400, 'ID utilisateur invalide.');
+    }
+
+    if (role !== 'admin' && role !== 'viewer') {
+      throw httpError(400, 'Role invalide. Les roles valides sont admin ou viewer.');
+    }
+
+    if (req.user.id === id && role !== 'admin') {
+      throw httpError(400, 'Vous ne pouvez pas retirer votre propre role admin.');
+    }
+
+    const [result] = await pool.execute(
+      `UPDATE users
+       SET role = :role
+       WHERE id = :id`,
+      { role, id }
+    );
+
+    if (result.affectedRows === 0) {
+      throw httpError(404, 'Utilisateur non trouve.');
+    }
+
+    const [rows] = await pool.execute(
+      `SELECT id, username, role, created_at, updated_at
+       FROM users
+       WHERE id = :id`,
+      { id }
+    );
+
+    res.json({ data: rows[0] });
+  })
+);
+
+router.delete(
+  '/users/:id',
+  authenticate,
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const id = parseInt(req.params.id, 10);
+
+    if (isNaN(id)) {
+      throw httpError(400, 'ID utilisateur invalide.');
+    }
+
+    if (req.user.id === id) {
+      throw httpError(400, 'Vous ne pouvez pas supprimer votre propre compte.');
+    }
+
+    const [result] = await pool.execute(
+      `DELETE FROM users
+       WHERE id = :id`,
+      { id }
+    );
+
+    if (result.affectedRows === 0) {
+      throw httpError(404, 'Utilisateur non trouve.');
+    }
+
+    res.json({ message: 'Utilisateur supprime avec succes.' });
   })
 );
 

@@ -2,11 +2,12 @@ import { BadgePlus, CalendarDays, ContactRound, CreditCard, MapPinned, MessageSq
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../services/api.js';
 
-export function DashboardView({ token, onNavigate }) {
+export function DashboardView({ token, onNavigate, user }) {
   const [pastors, setPastors] = useState([]);
   const [postes, setPostes] = useState([]);
   const [fonctions, setFonctions] = useState([]);
   const [error, setError] = useState('');
+  const isAdmin = user?.role === 'admin';
 
   useEffect(() => {
     async function loadDashboard() {
@@ -75,26 +76,22 @@ export function DashboardView({ token, onNavigate }) {
           <Search size={18} />
           Voir l'annuaire
         </button>
-        <button type="button" onClick={() => onNavigate('addPastor')}>
-          <UserPlus size={18} />
-          Ajouter un pasteur
-        </button>
-        <button type="button" onClick={() => onNavigate('addPoste')}>
-          <MapPinned size={18} />
-          Ajouter un poste
-        </button>
-        <button type="button" onClick={() => onNavigate('addFonction')}>
-          <BadgePlus size={18} />
-          Gerer les fonctions
-        </button>
-        <button type="button" onClick={() => onNavigate('payments')}>
-          <CreditCard size={18} />
-          Voir paiements
-        </button>
-        <button type="button" onClick={() => onNavigate('appreciations')}>
-          <MessageSquareText size={18} />
-          Appreciations
-        </button>
+        {isAdmin ? (
+          <>
+            <button type="button" onClick={() => onNavigate('addPastor')}>
+              <UserPlus size={18} />
+              Ajouter un pasteur
+            </button>
+            <button type="button" onClick={() => onNavigate('addPoste')}>
+              <MapPinned size={18} />
+              Ajouter un poste
+            </button>
+            <button type="button" onClick={() => onNavigate('addFonction')}>
+              <BadgePlus size={18} />
+              Gerer les fonctions
+            </button>
+          </>
+        ) : null}
       </section>
 
       <section className="dashboard-grid">

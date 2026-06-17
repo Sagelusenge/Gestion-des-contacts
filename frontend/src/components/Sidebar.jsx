@@ -1,16 +1,18 @@
-import { BadgePlus, ContactRound, CreditCard, LayoutDashboard, LogOut, MapPinned, MessageSquareText, UserPlus } from 'lucide-react';
+import { BadgePlus, ContactRound, CreditCard, LayoutDashboard, LogOut, MapPinned, MessageSquareText, UserPlus, Users } from 'lucide-react';
 
 const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'directory', label: 'Annuaire', icon: ContactRound },
-  { id: 'payments', label: 'Paiements', icon: CreditCard },
-  { id: 'appreciations', label: 'Appreciations', icon: MessageSquareText },
-  { id: 'addPastor', label: 'Ajouter pasteur', icon: UserPlus },
-  { id: 'addPoste', label: 'Ajouter poste', icon: MapPinned },
-  { id: 'addFonction', label: 'Fonctions', icon: BadgePlus }
+  { id: 'addPastor', label: 'Ajouter pasteur', icon: UserPlus, adminOnly: true },
+  { id: 'addPoste', label: 'Ajouter poste', icon: MapPinned, adminOnly: true },
+  { id: 'addFonction', label: 'Fonctions', icon: BadgePlus, adminOnly: true },
+  { id: 'users', label: 'Rôles & Utilisateurs', icon: Users, adminOnly: true }
 ];
 
 export function Sidebar({ activeView, onViewChange, onLogout, user }) {
+  const isAdmin = user?.role === 'admin';
+  const filteredItems = navItems.filter((item) => !item.adminOnly || isAdmin);
+
   return (
     <aside className="side-nav">
       <div className="side-brand">
@@ -24,12 +26,12 @@ export function Sidebar({ activeView, onViewChange, onLogout, user }) {
         />
         <div>
           <strong>CBCA Connect</strong>
-          <span>{user?.role === 'admin' ? 'Administration' : 'Annuaire'}</span>
+          <span>{isAdmin ? 'Administration' : 'Annuaire'}</span>
         </div>
       </div>
 
       <nav className="side-links" aria-label="Navigation admin">
-        {navItems.map((item) => {
+        {filteredItems.map((item) => {
           const Icon = item.icon;
           return (
             <button

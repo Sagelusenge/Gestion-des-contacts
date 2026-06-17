@@ -45,7 +45,7 @@ function normalizeSearch(value) {
     .replace(/[\u0300-\u036f]/g, '');
 }
 
-export function DirectoryView({ token, onUnauthorized }) {
+export function DirectoryView({ token, onUnauthorized, user }) {
   const [pastors, setPastors] = useState([]);
   const [postes, setPostes] = useState([]);
   const [fonctions, setFonctions] = useState([]);
@@ -61,6 +61,7 @@ export function DirectoryView({ token, onUnauthorized }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const debouncedQuery = useDebounce(query, 300);
+  const isAdmin = user?.role === 'admin';
 
   const allPosteOptions = useMemo(() => {
     const values = postes.flatMap((poste) => [poste.region, poste.nom]).filter(Boolean);
@@ -291,24 +292,28 @@ export function DirectoryView({ token, onUnauthorized }) {
             <span>{pastors.length > 1 ? 'pasteurs trouvés' : 'pasteur trouvé'}</span>
           </div>
           <div className="directory-actions">
-            <button
-              className="print-all-button"
-              type="button"
-              onClick={() => downloadCsv(pastors)}
-              disabled={isLoading || pastors.length === 0}
-            >
-              <Download size={18} />
-              Export CSV
-            </button>
-            <button
-              className="print-all-button"
-              type="button"
-              onClick={handlePrintAllPastors}
-              disabled={isLoading}
-            >
-              <Printer size={18} />
-              Imprimer tous
-            </button>
+            {isAdmin && (
+              <>
+                <button
+                  className="print-all-button"
+                  type="button"
+                  onClick={() => downloadCsv(pastors)}
+                  disabled={isLoading || pastors.length === 0}
+                >
+                  <Download size={18} />
+                  Export CSV
+                </button>
+                <button
+                  className="print-all-button"
+                  type="button"
+                  onClick={handlePrintAllPastors}
+                  disabled={isLoading}
+                >
+                  <Printer size={18} />
+                  Imprimer tous
+                </button>
+              </>
+            )}
             <button
               className="print-all-button quiet-action"
               type="button"
@@ -321,75 +326,77 @@ export function DirectoryView({ token, onUnauthorized }) {
           </div>
         </div>
 
-        <section className="bulk-whatsapp-panel" aria-label="Message WhatsApp groupe">
-          <div className="bulk-whatsapp-heading">
-            <div>
-              <h2>Message WhatsApp groupe</h2>
-              <p>
-                {whatsappTargets.length} destinataire{whatsappTargets.length > 1 ? 's' : ''} avec numero
-                {activePoste ? ` pour ${activePoste}` : ' dans les resultats affiches'}
-              </p>
+        {isAdmin ? (
+          <section className="bulk-whatsapp-panel" aria-label="Message WhatsApp groupe">
+            <div className="bulk-whatsapp-heading">
+              <div>
+                <h2>Message WhatsApp groupe</h2>
+                <p>
+                  {whatsappTargets.length} destinataire{whatsappTargets.length > 1 ? 's' : ''} avec numero
+                  {activePoste ? ` pour ${activePoste}` : ' dans les resultats affiches'}
+                </p>
+              </div>
+              <MessageCircle size={24} />
             </div>
-            <MessageCircle size={24} />
-          </div>
 
-          <label className="bulk-message-field">
-            <span>Message a envoyer</span>
-            <textarea
-              rows="4"
-              value={bulkMessage}
-              onChange={(event) => {
-                setBulkMessage(event.target.value);
-                setShowBulkLinks(false);
-                setApiBroadcastSummary('');
-              }}
-              placeholder="Ex: Reunion ce samedi a 10h au bureau CBCA..."
-            />
-          </label>
+            <label className="bulk-message-field">
+              <span>Message a envoyer</span>
+              <textarea
+                rows="4"
+                value={bulkMessage}
+                onChange={(event) => {
+                  setBulkMessage(event.target.value);
+                  setShowBulkLinks(false);
+                  setApiBroadcastSummary('');
+                }}
+                placeholder="Ex: Reunion ce samedi a 10h au bureau CBCA..."
+              />
+            </label>
 
-          <div className="bulk-whatsapp-actions">
-            <button
-              className="admin-primary"
-              type="button"
-              onClick={openFirstWhatsAppMessage}
-              disabled={!canPrepareBulkMessage}
-            >
-              <Send size={18} />
-              Ouvrir le 1er WhatsApp
-            </button>
-            <button
-              className="admin-primary"
-              type="button"
-              onClick={sendBulkMessageWithApi}
-              disabled={!canPrepareBulkMessage || isApiSending}
-            >
-              <Send size={18} />
-              {isApiSending ? 'Envoi en cours...' : 'Envoyer a tous via API'}
-            </button>
-            <button
-              className="print-all-button quiet-action"
-              type="button"
-              onClick={() => setShowBulkLinks((current) => !current)}
-              disabled={!canPrepareBulkMessage}
-            >
-              <MessageCircle size={18} />
-              {showBulkLinks ? 'Masquer la liste' : 'Voir les destinataires'}
-            </button>
-          </div>
-
-          {apiBroadcastSummary ? <p className="notice success">{apiBroadcastSummary}</p> : null}
-
-          {showBulkLinks ? (
-            <div className="bulk-link-list">
-              {whatsappTargets.map((target, index) => (
-                <a href={target.url} target="_blank" rel="noreferrer" key={target.id}>
-                  <span>{index + 1}. {target.name}</span>
-                  <strong>Ouvrir</strong>
-                </a>
-              ))}
+            <div className="bulk-whatsapp-actions">
+              <button
+                className="admin-primary"
+                type="button"
+                onClick={openFirstWhatsAppMessage}
+                disabled={!canPrepareBulkMessage}
+              >
+                <Send size={18} />
+                Ouvrir le 1er WhatsApp
+              </button>
+              <button
+                className="admin-primary"
+                type="button"
+                onClick={sendBulkMessageWithApi}
+                disabled={!canPrepareBulkMessage || isApiSending}
+              >
+                <Send size={18} />
+                {isApiSending ? 'Envoi en cours...' : 'Envoyer a tous via API'}
+              </button>
+              <button
+                className="print-all-button quiet-action"
+                type="button"
+                onClick={() => setShowBulkLinks((current) => !current)}
+                disabled={!canPrepareBulkMessage}
+              >
+                <MessageCircle size={18} />
+                {showBulkLinks ? 'Masquer la liste' : 'Voir les destinataires'}
+              </button>
             </div>
-          ) : null}
-        </section>
+
+            {apiBroadcastSummary ? <p className="notice success">{apiBroadcastSummary}</p> : null}
+
+            {showBulkLinks ? (
+              <div className="bulk-link-list">
+                {whatsappTargets.map((target, index) => (
+                  <a href={target.url} target="_blank" rel="noreferrer" key={target.id}>
+                    <span>{index + 1}. {target.name}</span>
+                    <strong>Ouvrir</strong>
+                  </a>
+                ))}
+              </div>
+            ) : null}
+          </section>
+        ) : null}
 
         {error ? <p className="notice error">{error}</p> : null}
         {isLoading ? <p className="notice">Chargement...</p> : null}

@@ -9,6 +9,7 @@ import { DirectoryView } from './components/DirectoryView.jsx';
 import { LoginView } from './components/LoginView.jsx';
 import { PaymentsView } from './components/PaymentsView.jsx';
 import { Sidebar } from './components/Sidebar.jsx';
+import { UsersView } from './components/UsersView.jsx';
 import { APP_DOWNLOAD_URL } from './config/appLinks.js';
 
 const SESSION_KEY = 'cbca_session';
@@ -35,13 +36,9 @@ const pageMeta = {
     title: 'Gestion des fonctions',
     subtitle: 'Créer les fonctions que l’admin utilisera pour les pasteurs'
   },
-  payments: {
-    title: 'Paiements',
-    subtitle: 'Preuves Mobile Money envoyees depuis l app'
-  },
-  appreciations: {
-    title: 'Appreciations',
-    subtitle: 'Avis clients a approuver pour le site'
+  users: {
+    title: 'Rôles & Utilisateurs',
+    subtitle: 'Gérer les comptes utilisateurs et attribuer les rôles d’accès'
   }
 };
 
@@ -64,6 +61,7 @@ export default function App() {
   const [theme, setTheme] = useState(readTheme);
   const token = session?.token;
   const user = session?.user;
+  const isAdmin = user?.role === 'admin';
   const activeMeta = pageMeta[activeView] || pageMeta.dashboard;
   const isDark = theme === 'dark';
 
@@ -73,7 +71,15 @@ export default function App() {
     }
 
     if (activeView === 'dashboard') {
-      return <DashboardView token={token} onNavigate={setActiveView} />;
+      return <DashboardView token={token} onNavigate={setActiveView} user={user} />;
+    }
+
+    if (activeView === 'directory') {
+      return <DirectoryView token={token} onUnauthorized={handleLogout} user={user} />;
+    }
+
+    if (!isAdmin) {
+      return <DirectoryView token={token} onUnauthorized={handleLogout} user={user} />;
     }
 
     if (activeView === 'addPastor') {
@@ -88,16 +94,12 @@ export default function App() {
       return <AddFonctionView token={token} />;
     }
 
-    if (activeView === 'payments') {
-      return <PaymentsView token={token} />;
+    if (activeView === 'users') {
+      return <UsersView token={token} currentUser={user} />;
     }
 
-    if (activeView === 'appreciations') {
-      return <AppreciationsView token={token} />;
-    }
-
-    return <DirectoryView token={token} onUnauthorized={handleLogout} />;
-  }, [activeView, session, token]);
+    return <DirectoryView token={token} onUnauthorized={handleLogout} user={user} />;
+  }, [activeView, session, token, user, isAdmin]);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;

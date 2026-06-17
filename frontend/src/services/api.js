@@ -71,5 +71,9 @@ export const api = {
   getPostes: (token) => request('/postes', { token }),
   createPoste: (token, data) => request('/postes', { token, method: 'POST', body: data }),
   updatePoste: (token, id, data) => request(`/postes/${id}`, { token, method: 'PUT', body: data }),
-  deletePoste: (token, id) => request(`/postes/${id}`, { token, method: 'DELETE' })
+  deletePoste: (token, id) => request(`/postes/${id}`, { token, method: 'DELETE' }),
+  getUsers: (token) => request('/auth/users', { token }),
+  createUser: (token, data) => request('/auth/users', { token, method: 'POST', body: data }),
+  updateUserRole: (token, id, role) => request(`/auth/users/${id}/role`, { token, method: 'PATCH', body: { role } }),
+  deleteUser: (token, id) => request(`/auth/users/${id}`, { token, method: 'DELETE' })
 };

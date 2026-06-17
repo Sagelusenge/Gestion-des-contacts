@@ -29,6 +29,12 @@
     },
     "plugins": [
       "expo-sharing"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "c7faa82c-852a-4df7-938d-6ad1d7ed5e43"
+      }
+    },
+    "owner": "sagelusenge"
   }
 }

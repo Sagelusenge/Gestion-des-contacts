@@ -56,8 +56,6 @@ function useTheme() {
 const tabs = [
   { key: 'dashboard', label: 'Accueil', icon: 'grid-outline' },
   { key: 'directory', label: 'Annuaire', icon: 'search-outline' },
-  { key: 'broadcast', label: 'Diffusion', icon: 'megaphone-outline' },
-  { key: 'payment', label: 'Paiement', icon: 'card-outline' },
   { key: 'manage', label: 'Gestion', icon: 'create-outline' }
 ];
 
@@ -209,24 +207,15 @@ export default function App() {
     <SafeAreaView style={styles.safe}>
       <StatusBar style={themeName === 'dark' ? 'light' : 'dark'} />
       {activeTab === 'dashboard' ? (
-        <DashboardScreen token={session.token} onNavigate={setActiveTab} onLogout={handleLogout} />
+        <DashboardScreen token={session.token} onNavigate={setActiveTab} onLogout={handleLogout} user={session.user} />
       ) : null}
       {activeTab === 'directory' ? (
         <DirectoryScreen token={session.token} onLogout={handleLogout} />
       ) : null}
-      {activeTab === 'broadcast' ? (
-        <BroadcastScreen token={session.token} />
-      ) : null}
-      {activeTab === 'payment' ? (
-        <PaymentScreen token={session.token} />
-      ) : null}
-      {activeTab === 'feedback' ? (
-        <FeedbackScreen token={session.token} user={session.user} />
-      ) : null}
       {activeTab === 'manage' ? (
-        <ManageScreen token={session.token} />
+        <ManageScreen token={session.token} user={session.user} />
       ) : null}
-      <BottomNav activeTab={activeTab} onChange={setActiveTab} />
+      <BottomNav activeTab={activeTab} onChange={setActiveTab} user={session.user} />
     </SafeAreaView>
     </ThemeContext.Provider>
   );
@@ -288,13 +277,14 @@ function LoginScreen({ onLogin }) {
   );
 }
 
-function DashboardScreen({ token, onNavigate, onLogout }) {
+function DashboardScreen({ token, onNavigate, onLogout, user }) {
   const [pastors, setPastors] = useState([]);
   const [postes, setPostes] = useState([]);
   const [fonctions, setFonctions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const { palette } = useTheme();
+  const isAdmin = user?.role === 'admin';
 
   async function load() {
     setError('');
@@ -350,10 +340,9 @@ function DashboardScreen({ token, onNavigate, onLogout }) {
         <Text style={[styles.cardTitle, { color: palette.text }]}>Actions rapides</Text>
         <View style={styles.actionRow}>
           <ActionButton label="Annuaire" icon="search-outline" onPress={() => onNavigate('directory')} />
-          <ActionButton label="Diffusion" icon="megaphone-outline" onPress={() => onNavigate('broadcast')} />
-          <ActionButton label="Paiement" icon="card-outline" onPress={() => onNavigate('payment')} />
-          <ActionButton label="Appreciation" icon="chatbubble-ellipses-outline" onPress={() => onNavigate('feedback')} />
-          <ActionButton label="Gestion" icon="create-outline" onPress={() => onNavigate('manage')} />
+          {isAdmin ? (
+            <ActionButton label="Gestion" icon="create-outline" onPress={() => onNavigate('manage')} />
+          ) : null}
         </View>
       </View>
 
@@ -1036,7 +1025,7 @@ function FeedbackScreen({ token, user }) {
   );
 }
 
-function ManageScreen({ token }) {
+function ManageScreen({ token, user }) {
   const [section, setSection] = useState('pastors');
   const [pastors, setPastors] = useState([]);
   const [postes, setPostes] = useState([]);
@@ -1045,7 +1034,7 @@ function ManageScreen({ token }) {
   const [pastorForm, setPastorForm] = useState(blankPastor());
   const [posteForm, setPosteForm] = useState(blankPoste());
   const [fonctionForm, setFonctionForm] = useState(blankFonction());
-  const [userForm, setUserForm] = useState({ username: '', password: '' });
+  const [userForm, setUserForm] = useState({ username: '', password: '', role: 'viewer' });
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -1054,6 +1043,7 @@ function ManageScreen({ token }) {
   const [pastorSearch, setPastorSearch] = useState('');
   const [posteSearch, setPosteSearch] = useState('');
   const [fonctionSearch, setFonctionSearch] = useState('');
+  const [userSearch, setUserSearch] = useState('');
   const [manageVisibleCount, setManageVisibleCount] = useState(LIST_INITIAL_SIZE);
   const { palette } = useTheme();
 
@@ -1092,10 +1082,20 @@ function ManageScreen({ token }) {
   const shownPastors = useMemo(() => visiblePastors.slice(0, manageVisibleCount), [manageVisibleCount, visiblePastors]);
   const shownPostes = useMemo(() => visiblePostes.slice(0, manageVisibleCount), [manageVisibleCount, visiblePostes]);
   const shownFonctions = useMemo(() => visibleFonctions.slice(0, manageVisibleCount), [manageVisibleCount, visibleFonctions]);
+  const visibleUsers = useMemo(() => {
+    const search = normalizeSearch(userSearch);
+    return users.filter((u) => {
+      if (!search) {
+        return true;
+      }
+      return normalizeSearch(u.username).includes(search);
+    });
+  }, [users, userSearch]);
+  const shownUsers = useMemo(() => visibleUsers.slice(0, manageVisibleCount), [manageVisibleCount, visibleUsers]);
 
   useEffect(() => {
     setManageVisibleCount(LIST_INITIAL_SIZE);
-  }, [section, pastorSearch, posteSearch, fonctionSearch]);
+  }, [section, pastorSearch, posteSearch, fonctionSearch, userSearch]);
 
   async function load() {
     setError('');
@@ -1127,7 +1127,7 @@ function ManageScreen({ token }) {
     setPastorForm(blankPastor(fonctions[0]?.nom || 'Pasteur'));
     setPosteForm(blankPoste());
     setFonctionForm(blankFonction());
-    setUserForm({ username: '', password: '' });
+    setUserForm({ username: '', password: '', role: 'viewer' });
   }
 
   async function savePastor() {
@@ -1316,10 +1316,27 @@ function ManageScreen({ token }) {
     try {
       await api.createUser(token, {
         username: userForm.username,
-        password: userForm.password
+        password: userForm.password,
+        role: userForm.role || 'viewer'
       });
       setMessage('Utilisateur ajoute.');
       resetForms();
+      await load();
+    } catch (saveError) {
+      setError(saveError.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function toggleUserRole(userId, currentRole) {
+    const newRole = currentRole === 'admin' ? 'viewer' : 'admin';
+    setMessage('');
+    setError('');
+    setSaving(true);
+    try {
+      await api.updateUserRole(token, userId, newRole);
+      setMessage('Role utilisateur mis a jour.');
       await load();
     } catch (saveError) {
       setError(saveError.message);
@@ -1335,6 +1352,7 @@ function ManageScreen({ token }) {
       if (kind === 'pastor') await api.deletePastor(token, id);
       if (kind === 'poste') await api.deletePoste(token, id);
       if (kind === 'fonction') await api.deleteFonction(token, id);
+      if (kind === 'user') await api.deleteUser(token, id);
       setMessage('Element supprime.');
       resetForms();
       await load();
@@ -1493,14 +1511,57 @@ function ManageScreen({ token }) {
               secureTextEntry
               placeholder="Minimum 6 caracteres"
             />
+            <ChipList
+              label="Role"
+              values={['viewer', 'admin']}
+              labels={{ viewer: 'Lecteur', admin: 'Administrateur' }}
+              active={userForm.role || 'viewer'}
+              onChange={(value) => setUserForm({ ...userForm, role: value })}
+              includeAll={false}
+            />
             <SubmitRow saving={saving} onSubmit={saveUser} />
           </FormPanel>
-          {users.map((user) => (
-            <View style={[styles.card, { backgroundColor: palette.panel, borderColor: palette.line }]} key={user.id}>
-              <Text style={[styles.cardTitle, { color: palette.text }]}>{user.username}</Text>
-              <Text style={[styles.meta, { color: palette.muted }]}>{user.role}</Text>
-            </View>
-          ))}
+          <Field label="Rechercher dans les utilisateurs" value={userSearch} onChangeText={setUserSearch} placeholder="Email..." />
+          {shownUsers.map((u) => {
+            const isSelf = user && (user.id === u.id || user.username === u.username);
+            return (
+              <View style={[styles.card, { backgroundColor: palette.panel, borderColor: palette.line }]} key={u.id}>
+                <View style={styles.cardHeader}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.cardTitle, { color: palette.text }]}>{u.username}</Text>
+                    <Text style={[styles.meta, { color: palette.muted }]}>
+                      Role: {u.role === 'admin' ? 'Administrateur' : 'Lecteur'}
+                    </Text>
+                  </View>
+                  <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+                    {!isSelf ? (
+                      <>
+                        <RoundAction
+                          icon="shield-outline"
+                          color={colors.blue}
+                          onPress={() => toggleUserRole(u.id, u.role)}
+                        />
+                        <RoundAction
+                          icon="trash-outline"
+                          color={colors.red}
+                          onPress={() => confirmRemove('user', u.id)}
+                        />
+                      </>
+                    ) : (
+                      <Text style={[styles.meta, { color: palette.muted }]}>Moi</Text>
+                    )}
+                  </View>
+                </View>
+              </View>
+            );
+          })}
+          {visibleUsers.length > shownUsers.length ? (
+            <ActionButton
+              label={`Afficher ${Math.min(LIST_INCREMENT, visibleUsers.length - shownUsers.length)} de plus`}
+              icon="chevron-down-outline"
+              onPress={() => setManageVisibleCount((current) => current + LIST_INCREMENT)}
+            />
+          ) : null}
         </View>
       ) : null}
     </ScrollView>
@@ -1540,11 +1601,19 @@ function PastorCard({ pastor }) {
   );
 }
 
-function BottomNav({ activeTab, onChange }) {
+function BottomNav({ activeTab, onChange, user }) {
   const { palette } = useTheme();
+  const isAdmin = user?.role === 'admin';
+  const visibleTabs = tabs.filter((tab) => {
+    if (tab.key === 'broadcast' || tab.key === 'manage') {
+      return isAdmin;
+    }
+    return true;
+  });
+
   return (
     <View style={[styles.bottomNav, { backgroundColor: palette.navy, borderColor: palette.line }]}>
-      {tabs.map((tab) => {
+      {visibleTabs.map((tab) => {
         const active = activeTab === tab.key;
         return (
           <TouchableOpacity style={[styles.navItem, active && { backgroundColor: palette.panel }]} onPress={() => onChange(tab.key)} key={tab.key}>
