@@ -1,0 +1,5 @@
+- [ ] Modifier UI web: AddPastorView.jsx (pasteur/pasteurs -> serviteur/serviteurs; Poste -> Entité/Entités quand texte visible)
+- [ ] Modifier UI web: AdminView.jsx (pasteur/pasteurs/postes UI -> serviteur/serviteurs/entités; label Poste -> Entité)
+- [ ] Modifier UI web: DashboardView.jsx (titre “Postes” -> “Entités”)
+- [ ] Modifier UI mobile: App.js (textes/messages “pasteur(s)” -> “serviteur(s)”; UI “poste”/“Poste” -> “entité(s)”/“Entité” quand affiché)
+- [ ] Vérification rapide: build/lint optionnel + relecture ciblée des zones modifiées

@@ -152,7 +152,7 @@ export function AddPastorView({ token }) {
       { wch: 18 }
     ];
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Pasteurs');
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Serviteurs');
     XLSX.writeFile(workbook, `Serviteur-cbca-${new Date().toISOString().slice(0, 10)}.xlsx`);
   }
 
@@ -254,7 +254,7 @@ export function AddPastorView({ token }) {
       }));
       const payload = await api.importPastors(token, rows);
       const summary = payload.data;
-      setMessage(`${summary.imported} Serviteur(s) importes. ${summary.createdFunctions} fonction(s) et ${summary.createdPostes} poste(s) crees.`);
+      setMessage(`${summary.imported} Serviteur(s) importes. ${summary.createdFunctions} fonction(s) et ${summary.createdPostes} entite(s) crees.`);
       if (summary.errors?.length) {
         setError(summary.errors.slice(0, 3).join(' '));
       }
@@ -316,7 +316,7 @@ export function AddPastorView({ token }) {
       <form className="dark-form-panel" onSubmit={handleSubmit}>
         <div className="panel-title">
           <UserPlus size={22} />
-          <h2>{editingPastorId ? 'Modifier un Serviteur' : 'Ajouter un pasteur'}</h2>
+          <h2>{editingPastorId ? 'Modifier un Serviteur' : 'Ajouter un serviteur'}</h2>
         </div>
 
         <input
@@ -411,7 +411,7 @@ export function AddPastorView({ token }) {
         <div className="form-actions-row">
           <button className="admin-primary" type="submit" disabled={isSaving}>
             <Plus size={18} />
-            {isSaving ? 'Enregistrement...' : editingPastorId ? 'Mettre a jour' : 'Ajouter le pasteur'}
+            {isSaving ? 'Enregistrement...' : editingPastorId ? 'Mettre a jour' : 'Ajouter le serviteur'}
           </button>
           {editingPastorId ? (
             <button className="secondary-action" type="button" onClick={resetForm}>
@@ -425,7 +425,7 @@ export function AddPastorView({ token }) {
       <article className="dark-panel">
         <div className="panel-title">
           <UserPlus size={22} />
-          <h2>Pasteurs enregistres</h2>
+          <h2>Serviteurs enregistres</h2>
         </div>
         <div className="admin-list">
           {pastors.map((pastor) => (

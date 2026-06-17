@@ -119,7 +119,7 @@ export function DashboardView({ token, onNavigate, user }) {
         <article className="dark-panel dashboard-side-panel">
           <div className="panel-title">
             <MapPinned size={22} />
-            <h2>Postes</h2>
+            <h2>Entités</h2>
           </div>
           <div className="poste-pill-list">
             {visiblePostes.map((poste) => (

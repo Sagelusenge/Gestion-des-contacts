@@ -93,7 +93,7 @@ export function AdminView({ token }) {
         date_affectation: pastorForm.date_affectation || null
       });
       setPastorForm({ ...initialPastor, poste: pastorForm.poste });
-      setMessage('Pasteur ajoute.');
+      setMessage('Serviteur ajoute.');
       await refreshAdminData();
     } catch (saveError) {
       setError(saveError.message);
@@ -108,7 +108,7 @@ export function AdminView({ token }) {
 
     try {
       await api.deletePastor(token, id);
-      setMessage('Pasteur supprime.');
+      setMessage('Serviteur supprime.');
       await refreshAdminData();
     } catch (deleteError) {
       setError(deleteError.message);
@@ -121,7 +121,7 @@ export function AdminView({ token }) {
 
     try {
       await api.deletePoste(token, id);
-      setMessage('Poste supprime.');
+      setMessage('Entite supprime.');
       await refreshAdminData();
     } catch (deleteError) {
       setError(deleteError.message);
@@ -146,14 +146,14 @@ export function AdminView({ token }) {
           type="button"
           onClick={() => setActivePanel('postes')}
         >
-          Postes
+          Entites
         </button>
         <button
           className={activePanel === 'pasteurs' ? 'segment active' : 'segment'}
           type="button"
           onClick={() => setActivePanel('pasteurs')}
         >
-          Pasteurs
+          Serviteurs
         </button>
       </div>
 
@@ -163,9 +163,9 @@ export function AdminView({ token }) {
       {activePanel === 'postes' ? (
         <section className="admin-grid">
           <form className="form-panel" onSubmit={handleCreatePoste}>
-            <h2>Ajouter un poste</h2>
+            <h2>Ajouter une entite</h2>
             <label className="field">
-              <span>Nom du poste</span>
+              <span>Nom de l'entite</span>
               <input
                 value={posteForm.nom}
                 onChange={(event) => updatePosteField('nom', event.target.value)}
@@ -186,7 +186,7 @@ export function AdminView({ token }) {
               <textarea
                 value={posteForm.description}
                 onChange={(event) => updatePosteField('description', event.target.value)}
-                placeholder="Paroisse, poste ou département"
+                placeholder="Paroisse, entite ou département"
                 rows="3"
               />
             </label>
@@ -198,8 +198,8 @@ export function AdminView({ token }) {
             </div>
           </form>
 
-          <section className="table-panel" aria-label="Postes existants">
-            <h2>Postes existants</h2>
+          <section className="table-panel" aria-label="Entites existantes">
+            <h2>Entites existantes</h2>
             <div className="compact-list">
               {sortedPostes.map((poste) => (
                 <div className="compact-row" key={poste.id}>
@@ -218,13 +218,13 @@ export function AdminView({ token }) {
       ) : (
         <section className="admin-grid">
           <form className="form-panel" onSubmit={handleCreatePastor}>
-            <h2>Ajouter un pasteur</h2>
+            <h2>Ajouter un serviteur</h2>
             <label className="field">
               <span>Nom complet</span>
               <input
                 value={pastorForm.nom}
                 onChange={(event) => updatePastorField('nom', event.target.value)}
-                placeholder="Nom du pasteur"
+                placeholder="Nom du serviteur"
                 required
               />
             </label>
@@ -253,13 +253,13 @@ export function AdminView({ token }) {
               </label>
             </div>
             <label className="field">
-              <span>Poste</span>
+              <span>Entite</span>
               <select
                 value={pastorForm.poste}
                 onChange={(event) => updatePastorField('poste', event.target.value)}
                 required
               >
-                <option value="">Choisir un poste</option>
+                <option value="">Choisir une entite</option>
                 {sortedPostes.map((poste) => (
                   <option value={poste.nom} key={poste.id}>
                     {poste.nom}
@@ -294,8 +294,8 @@ export function AdminView({ token }) {
             </div>
           </form>
 
-          <section className="table-panel" aria-label="Pasteurs">
-            <h2>Pasteurs</h2>
+          <section className="table-panel" aria-label="Serviteurs">
+            <h2>Serviteurs</h2>
             <div className="compact-list">
               {pastors.map((pastor) => (
                 <div className="compact-row" key={pastor.id}>

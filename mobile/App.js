@@ -311,8 +311,8 @@ function DashboardScreen({ token, onNavigate, onLogout, user }) {
 
   const regions = useMemo(() => new Set(postes.map((poste) => poste.region).filter(Boolean)).size, [postes]);
   const stats = [
-    { label: 'Pasteurs', value: pastors.length, icon: 'account-group-outline' },
-    { label: 'Postes', value: postes.length, icon: 'map-marker-radius-outline' },
+    { label: 'Serviteurs', value: pastors.length, icon: 'account-group-outline' },
+    { label: 'Entités', value: postes.length, icon: 'map-marker-radius-outline' },
     { label: 'Regions', value: regions, icon: 'map-outline' },
     { label: 'Fonctions', value: fonctions.length, icon: 'badge-account-outline' }
   ];
@@ -346,9 +346,9 @@ function DashboardScreen({ token, onNavigate, onLogout, user }) {
         </View>
       </View>
 
-      <Text style={[styles.pageSubtitle, { marginBottom: 10, color: palette.muted }]}>Derniers pasteurs</Text>
+      <Text style={[styles.pageSubtitle, { marginBottom: 10, color: palette.muted }]}>Derniers serviteurs</Text>
       {loading && pastors.length === 0 ? <ActivityIndicator color={palette.blue} /> : null}
-      {!loading && pastors.length === 0 ? <EmptyState title="Aucun pasteur" text="Ajoutez le premier pasteur depuis l'onglet Gestion." /> : null}
+      {!loading && pastors.length === 0 ? <EmptyState title="Aucun serviteur" text="Ajoutez le premier serviteur depuis l'onglet Gestion." /> : null}
       {pastors.slice(0, 5).map((pastor) => (
         <MiniRow title={pastor.nom} subtitle={`${pastor.degre} - ${pastor.poste}`} key={pastor.id} />
       ))}
@@ -429,10 +429,10 @@ function DirectoryScreen({ token, onLogout }) {
       refreshControl={<RefreshControl tintColor={palette.blue} refreshing={loading} onRefresh={loadPastors} />}
     >
       <Header title="Annuaire" subtitle={`${pastors.length} contact${pastors.length > 1 ? 's' : ''} affiche${pastors.length > 1 ? 's' : ''}`} />
-      <Field label="Recherche" value={query} onChangeText={setQuery} placeholder="Nom, fonction, poste..." />
+      <Field label="Recherche" value={query} onChangeText={setQuery} placeholder="Nom, fonction, entité..." />
 
       <ChipList label="Fonctions" values={fonctions.map((fonction) => fonction.nom)} active={activeFonction} onChange={setActiveFonction} searchable searchPlaceholder="Rechercher une fonction..." />
-      <ChipList label="Postes" values={posteOptions} active={activePoste} onChange={setActivePoste} searchable searchPlaceholder="Rechercher un poste..." />
+      <ChipList label="Entités" values={posteOptions} active={activePoste} onChange={setActivePoste} searchable searchPlaceholder="Rechercher une entité..." />
 
       {error ? <Notice type="error" message={error} /> : null}
       {loading && pastors.length === 0 ? <ActivityIndicator color={palette.blue} /> : null}
@@ -608,14 +608,14 @@ function BroadcastScreen({ token }) {
       contentContainerStyle={styles.content}
       refreshControl={<RefreshControl tintColor={palette.blue} refreshing={loading} onRefresh={load} />}
     >
-      <Header title="Diffusion" subtitle="Message WhatsApp par poste, region ou fonction" rightIcon="refresh-outline" onRightPress={load} />
+      <Header title="Diffusion" subtitle="Message WhatsApp par entité, region ou fonction" rightIcon="refresh-outline" onRightPress={load} />
       {error ? <Notice type="error" message={error} /> : null}
 
       <FormPanel title="Cible de diffusion">
         <ChipList
           label="Categorie"
           values={['poste', 'region', 'fonction']}
-          labels={{ poste: 'Poste', region: 'Region', fonction: 'Fonction' }}
+          labels={{ poste: 'Entité', region: 'Region', fonction: 'Fonction' }}
           active={filterType}
           includeAll={false}
           onChange={(value) => {
@@ -628,11 +628,11 @@ function BroadcastScreen({ token }) {
           }}
         />
         <ChipList
-          label={filterType === 'poste' ? 'Postes' : filterType === 'region' ? 'Regions' : 'Fonctions'}
+          label={filterType === 'poste' ? 'Entités' : filterType === 'region' ? 'Regions' : 'Fonctions'}
           values={filterValues}
           active={selectedValue}
           searchable
-          searchPlaceholder={filterType === 'poste' ? 'Rechercher un poste...' : filterType === 'region' ? 'Rechercher une region...' : 'Rechercher une fonction...'}
+          searchPlaceholder={filterType === 'poste' ? 'Rechercher une entité...' : filterType === 'region' ? 'Rechercher une region...' : 'Rechercher une fonction...'}
           onChange={(value) => {
             setSelectedValue(value);
             setShowRecipients(false);
@@ -1191,7 +1191,7 @@ function ManageScreen({ token, user }) {
       const payload = await api.importPastors(token, rows);
       const summary = payload.data || {};
 
-      setMessage(`${summary.imported || 0} pasteur(s) importes. ${summary.createdFunctions || 0} fonction(s) et ${summary.createdPostes || 0} poste(s) crees.`);
+      setMessage(`${summary.imported || 0} serviteur(s) importes. ${summary.createdFunctions || 0} fonction(s) et ${summary.createdPostes || 0} entite(s) crees.`);
       if (summary.errors?.length) {
         setError(summary.errors.slice(0, 3).join(' '));
       }
@@ -1375,14 +1375,14 @@ function ManageScreen({ token, user }) {
       refreshControl={<RefreshControl tintColor={palette.blue} refreshing={loading} onRefresh={load} />}
     >
       <Header title="Gestion" subtitle="Ajouter, modifier et supprimer les donnees" rightIcon="refresh-outline" onRightPress={load} />
-      <ChipList values={['pastors', 'postes', 'fonctions', 'users']} labels={{ pastors: 'Pasteurs', postes: 'Postes', fonctions: 'Fonctions', users: 'Users' }} active={section} onChange={(value) => { setSection(value); resetForms(); }} includeAll={false} />
+      <ChipList values={['pastors', 'postes', 'fonctions', 'users']} labels={{ pastors: 'Serviteurs', postes: 'Entités', fonctions: 'Fonctions', users: 'Users' }} active={section} onChange={(value) => { setSection(value); resetForms(); }} includeAll={false} />
 
       {message ? <Notice type="success" message={message} /> : null}
       {error ? <Notice type="error" message={error} /> : null}
 
       {section === 'pastors' ? (
         <View>
-          <FormPanel title={editingId ? 'Modifier pasteur' : 'Ajouter pasteur'}>
+          <FormPanel title={editingId ? 'Modifier serviteur' : 'Ajouter serviteur'}>
             <View style={styles.actionRow}>
               <ActionButton label="Importer Excel" icon="cloud-upload-outline" onPress={importPastorsFromExcel} />
               <ActionButton label="Exporter Excel" icon="download-outline" onPress={exportPastorsToExcel} />
@@ -1390,14 +1390,14 @@ function ManageScreen({ token, user }) {
             <Field label="Nom complet" value={pastorForm.nom} onChangeText={(value) => setPastorForm({ ...pastorForm, nom: value })} />
             <Field label="ID serviteur" value={pastorForm.id_serviteur} onChangeText={(value) => setPastorForm({ ...pastorForm, id_serviteur: value })} placeholder="Ex: 000246" />
             <ChipList label="Fonction" values={fonctions.map((fonction) => fonction.nom)} active={pastorForm.degre} onChange={(value) => setPastorForm({ ...pastorForm, degre: value })} searchable searchPlaceholder="Rechercher une fonction..." />
-            <ChipList label="Poste" values={postes.map((poste) => poste.nom)} active={pastorForm.poste} onChange={(value) => setPastorForm({ ...pastorForm, poste: value })} searchable searchPlaceholder="Rechercher un poste..." />
+            <ChipList label="Entité" values={postes.map((poste) => poste.nom)} active={pastorForm.poste} onChange={(value) => setPastorForm({ ...pastorForm, poste: value })} searchable searchPlaceholder="Rechercher une entité..." />
             <Field label="Entite" value={pastorForm.entite} onChangeText={(value) => setPastorForm({ ...pastorForm, entite: value })} placeholder="Ex: Bureau poste Bambo" />
             <Field label="Telephone" value={pastorForm.telephone} onChangeText={(value) => setPastorForm({ ...pastorForm, telephone: value })} keyboardType="phone-pad" />
             <Field label="Email" value={pastorForm.email} onChangeText={(value) => setPastorForm({ ...pastorForm, email: value })} keyboardType="email-address" autoCapitalize="none" />
             <Field label="Date affectation" value={pastorForm.date_affectation} onChangeText={(value) => setPastorForm({ ...pastorForm, date_affectation: value })} placeholder="YYYY-MM-DD" />
             <SubmitRow saving={saving} onSubmit={savePastor} onCancel={editingId ? resetForms : null} />
           </FormPanel>
-          <Field label="Rechercher dans les serviteurs" value={pastorSearch} onChangeText={setPastorSearch} placeholder="Nom, fonction, poste..." />
+          <Field label="Rechercher dans les serviteurs" value={pastorSearch} onChangeText={setPastorSearch} placeholder="Nom, fonction, entité..." />
           {shownPastors.map((pastor) => (
             <ManageRow
               title={pastor.nom}
@@ -1409,7 +1409,7 @@ function ManageScreen({ token, user }) {
                 setPastorForm({
                   nom: pastor.nom || '',
                   id_serviteur: pastor.id_serviteur || '',
-                  degre: pastor.degre || fonctions[0]?.nom || 'Pasteur',
+                  degre: pastor.degre || fonctions[0]?.nom || 'Serviteur',
                   poste: pastor.poste || '',
                   entite: pastor.entite || '',
                   telephone: pastor.telephone || '',
@@ -1432,13 +1432,13 @@ function ManageScreen({ token, user }) {
 
       {section === 'postes' ? (
         <View>
-          <FormPanel title={editingId ? 'Modifier poste' : 'Ajouter poste'}>
-            <Field label="Nom du poste" value={posteForm.nom} onChangeText={(value) => setPosteForm({ ...posteForm, nom: value })} />
+          <FormPanel title={editingId ? 'Modifier entité' : 'Ajouter entité'}>
+            <Field label="Nom de l'entité" value={posteForm.nom} onChangeText={(value) => setPosteForm({ ...posteForm, nom: value })} />
             <Field label="Region" value={posteForm.region} onChangeText={(value) => setPosteForm({ ...posteForm, region: value })} />
             <Field label="Description" value={posteForm.description} onChangeText={(value) => setPosteForm({ ...posteForm, description: value })} multiline />
             <SubmitRow saving={saving} onSubmit={savePoste} onCancel={editingId ? resetForms : null} />
           </FormPanel>
-          <Field label="Rechercher dans les postes" value={posteSearch} onChangeText={setPosteSearch} placeholder="Poste, region..." />
+          <Field label="Rechercher dans les entités" value={posteSearch} onChangeText={setPosteSearch} placeholder="Entité, region..." />
           {shownPostes.map((poste) => (
             <ManageRow
               title={poste.nom}

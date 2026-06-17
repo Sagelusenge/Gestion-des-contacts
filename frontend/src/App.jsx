@@ -19,20 +19,20 @@ const pageMeta = {
     subtitle: 'Vue générale de l’annuaire pastoral CBCA'
   },
   directory: {
-    title: 'Annuaire',
-    subtitle: 'Recherche rapide par nom, degré, poste ou région'
+    title: 'Annuaire Pastoral',
+    subtitle: 'Recherche rapide par nom, degré, entité ou région'
   },
   addPastor: {
-    title: 'Ajout des pasteurs',
-    subtitle: 'Enregistrer un nouveau pasteur et ses coordonnées'
+    title: 'Ajout des serviteurs',
+    subtitle: 'Enregistrer un nouveau serviteur et ses coordonnées'
   },
   addPoste: {
-    title: 'Ajout des postes',
-    subtitle: 'Créer les postes, paroisses, régions et départements'
+    title: 'Ajout des entités',
+    subtitle: 'Créer les entités, paroisses, régions et départements'
   },
-  addFonction: {
+  addGrade: {
     title: 'Gestion des fonctions',
-    subtitle: 'Créer les fonctions que l’admin utilisera pour les pasteurs'
+    subtitle: 'Créer les fonctions que l’admin utilisera pour les serviteurs'
   },
   users: {
     title: 'Rôles & Utilisateurs',
