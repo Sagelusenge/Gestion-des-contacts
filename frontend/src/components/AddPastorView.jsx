@@ -7,7 +7,7 @@ import { printRecord } from '../utils/printRecord.js';
 const initialPastor = {
   id_serviteur: '',
   nom: '',
-  degre: 'Pasteur',
+  degre: 'Serviteur',
   poste: '',
   entite: '',
   telephone: '',
@@ -113,11 +113,11 @@ export function AddPastorView({ token }) {
   }
 
   function handlePrint(pastor) {
-    printRecord(`Pasteur - ${pastor.nom}`, [
+    printRecord(`Serviteur - ${pastor.nom}`, [
       { label: 'Nom', value: pastor.nom },
       { label: 'ID serviteur', value: pastor.id_serviteur },
       { label: 'Fonction', value: pastor.degre },
-      { label: 'Poste', value: pastor.poste },
+     // { label: 'Poste', value: pastor.poste },
       { label: 'Entite', value: pastor.entite },
       { label: 'Telephone', value: pastor.telephone },
       { label: 'Email', value: pastor.email },
@@ -153,7 +153,7 @@ export function AddPastorView({ token }) {
     ];
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Pasteurs');
-    XLSX.writeFile(workbook, `pasteurs-cbca-${new Date().toISOString().slice(0, 10)}.xlsx`);
+    XLSX.writeFile(workbook, `Serviteur-cbca-${new Date().toISOString().slice(0, 10)}.xlsx`);
   }
 
   function parseDelimitedFile(text) {
@@ -254,7 +254,7 @@ export function AddPastorView({ token }) {
       }));
       const payload = await api.importPastors(token, rows);
       const summary = payload.data;
-      setMessage(`${summary.imported} pasteur(s) importes. ${summary.createdFunctions} fonction(s) et ${summary.createdPostes} poste(s) crees.`);
+      setMessage(`${summary.imported} Serviteur(s) importes. ${summary.createdFunctions} fonction(s) et ${summary.createdPostes} poste(s) crees.`);
       if (summary.errors?.length) {
         setError(summary.errors.slice(0, 3).join(' '));
       }
@@ -282,12 +282,12 @@ export function AddPastorView({ token }) {
 
       if (editingPastorId) {
         await api.updatePastor(token, editingPastorId, payload);
-        setMessage('Pasteur mis a jour avec succes.');
+        setMessage('Serviteur mis a jour avec succes.');
         resetForm();
       } else {
         await api.createPastor(token, payload);
         setForm({ ...initialPastor, poste: form.poste, degre: form.degre });
-        setMessage('Pasteur ajoute avec succes.');
+        setMessage('Serviteur ajoute avec succes.');
       }
 
       await loadData();
@@ -304,7 +304,7 @@ export function AddPastorView({ token }) {
 
     try {
       await api.deletePastor(token, id);
-      setMessage('Pasteur supprime.');
+      setMessage('Serviteur supprime.');
       await loadData();
     } catch (deleteError) {
       setError(deleteError.message);
@@ -316,7 +316,7 @@ export function AddPastorView({ token }) {
       <form className="dark-form-panel" onSubmit={handleSubmit}>
         <div className="panel-title">
           <UserPlus size={22} />
-          <h2>{editingPastorId ? 'Modifier un pasteur' : 'Ajouter un pasteur'}</h2>
+          <h2>{editingPastorId ? 'Modifier un Serviteur' : 'Ajouter un pasteur'}</h2>
         </div>
 
         <input

@@ -72,9 +72,9 @@ export function AddPosteView({ token }) {
   }
 
   function handlePrint(poste) {
-    printRecord(`Poste - ${poste.nom}`, [
-      { label: 'Nom du poste', value: poste.nom },
-      { label: 'Région', value: poste.region },
+    printRecord(`Entites - ${poste.nom}`, [
+      { label: 'Nom Entite , value: poste.nom },
+   //   { label: 'Région', value: poste.region },
       { label: 'Description', value: poste.description }
     ]);
   }
@@ -94,12 +94,12 @@ export function AddPosteView({ token }) {
 
       if (editingPosteId) {
         await api.updatePoste(token, editingPosteId, payload);
-        setMessage('Poste mis à jour avec succès.');
+        setMessage('Entites mis à jour avec succès.');
         resetForm();
       } else {
         await api.createPoste(token, payload);
         setForm(initialPoste);
-        setMessage('Poste ajouté avec succès.');
+        setMessage('Entites ajouté avec succès.');
       }
 
       await loadPostes();
@@ -116,7 +116,7 @@ export function AddPosteView({ token }) {
 
     try {
       await api.deletePoste(token, id);
-      setMessage('Poste supprimé.');
+      setMessage('Entites supprimé.');
       await loadPostes();
     } catch (deleteError) {
       setError(deleteError.message);
@@ -128,11 +128,11 @@ export function AddPosteView({ token }) {
       <form className="dark-form-panel" onSubmit={handleSubmit}>
         <div className="panel-title">
           <MapPinned size={22} />
-          <h2>{editingPosteId ? 'Modifier un poste' : 'Ajouter un poste'}</h2>
+          <h2>{editingPosteId ? 'Modifier un Entites' : 'Ajouter un Entites'}</h2>
         </div>
 
         <label className="field dark-field">
-          <span>Nom du poste</span>
+          <span>Nom du Entites</span>
           <input value={form.nom} onChange={(event) => updateField('nom', event.target.value)} required />
         </label>
         <label className="field dark-field">
@@ -150,7 +150,7 @@ export function AddPosteView({ token }) {
         <div className="form-actions-row">
           <button className="admin-primary" type="submit" disabled={isSaving}>
             <Plus size={18} />
-            {isSaving ? 'Enregistrement...' : editingPosteId ? 'Mettre à jour' : 'Ajouter le poste'}
+            {isSaving ? 'Enregistrement...' : editingPosteId ? 'Mettre à jour' : 'Ajouter le Entites'}
           </button>
           {editingPosteId ? (
             <button className="secondary-action" type="button" onClick={resetForm}>
@@ -171,7 +171,7 @@ export function AddPosteView({ token }) {
           <input
             value={posteSearch}
             onChange={(event) => setPosteSearch(event.target.value)}
-            placeholder="Rechercher un poste ou une region..."
+            placeholder="Rechercher un Entites ou une region..."
           />
         </label>
         <div className="admin-list">
@@ -194,7 +194,7 @@ export function AddPosteView({ token }) {
               </div>
             </div>
           ))}
-          {sortedPostes.length === 0 ? <p className="notice">Aucun poste trouve.</p> : null}
+          {sortedPostes.length === 0 ? <p className="notice">Aucun Entites trouve.</p> : null}
         </div>
       </article>
     </section>

@@ -10,7 +10,7 @@ const initialPoste = {
 
 const initialPastor = {
   nom: '',
-  degre: 'Pasteur',
+  degre: 'Serviteur',
   poste: '',
   telephone: '',
   email: '',

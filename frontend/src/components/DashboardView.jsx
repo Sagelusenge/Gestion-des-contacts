@@ -32,8 +32,8 @@ export function DashboardView({ token, onNavigate, user }) {
     const regions = new Set(postes.map((poste) => poste.region).filter(Boolean)).size;
 
     return [
-      { label: 'Pasteurs', value: pastors.length, icon: ContactRound },
-      { label: 'Postes', value: postes.length, icon: MapPinned },
+      { label: 'Serviteur', value: pastors.length, icon: ContactRound },
+      { label: 'Entite', value: postes.length, icon: MapPinned },
       { label: 'Régions', value: regions, icon: CalendarDays },
       { label: 'Fonctions', value: fonctions.length, icon: BadgePlus }
     ];
