@@ -1,4 +1,4 @@
-import { BadgePlus, ContactRound, CreditCard, LayoutDashboard, LogOut, MapPinned, MessageSquareText, UserPlus, Users } from 'lucide-react';
+import { BadgePlus, ContactRound, LayoutDashboard, LogOut, MapPinned, UserPlus, Users } from 'lucide-react';
 
 const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },

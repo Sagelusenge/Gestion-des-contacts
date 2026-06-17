@@ -1,13 +1,11 @@
 import { Download, Moon, RefreshCw, Sun } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { AppreciationsView } from './components/AppreciationsView.jsx';
 import { AddPastorView } from './components/AddPastorView.jsx';
 import { AddFonctionView } from './components/AddGradeView.jsx';
 import { AddPosteView } from './components/AddPosteView.jsx';
 import { DashboardView } from './components/DashboardView.jsx';
 import { DirectoryView } from './components/DirectoryView.jsx';
 import { LoginView } from './components/LoginView.jsx';
-import { PaymentsView } from './components/PaymentsView.jsx';
 import { Sidebar } from './components/Sidebar.jsx';
 import { UsersView } from './components/UsersView.jsx';
 import { APP_DOWNLOAD_URL } from './config/appLinks.js';
