@@ -32,9 +32,9 @@ export function DashboardView({ token, onNavigate, user }) {
     const regions = new Set(postes.map((poste) => poste.region).filter(Boolean)).size;
 
     return [
-      { label: 'Serviteur', value: pastors.length, icon: ContactRound },
-      { label: 'Entite', value: postes.length, icon: MapPinned },
-      { label: 'Régions', value: regions, icon: CalendarDays },
+      { label: 'Serviteurs', value: pastors.length, icon: ContactRound },
+      { label: 'Entites', value: postes.length, icon: MapPinned },
+     // { label: 'Régions', value: regions, icon: CalendarDays },
       { label: 'Fonctions', value: fonctions.length, icon: BadgePlus }
     ];
   }, [pastors, postes, fonctions]);
@@ -98,7 +98,7 @@ export function DashboardView({ token, onNavigate, user }) {
         <article className="dark-panel dashboard-main-panel">
           <div className="panel-title">
             <ContactRound size={22} />
-            <h2>Derniers pasteurs enregistrés</h2>
+            <h2>Derniers Serviteurs enregistrés</h2>
           </div>
           <div className="data-table">
             <div className="table-head">

@@ -3,8 +3,8 @@ import { BadgePlus, ContactRound, LayoutDashboard, LogOut, MapPinned, UserPlus, 
 const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'directory', label: 'Annuaire', icon: ContactRound },
-  { id: 'addPastor', label: 'Ajouter pasteur', icon: UserPlus, adminOnly: true },
-  { id: 'addPoste', label: 'Ajouter poste', icon: MapPinned, adminOnly: true },
+  { id: 'addPastor', label: 'Ajouter Serviteur', icon: UserPlus, adminOnly: true },
+  { id: 'addPoste', label: 'Ajouter Entité', icon: MapPinned, adminOnly: true },
   { id: 'addFonction', label: 'Fonctions', icon: BadgePlus, adminOnly: true },
   { id: 'users', label: 'Rôles & Utilisateurs', icon: Users, adminOnly: true }
 ];
