@@ -80,11 +80,11 @@ export function DashboardView({ token, onNavigate, user }) {
           <>
             <button type="button" onClick={() => onNavigate('addPastor')}>
               <UserPlus size={18} />
-              Ajouter un pasteur
+              Ajouter un Serviteur
             </button>
             <button type="button" onClick={() => onNavigate('addPoste')}>
               <MapPinned size={18} />
-              Ajouter un poste
+              Ajouter une Entité
             </button>
             <button type="button" onClick={() => onNavigate('addFonction')}>
               <BadgePlus size={18} />
@@ -104,7 +104,7 @@ export function DashboardView({ token, onNavigate, user }) {
             <div className="table-head">
               <span>Nom</span>
               <span>Fonction</span>
-              <span>Poste</span>
+              <span>Entité</span>
             </div>
             {recentPastors.map((pastor) => (
               <div className="table-row" key={pastor.id}>
