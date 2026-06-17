@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { env } from '../config/env.js';
 import { pool } from '../config/db.js';
 import { authenticate, requireAdmin } from '../middleware/auth.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -6,14 +7,31 @@ import { httpError } from '../utils/httpError.js';
 import { normalizePhoneForWhatsApp } from '../utils/communicationLinks.js';
 import {
   buildBroadcastMessage,
-  isWhatsAppCloudConfigured,
+  getWhatsAppWebStatus,
+  initializeWhatsAppWeb,
+  restartWhatsAppWeb,
   sendBroadcastMessages
-} from '../services/whatsappCloud.js';
+} from '../services/whatsappWeb.js';
 
 const router = Router();
 
 router.use(authenticate);
 router.use(requireAdmin);
+
+router.get(
+  '/whatsapp/status',
+  asyncHandler(async (_req, res) => {
+    res.json({ data: getWhatsAppWebStatus() });
+  })
+);
+
+router.post(
+  '/whatsapp/restart',
+  asyncHandler(async (_req, res) => {
+    const status = await restartWhatsAppWeb();
+    res.json({ data: status });
+  })
+);
 
 function normalizeIds(ids) {
   if (!Array.isArray(ids)) {
@@ -39,8 +57,14 @@ router.post(
       throw httpError(400, 'Aucun destinataire selectionne.');
     }
 
-    if (!isWhatsAppCloudConfigured()) {
-      throw httpError(503, "WhatsApp Cloud API n'est pas configuree. Ajoutez WHATSAPP_ACCESS_TOKEN et WHATSAPP_PHONE_NUMBER_ID dans Render.");
+    if (ids.length > env.whatsapp.maxRecipientsPerBroadcast) {
+      throw httpError(400, `Trop de destinataires pour Render 512 MB. Selectionnez au maximum ${env.whatsapp.maxRecipientsPerBroadcast} destinataires par envoi.`);
+    }
+
+    await initializeWhatsAppWeb();
+
+    if (!getWhatsAppWebStatus().isReady) {
+      throw httpError(503, "WhatsApp Web n'est pas encore connecte. Ouvrez le panneau WhatsApp dans l'application; si un QR code apparait, scannez-le une seule fois avec votre telephone.");
     }
 
     const placeholders = ids.map((_, index) => `:id${index}`).join(', ');

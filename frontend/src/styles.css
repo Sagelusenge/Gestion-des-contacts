@@ -2343,292 +2343,12 @@ body {
   }
 }
 
-/* Payment proof admin */
-.payments-page,
-.payment-list {
-  display: grid;
-  gap: 14px;
-}
-
-.payments-toolbar {
-  align-items: center;
-  justify-content: space-between;
-}
-
-.payments-toolbar select {
-  min-height: 48px;
-  min-width: min(260px, 100%);
-  border: 1px solid var(--cbca-line);
-  border-radius: 12px;
-  background: var(--cbca-white);
-  color: var(--cbca-text);
-  padding: 0 12px;
-  font-weight: 850;
-}
-
-.payment-card {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 16px;
-  align-items: start;
-}
-
-.payment-card-main {
-  min-width: 0;
-  display: grid;
-  gap: 7px;
-}
-
-.payment-card-heading {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-}
-
-.payment-card h2 {
-  color: var(--cbca-text);
-  font-size: 1.2rem;
-  overflow-wrap: anywhere;
-}
-
-.payment-card p,
-.payment-card small {
-  color: var(--cbca-muted);
-  font-weight: 800;
-  overflow-wrap: anywhere;
-}
-
-.payment-status {
-  min-height: 28px;
-  display: inline-flex;
-  align-items: center;
-  border-radius: 999px;
-  padding: 0 10px;
-  font-size: 0.76rem;
-  font-weight: 950;
-}
-
-.payment-status.pending {
-  background: #fff7dc;
-  color: #7a5b07;
-}
-
-.payment-status.confirmed {
-  background: #e5f8eb;
-  color: #126b39;
-}
-
-.payment-status.rejected {
-  background: var(--cbca-red-soft);
-  color: var(--cbca-red);
-}
-
-.payment-card-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
-.payment-action {
-  min-height: 40px;
-  border: 0;
-  border-radius: 10px;
-  padding: 0 12px;
-  font-weight: 900;
-}
-
-.payment-action.confirm {
-  background: #e5f8eb;
-  color: #126b39;
-}
-
-.payment-action.reject {
-  background: var(--cbca-red-soft);
-  color: var(--cbca-red);
-}
-
-.payment-action:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
-}
-
 .empty-panel {
   display: grid;
   justify-items: center;
   text-align: center;
   gap: 8px;
 }
-
-:root[data-theme='dark'] .payments-toolbar select {
-  border-color: var(--cbca-line);
-  background: #0b1627;
-  color: var(--cbca-text);
-}
-
-:root[data-theme='dark'] .payment-status.pending {
-  background: rgba(245, 191, 59, 0.16);
-  color: #ffe29a;
-}
-
-:root[data-theme='dark'] .payment-status.confirmed,
-:root[data-theme='dark'] .payment-action.confirm {
-  background: rgba(34, 197, 94, 0.16);
-  color: #b7f7c9;
-}
-
-@media (max-width: 640px) {
-  .payment-card {
-    grid-template-columns: 1fr;
-  }
-
-  .payment-card-actions {
-    justify-content: flex-start;
-  }
-
-  .payment-action {
-    flex: 1 1 120px;
-  }
-}
-
-/* Appreciation workflow */
-.appreciations-page,
-.appreciation-list {
-  display: grid;
-  gap: 14px;
-}
-
-.appreciations-toolbar {
-  align-items: center;
-  justify-content: space-between;
-}
-
-.appreciations-toolbar select {
-  min-height: 48px;
-  min-width: min(260px, 100%);
-  border: 1px solid var(--cbca-line);
-  border-radius: 12px;
-  background: var(--cbca-white);
-  color: var(--cbca-text);
-  padding: 0 12px;
-  font-weight: 850;
-}
-
-.appreciation-card {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 16px;
-  align-items: start;
-}
-
-.appreciation-card-main {
-  min-width: 0;
-  display: grid;
-  gap: 8px;
-}
-
-.appreciation-card-heading {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-}
-
-.appreciation-card p,
-.appreciation-card small {
-  color: var(--cbca-muted);
-  font-weight: 800;
-  overflow-wrap: anywhere;
-}
-
-.appreciation-status,
-.appreciation-rating {
-  min-height: 28px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border-radius: 999px;
-  padding: 0 10px;
-  font-size: 0.76rem;
-  font-weight: 950;
-}
-
-.appreciation-status.pending {
-  background: #fff7dc;
-  color: #7a5b07;
-}
-
-.appreciation-status.approved {
-  background: #e5f8eb;
-  color: #126b39;
-}
-
-.appreciation-status.rejected {
-  background: var(--cbca-red-soft);
-  color: var(--cbca-red);
-}
-
-.appreciation-rating {
-  background: #eef4ff;
-  color: var(--cbca-blue);
-}
-
-.appreciation-card-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
-.public-appreciations {
-  width: min(920px, calc(100vw - 28px));
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-  margin-top: 16px;
-}
-
-.public-appreciation-card {
-  min-width: 0;
-  display: grid;
-  gap: 8px;
-  border: 1px solid var(--cbca-line);
-  border-radius: 12px;
-  padding: 14px;
-  background: var(--cbca-white);
-  color: var(--cbca-text);
-  box-shadow: 0 12px 26px rgba(18, 63, 140, 0.08);
-}
-
-.public-appreciation-card div {
-  display: grid;
-  gap: 2px;
-}
-
-.public-appreciation-card strong,
-.public-appreciation-card p {
-  overflow-wrap: anywhere;
-}
-
-.public-appreciation-card span,
-.public-appreciation-card p {
-  color: var(--cbca-muted);
-  font-weight: 780;
-}
-
-.public-appreciation-card p {
-  font-size: 0.88rem;
-}
-
-.public-appreciation-card small {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  color: var(--cbca-blue);
-  font-weight: 950;
-}
-
 /* Compact navigation polish */
 .side-nav {
   overflow-y: auto;
@@ -2654,44 +2374,6 @@ body {
   .admin-shell {
     grid-template-columns: 248px minmax(0, 1fr);
   }
-}
-
-@media (max-width: 900px) {
-  .public-appreciations {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 640px) {
-  .appreciation-card {
-    grid-template-columns: 1fr;
-  }
-
-  .appreciation-card-actions {
-    justify-content: flex-start;
-  }
-
-  .public-appreciations {
-    grid-template-columns: 1fr;
-  }
-}
-
-:root[data-theme='dark'] .appreciations-toolbar select,
-:root[data-theme='dark'] .public-appreciation-card {
-  border-color: var(--cbca-line);
-  background: var(--cbca-white);
-  color: var(--cbca-text);
-}
-
-:root[data-theme='dark'] .appreciation-status.pending {
-  background: rgba(245, 191, 59, 0.16);
-  color: #ffe29a;
-}
-
-:root[data-theme='dark'] .appreciation-status.approved,
-:root[data-theme='dark'] .appreciation-rating {
-  background: rgba(34, 197, 94, 0.16);
-  color: #b7f7c9;
 }
 
 /* Responsive hardening */
@@ -3391,6 +3073,82 @@ body {
   margin-top: 0;
 }
 
+.whatsapp-session {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid rgba(22, 163, 74, 0.24);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: rgba(240, 253, 244, 0.78);
+}
+
+.whatsapp-session.ready {
+  background: rgba(236, 253, 245, 0.96);
+}
+
+.whatsapp-session-copy {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.whatsapp-session-copy span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #166534;
+  font-size: 0.9rem;
+  font-weight: 950;
+}
+
+.whatsapp-session-copy p {
+  color: var(--cbca-muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.whatsapp-session-status,
+.whatsapp-session-error {
+  color: var(--cbca-muted);
+  font-size: 0.78rem;
+  font-weight: 850;
+  overflow-wrap: anywhere;
+}
+
+.whatsapp-session-error {
+  color: var(--cbca-red);
+}
+
+.whatsapp-session-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.whatsapp-session svg {
+  flex: 0 0 auto;
+}
+
+.whatsapp-qr-panel {
+  display: flex;
+  justify-content: center;
+  border: 1px dashed rgba(22, 163, 74, 0.36);
+  border-radius: 12px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.whatsapp-qr-panel img {
+  width: min(280px, 100%);
+  aspect-ratio: 1;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
 .bulk-link-list {
   display: grid;
   gap: 8px;
@@ -3440,6 +3198,24 @@ body {
   color: var(--cbca-text);
 }
 
+:root[data-theme='dark'] .whatsapp-session {
+  border-color: rgba(74, 222, 128, 0.24);
+  background: rgba(20, 83, 45, 0.22);
+}
+
+:root[data-theme='dark'] .whatsapp-session.ready {
+  background: rgba(20, 83, 45, 0.32);
+}
+
+:root[data-theme='dark'] .whatsapp-session-copy span {
+  color: #86efac;
+}
+
+:root[data-theme='dark'] .whatsapp-qr-panel {
+  border-color: rgba(74, 222, 128, 0.28);
+  background: rgba(11, 22, 39, 0.6);
+}
+
 :root[data-theme='dark'] .bulk-link-list a {
   border-color: var(--cbca-line);
   background: rgba(11, 22, 39, 0.72);
@@ -3452,8 +3228,14 @@ body {
   }
 
   .bulk-whatsapp-actions .admin-primary,
-  .bulk-whatsapp-actions .print-all-button {
+  .bulk-whatsapp-actions .print-all-button,
+  .whatsapp-session .print-all-button,
+  .whatsapp-session-actions {
     width: 100%;
+  }
+
+  .whatsapp-session {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -4004,5 +3786,56 @@ body {
   .login-download-link,
   .primary-button {
     font-size: 0.86rem;
+  }
+}
+
+
+/* Compact workspace header override */
+.workspace-header {
+  min-height: 72px;
+  padding: 12px 26px;
+  gap: 14px;
+}
+
+.workspace-header h1 {
+  font-size: 1.52rem;
+  line-height: 1.12;
+}
+
+.workspace-header p {
+  font-size: 0.82rem;
+  margin-top: 2px;
+}
+
+.workspace-actions {
+  gap: 10px;
+}
+
+.workspace-tool {
+  min-height: 40px;
+  border-radius: 12px;
+  padding: 0 14px;
+  font-size: 0.9rem;
+}
+
+.workspace-tool svg {
+  width: 18px;
+  height: 18px;
+}
+
+@media (max-width: 860px) {
+  .workspace-header {
+    padding: 12px 14px;
+  }
+}
+
+@media (max-width: 640px) {
+  .workspace-header {
+    min-height: auto;
+    gap: 10px;
+  }
+
+  .workspace-header h1 {
+    font-size: 1.26rem;
   }
 }

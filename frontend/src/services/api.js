@@ -34,13 +34,6 @@ async function request(path, { token, method = 'GET', body } = {}) {
 
 export const api = {
   login: (credentials) => request('/auth/login', { method: 'POST', body: credentials }),
-  getPublicAppreciations: () => request('/appreciations/public'),
-  getAppreciations: (token, params = {}) => {
-    const query = new URLSearchParams(params);
-    return request(`/appreciations?${query.toString()}`, { token });
-  },
-  createAppreciation: (token, data) => request('/appreciations', { token, method: 'POST', body: data }),
-  updateAppreciationStatus: (token, id, status) => request(`/appreciations/${id}/status`, { token, method: 'PATCH', body: { status } }),
   getGrades: (token) => request('/grades', { token }),
   createGrade: (token, data) => request('/grades', { token, method: 'POST', body: data }),
   updateGrade: (token, id, data) => request(`/grades/${id}`, { token, method: 'PUT', body: data }),
@@ -61,13 +54,9 @@ export const api = {
   importPastors: (token, rows) => request('/pastors/import', { token, method: 'POST', body: { rows } }),
   updatePastor: (token, id, data) => request(`/pastors/${id}`, { token, method: 'PUT', body: data }),
   deletePastor: (token, id) => request(`/pastors/${id}`, { token, method: 'DELETE' }),
+  getWhatsappStatus: (token) => request('/broadcasts/whatsapp/status', { token }),
+  restartWhatsappSession: (token) => request('/broadcasts/whatsapp/restart', { token, method: 'POST' }),
   sendWhatsappBroadcast: (token, data) => request('/broadcasts/whatsapp', { token, method: 'POST', body: data }),
-  getPayments: (token, params = {}) => {
-    const query = new URLSearchParams(params);
-    return request(`/payments?${query.toString()}`, { token });
-  },
-  createPayment: (token, data) => request('/payments', { token, method: 'POST', body: data }),
-  updatePaymentStatus: (token, id, status) => request(`/payments/${id}/status`, { token, method: 'PATCH', body: { status } }),
   getPostes: (token) => request('/postes', { token }),
   createPoste: (token, data) => request('/postes', { token, method: 'POST', body: data }),
   updatePoste: (token, id, data) => request(`/postes/${id}`, { token, method: 'PUT', body: data }),
