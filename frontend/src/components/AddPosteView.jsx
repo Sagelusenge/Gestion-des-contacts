@@ -73,7 +73,7 @@ export function AddPosteView({ token }) {
 
   function handlePrint(poste) {
     printRecord(`Entites - ${poste.nom}`, [
-      { label: 'Nom Entite , value: poste.nom },
+      { label: 'Nom Entite' , value: poste.nom },
    //   { label: 'Région', value: poste.region },
       { label: 'Description', value: poste.description }
     ]);
