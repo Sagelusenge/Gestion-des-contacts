@@ -10,13 +10,6 @@ export function isWhatsAppCloudConfigured() {
   return Boolean(env.whatsapp.accessToken && env.whatsapp.phoneNumberId);
 }
 
-export function buildBroadcastMessage(pastor, message) {
-  const fonction = pastor.degre || 'Serviteur';
-  const intro = `Bonjour ${fonction} ${pastor.nom}, nous vous saluons au nom du Tout-Puissant.`;
-  const body = String(message || '').trim();
-  return body ? `${intro}\n${body}` : intro;
-}
-
 async function sendTextMessage({ to, body }) {
   const response = await fetch(
     `https://graph.facebook.com/${env.whatsapp.graphVersion}/${env.whatsapp.phoneNumberId}/messages`,
