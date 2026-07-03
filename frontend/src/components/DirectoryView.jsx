@@ -1,42 +1,9 @@
-import { Download, MessageCircle, Printer, RefreshCw, RotateCcw, Search, Send } from 'lucide-react';
+import { Download, Printer, RefreshCw, RotateCcw, Search } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useDebounce } from '../hooks/useDebounce.js';
 import { api } from '../services/api.js';
 import { printPastorsList } from '../utils/printRecord.js';
 import { PastorCard } from './PastorCard.jsx';
-
-function normalizePhoneForWhatsApp(phone) {
-  const digits = String(phone || '').replace(/[^\d]/g, '');
-
-  if (!digits) {
-    return '';
-  }
-
-  if (digits.startsWith('00')) {
-    return digits.slice(2);
-  }
-
-  if (digits.startsWith('243')) {
-    return digits;
-  }
-
-  if (digits.startsWith('0')) {
-    return `243${digits.slice(1)}`;
-  }
-
-  if (digits.length === 9 && ['8', '9'].includes(digits[0])) {
-    return `243${digits}`;
-  }
-
-  return digits;
-}
-
-function buildBroadcastText(pastor, message) {
-  const fonction = pastor.degre || 'Serviteur';
-  const intro = `Bonjour ${fonction} ${pastor.nom}, nous vous saluons au nom du Tout-Puissant.`;
-  const body = message.trim();
-  return body ? `${intro}\n${body}` : intro;
-}
 
 function normalizeSearch(value) {
   return String(value || '')
@@ -54,10 +21,6 @@ export function DirectoryView({ token, onUnauthorized, user }) {
   const [activePoste, setActivePoste] = useState('');
   const [posteSearch, setPosteSearch] = useState('');
   const [fonctionSearch, setFonctionSearch] = useState('');
-  const [bulkMessage, setBulkMessage] = useState('');
-  const [showBulkLinks, setShowBulkLinks] = useState(false);
-  const [isApiSending, setIsApiSending] = useState(false);
-  const [apiBroadcastSummary, setApiBroadcastSummary] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const debouncedQuery = useDebounce(query, 300);
@@ -78,21 +41,6 @@ export function DirectoryView({ token, onUnauthorized, user }) {
       .sort((a, b) => a.nom.localeCompare(b.nom));
   }, [activeDegree, fonctions, fonctionSearch]);
   const hasActiveFilters = Boolean(query || activeDegree || activePoste);
-  const whatsappTargets = useMemo(() => pastors
-    .map((pastor) => {
-      const phone = normalizePhoneForWhatsApp(pastor.telephone);
-      return {
-        id: pastor.id,
-        name: pastor.nom,
-        phone,
-        url: phone && bulkMessage.trim()
-          ? `https://wa.me/${phone}?text=${encodeURIComponent(buildBroadcastText(pastor, bulkMessage))}`
-          : ''
-      };
-    })
-    .filter((target) => target.phone), [pastors, bulkMessage]);
-  const canPrepareBulkMessage = Boolean(bulkMessage.trim() && whatsappTargets.length);
-
   function resetFilters() {
     setQuery('');
     setActivePoste('');
@@ -132,41 +80,6 @@ export function DirectoryView({ token, onUnauthorized, user }) {
     link.click();
     link.remove();
     URL.revokeObjectURL(url);
-  }
-
-  function openFirstWhatsAppMessage() {
-    if (!canPrepareBulkMessage) {
-      return;
-    }
-
-    setShowBulkLinks(true);
-    window.open(whatsappTargets[0].url, '_blank', 'noopener,noreferrer');
-  }
-
-  async function sendBulkMessageWithApi() {
-    if (!canPrepareBulkMessage) {
-      return;
-    }
-
-    setError('');
-    setApiBroadcastSummary('');
-    setIsApiSending(true);
-
-    try {
-      const payload = await api.sendWhatsappBroadcast(token, {
-        message: bulkMessage,
-        ids: whatsappTargets.map((target) => target.id)
-      });
-      const summary = payload.data || {};
-      setApiBroadcastSummary(`${summary.sent || 0} envoye(s), ${summary.failed || 0} echec(s), ${summary.skipped || 0} ignore(s).`);
-      if (summary.errors?.length) {
-        setError(summary.errors.map((item) => `${item.nom}: ${item.error}`).join(' '));
-      }
-    } catch (sendError) {
-      setError(sendError.message);
-    } finally {
-      setIsApiSending(false);
-    }
   }
 
   async function loadPastors() {
@@ -325,78 +238,6 @@ export function DirectoryView({ token, onUnauthorized, user }) {
             </button>
           </div>
         </div>
-
-        {isAdmin ? (
-          <section className="bulk-whatsapp-panel" aria-label="Message WhatsApp groupe">
-            <div className="bulk-whatsapp-heading">
-              <div>
-                <h2>Message WhatsApp groupe</h2>
-                <p>
-                  {whatsappTargets.length} destinataire{whatsappTargets.length > 1 ? 's' : ''} avec numero
-                  {activePoste ? ` pour ${activePoste}` : ' dans les resultats affiches'}
-                </p>
-              </div>
-              <MessageCircle size={24} />
-            </div>
-
-            <label className="bulk-message-field">
-              <span>Message a envoyer</span>
-              <textarea
-                rows="4"
-                value={bulkMessage}
-                onChange={(event) => {
-                  setBulkMessage(event.target.value);
-                  setShowBulkLinks(false);
-                  setApiBroadcastSummary('');
-                }}
-                placeholder="Ex: Reunion ce samedi a 10h au bureau CBCA..."
-              />
-            </label>
-
-            <div className="bulk-whatsapp-actions">
-              <button
-                className="admin-primary"
-                type="button"
-                onClick={openFirstWhatsAppMessage}
-                disabled={!canPrepareBulkMessage}
-              >
-                <Send size={18} />
-                Ouvrir le 1er WhatsApp
-              </button>
-              <button
-                className="admin-primary"
-                type="button"
-                onClick={sendBulkMessageWithApi}
-                disabled={!canPrepareBulkMessage || isApiSending}
-              >
-                <Send size={18} />
-                {isApiSending ? 'Envoi en cours...' : 'Envoyer a tous via API'}
-              </button>
-              <button
-                className="print-all-button quiet-action"
-                type="button"
-                onClick={() => setShowBulkLinks((current) => !current)}
-                disabled={!canPrepareBulkMessage}
-              >
-                <MessageCircle size={18} />
-                {showBulkLinks ? 'Masquer la liste' : 'Voir les destinataires'}
-              </button>
-            </div>
-
-            {apiBroadcastSummary ? <p className="notice success">{apiBroadcastSummary}</p> : null}
-
-            {showBulkLinks ? (
-              <div className="bulk-link-list">
-                {whatsappTargets.map((target, index) => (
-                  <a href={target.url} target="_blank" rel="noreferrer" key={target.id}>
-                    <span>{index + 1}. {target.name}</span>
-                    <strong>Ouvrir</strong>
-                  </a>
-                ))}
-              </div>
-            ) : null}
-          </section>
-        ) : null}
 
         {error ? <p className="notice error">{error}</p> : null}
         {isLoading ? <p className="notice">Chargement...</p> : null}

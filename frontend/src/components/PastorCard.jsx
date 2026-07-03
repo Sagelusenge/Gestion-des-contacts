@@ -1,5 +1,4 @@
-import { Check, Copy, Mail, MapPin, Phone } from 'lucide-react';
-import { useState } from 'react';
+import { Mail, MapPin, MessageSquareText, Phone } from 'lucide-react';
 
 const degreeClassNames = {
   Révérend: 'badge gold',
@@ -18,26 +17,21 @@ function getInitials(name) {
     .join('');
 }
 
-export function PastorCard({ pastor }) {
-  const [copied, setCopied] = useState(false);
-  const contactText = [
-    `${pastor.degre} ${pastor.nom}`,
-    pastor.id_serviteur ? `ID: ${pastor.id_serviteur}` : '',
-    pastor.poste,
-    pastor.entite ? `Entite: ${pastor.entite}` : '',
-    pastor.telephone ? `Tel: ${pastor.telephone}` : '',
-    pastor.email ? `Email: ${pastor.email}` : ''
-  ].filter(Boolean).join('\n');
+function getWhatsAppUrl(phone) {
+  const digits = String(phone || '').replace(/[^\d]/g, '');
+  const normalized = digits.startsWith('00')
+    ? digits.slice(2)
+    : digits.startsWith('0')
+      ? `243${digits.slice(1)}`
+      : digits.length === 9 && ['8', '9'].includes(digits[0])
+        ? `243${digits}`
+        : digits;
 
-  async function copyContact() {
-    try {
-      await navigator.clipboard.writeText(contactText);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1800);
-    } catch {
-      setCopied(false);
-    }
-  }
+  return normalized ? `https://wa.me/${normalized}` : '';
+}
+
+export function PastorCard({ pastor }) {
+  const whatsappUrl = pastor.actions?.whatsapp?.split('?')[0] || getWhatsAppUrl(pastor.telephone);
 
   return (
     <article className="connect-card">
@@ -72,27 +66,36 @@ export function PastorCard({ pastor }) {
       </div>
 
       <div className="connect-actions">
-        <a className="square-action call" href={pastor.actions?.call || `tel:${pastor.telephone}`} aria-label="Appeler">
-          <Phone size={20} />
-        </a>
-        {pastor.email ? (
-          <a className="square-action email" href={`mailto:${pastor.email}`} aria-label="Envoyer un email">
-            <Mail size={20} />
-          </a>
+        {pastor.telephone ? (
+          <>
+            <a
+              className="square-action call"
+              href={pastor.actions?.call || `tel:${pastor.telephone}`}
+              aria-label="Appeler par téléphone"
+              title="Appel téléphonique"
+            >
+              <Phone size={20} />
+            </a>
+            <a
+              className="square-action whatsapp"
+              href={whatsappUrl}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Ouvrir WhatsApp"
+              title="WhatsApp"
+            >
+              <img src="/icons/whatsapp-logo.svg" alt="" />
+            </a>
+            <a
+              className="square-action sms"
+              href={`sms:${pastor.telephone}`}
+              aria-label="Envoyer un SMS"
+              title="SMS"
+            >
+              <MessageSquareText size={20} />
+            </a>
+          </>
         ) : null}
-        <a
-          className="square-action whatsapp whatsapp-call"
-          href={pastor.actions?.whatsapp}
-          target="_blank"
-          rel="noreferrer"
-          aria-label="Ouvrir WhatsApp pour appeler ou écrire"
-          title="Appel WhatsApp"
-        >
-          <img src="/icons/whatsapp-logo.svg" alt="" />
-        </a>
-        <button className="square-action copy-contact" type="button" onClick={copyContact} aria-label="Copier le contact">
-          {copied ? <Check size={20} /> : <Copy size={20} />}
-        </button>
       </div>
     </article>
   );

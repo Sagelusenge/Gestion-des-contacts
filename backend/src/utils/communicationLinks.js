@@ -27,14 +27,12 @@ export function normalizePhoneForWhatsApp(phone) {
 export function withCommunicationLinks(pastor) {
   const phone = pastor.telephone || '';
   const whatsappPhone = normalizePhoneForWhatsApp(phone);
-  const fonction = pastor.degre || 'Serviteur';
-  const message = `Bonjour ${fonction} ${pastor.nom}, nous vous saluons au nom du Tout-Puissant. Nous vous contactons via l'annuaire CBCA pour une communication concernant votre fonction et votre poste.`;
 
   return {
     ...pastor,
     actions: {
       call: `tel:${phone}`,
-      whatsapp: `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(message)}`
+      whatsapp: whatsappPhone ? `https://wa.me/${whatsappPhone}` : ''
     }
   };
 }

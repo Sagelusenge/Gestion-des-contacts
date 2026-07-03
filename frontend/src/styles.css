@@ -2954,7 +2954,7 @@ body {
 }
 
 .connect-actions {
-  grid-template-columns: repeat(2, 40px);
+  grid-template-columns: repeat(3, 40px);
 }
 
 .square-action {
@@ -2964,6 +2964,11 @@ body {
 .square-action.email {
   background: #eef4ff;
   color: var(--cbca-blue);
+}
+
+.square-action.sms {
+  background: #fff4e8;
+  color: #d97706;
 }
 
 .square-action.copy-contact {
@@ -2989,6 +2994,11 @@ body {
 :root[data-theme='dark'] .square-action.copy-contact {
   background: rgba(180, 198, 228, 0.12);
   color: var(--cbca-muted);
+}
+
+:root[data-theme='dark'] .square-action.sms {
+  background: rgba(245, 158, 11, 0.16);
+  color: #fcd34d;
 }
 
 @media (max-width: 640px) {
@@ -3582,7 +3592,7 @@ body {
 
   .connect-actions {
     grid-column: 1 / -1;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     width: 100%;
     justify-items: stretch;
   }
